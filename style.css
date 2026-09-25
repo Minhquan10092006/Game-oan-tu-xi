@@ -931,3 +931,164 @@ body {
     from { opacity: 0; transform: translateX(-50%) translateY(4px); }
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+/* ============================================
+   SCREEN MANAGER
+   ============================================ */
+.screen {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Menu Screen ---- */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  gap: 24px;
+}
+
+.menu-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6, #3b82f6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 6s ease infinite;
+  text-align: center;
+}
+
+.menu-title .title-icon {
+  -webkit-text-fill-color: initial;
+  font-size: 1.5rem;
+}
+
+.menu-subtitle {
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin-top: -12px;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 800px;
+  width: 100%;
+}
+
+.mode-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  color: inherit;
+  font-family: inherit;
+  display: block;
+  width: 100%;
+}
+
+.mode-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent-purple);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+}
+
+.mode-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.mode-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.mode-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.mode-tag {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.mode-tag.p2 {
+  background: var(--accent-p1-soft);
+  color: var(--accent-p1);
+  border: 1px solid var(--accent-p1);
+}
+
+.mode-tag.p8 {
+  background: var(--accent-gold-glow);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+}
+
+/* ---- Back button ---- */
+.back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--accent-purple);
+}
+
+/* Fix: solo screen dùng #app padding như cũ */
+#screen-solo #app {
+  padding-top: 60px; /* chừa chỗ cho back button */
+}
+
+#screen-multi {
+  padding-top: 60px;
+}
