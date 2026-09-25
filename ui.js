@@ -146,11 +146,11 @@ function renderBoard() {
             // Goal cells
             if (r === GOALS[1].row && c === GOALS[1].col) {
                 cell.classList.add('goal-p1');
-                cell.dataset.tooltip = 'Đích P1 (1,9)';
+                cell.dataset.tooltip = 'Đích P1 (9,9)';
             }
             if (r === GOALS[2].row && c === GOALS[2].col) {
                 cell.classList.add('goal-p2');
-                cell.dataset.tooltip = 'Đích P2 (9,1)';
+                cell.dataset.tooltip = 'Đích P2 (1,1)';
             }
 
             // Last move highlights
