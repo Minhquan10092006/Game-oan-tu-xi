@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Oẳn Tù Tì 2.0 - Trò chơi bàn cờ chiến thuật Rock-Paper-Scissors theo lượt, kết hợp cờ vua và oẳn tù tì trên bàn 9x9.">
+    <title>Oẳn Tù Tì 2.0 | Rock-Paper-Scissors Board Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Animated background particles -->
+        <canvas id="bg-canvas"></canvas>
+
+        <!-- Header -->
+        <header id="game-header">
+            <div class="header-glow"></div>
+            <h1 id="game-title">
+                <span class="title-icon">⚔️</span>
+                <span class="title-text">OẲN TÙ TÌ <span class="version">2.0</span></span>
+                <span class="title-icon">⚔️</span>
+            </h1>
+            <p class="subtitle">Rock • Paper • Scissors — Strategic Board Game</p>
+        </header>
+
+        <!-- Game Info Bar -->
+        <div id="game-info-bar">
+            <div id="player1-info" class="player-info active-player">
+                <div class="player-avatar p1-avatar">🔴</div>
+                <div class="player-details">
+                    <span class="player-name">Player 1</span>
+                    <span class="player-goal">🎯 Đến ô (9, 9)</span>
+                    <div class="piece-count" id="p1-pieces">
+                        <span class="piece-badge rock">🪨×0</span>
+                        <span class="piece-badge paper">📄×0</span>
+                        <span class="piece-badge scissors">✂️×0</span>
+                    </div>
+                </div>
+            </div>
+            <div id="turn-indicator">
+                <div class="turn-orb" id="turn-orb"></div>
+                <span id="turn-text">Lượt Player 1</span>
+                <span id="turn-number">Turn 1</span>
+            </div>
+            <div id="player2-info" class="player-info">
+                <div class="player-avatar p2-avatar">🔵</div>
+                <div class="player-details">
+                    <span class="player-name">Player 2</span>
+                    <span class="player-goal">🎯 Đến ô (1, 1)</span>
+                    <div class="piece-count" id="p2-pieces">
+                        <span class="piece-badge rock">🪨×0</span>
+                        <span class="piece-badge paper">📄×0</span>
+                        <span class="piece-badge scissors">✂️×0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="game-area">
+            <!-- Board container -->
+            <div id="board-wrapper">
+                <!-- Column labels top -->
+                <div class="coord-labels top-labels" id="top-labels"></div>
+                <div class="board-with-rows">
+                    <!-- Row labels left -->
+                    <div class="coord-labels row-labels" id="left-labels"></div>
+                    <!-- The board -->
+                    <div id="board" role="grid" aria-label="Game board 9x9"></div>
+                    <!-- Row labels right -->
+                    <div class="coord-labels row-labels" id="right-labels"></div>
+                </div>
+                <!-- Column labels bottom -->
+                <div class="coord-labels top-labels" id="bottom-labels"></div>
+            </div>
+
+            <!-- Side Panel -->
+            <aside id="side-panel">
+                <!-- Move Log -->
+                <div class="panel-section" id="move-log-section">
+                    <h2 class="panel-title">📜 Lịch Sử Nước Đi</h2>
+                    <div id="move-log"></div>
+                </div>
+                <!-- Legend -->
+                <div class="panel-section" id="legend-section">
+                    <h2 class="panel-title">📖 Chú Thích</h2>
+                    <div class="legend-grid">
+                        <div class="legend-item"><span class="legend-icon rock-icon p1">🪨</span> Búa (Rock)</div>
+                        <div class="legend-item"><span class="legend-icon paper-icon p1">📄</span> Bao (Paper)</div>
+                        <div class="legend-item"><span class="legend-icon scissors-icon p1">✂️</span> Kéo (Scissors)</div>
+                    </div>
+                    <div class="legend-rules">
+                        <div class="rule">🪨 → ✂️ <span>Búa ăn Kéo</span></div>
+                        <div class="rule">✂️ → 📄 <span>Kéo ăn Bao</span></div>
+                        <div class="rule">📄 → 🪨 <span>Bao ăn Búa</span></div>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <div class="panel-section" id="controls-section">
+                    <button id="btn-new-game" class="game-btn primary-btn" onclick="newGame()">
+                        🔄 Ván Mới
+                    </button>
+                    <button id="btn-undo" class="game-btn secondary-btn" onclick="undoMove()">
+                        ↩️ Hoàn Tác
+                    </button>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Status Bar -->
+        <div id="status-bar">
+            <span id="status-message">Chọn một quân cờ để bắt đầu</span>
+        </div>
+
+        <!-- Victory Overlay -->
+        <div id="victory-overlay" class="hidden">
+            <div id="victory-modal">
+                <div class="victory-particles" id="victory-particles"></div>
+                <div class="trophy">🏆</div>
+                <h2 id="victory-title">Chiến Thắng!</h2>
+                <p id="victory-message"></p>
+                <button class="game-btn primary-btn" onclick="newGame()">🔄 Chơi Lại</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>
