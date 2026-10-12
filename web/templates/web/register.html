@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký — Oẳn Tù Tì 2.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a1a;
+      color: #e0e0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #12122a;
+      border: 1px solid #2a2a5a;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 8px 40px rgba(124,111,255,.15);
+    }
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: #7c6fff;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    h2 {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    input {
+      width: 100%;
+      background: #0d0d20;
+      border: 1px solid #2a2a5a;
+      border-radius: 8px;
+      color: #e0e0f0;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      transition: border-color .2s;
+    }
+    input:focus { outline: none; border-color: #7c6fff; }
+    /* Ẩn input Django tự thêm (help_text là ul) */
+    ul.errorlist { list-style: none; margin: 4px 0 0; }
+    ul.errorlist li {
+      color: #f44336;
+      font-size: 0.78rem;
+    }
+    .help-text {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 4px;
+    }
+    .btn {
+      margin-top: 24px;
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #5a4fcf, #7c6fff);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .9; }
+    .footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .footer-link a { color: #7c6fff; text-decoration: none; }
+    .footer-link a:hover { text-decoration: underline; }
+    .back-home {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: #444;
+      text-decoration: none;
+    }
+    .back-home:hover { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">⚔️ OẲN TÙ TÌ 2.0</div>
+    <h2>Tạo tài khoản</h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label>Tên đăng nhập</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% endif %}
+
+      <label>Mật khẩu</label>
+      {{ form.password1 }}
+      {% if form.password1.errors %}
+        <ul class="errorlist">{% for e in form.password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% endif %}
+      <div class="help-text">Tối thiểu 8 ký tự, không dùng mật khẩu quá đơn giản.</div>
+
+      <label>Xác nhận mật khẩu</label>
+      {{ form.password2 }}
+      {% if form.password2.errors %}
+        <ul class="errorlist">{% for e in form.password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+        <ul class="errorlist" style="margin-top:12px">
+          {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+
+      <button type="submit" class="btn">Đăng ký</button>
+    </form>
+
+    <div class="footer-link">
+      Đã có tài khoản? <a href="/login/">Đăng nhập</a>
+    </div>
+    <a href="/" class="back-home">← Về trang chủ</a>
+  </div>
+</body>
+</html>

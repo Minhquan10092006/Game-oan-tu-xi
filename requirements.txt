@@ -1,0 +1,14 @@
+# Django core
+Django==6.1.2
+
+# REST API
+djangorestframework==3.18.3
+
+# CORS headers (cho phép frontend JS gọi API từ port khác)
+django-cors-headers==4.6.0
+
+# HTTP requests tới Judge0
+requests==2.32.3
+
+# Môi trường biến (đọc .env)
+python-dotenv==1.1.0
