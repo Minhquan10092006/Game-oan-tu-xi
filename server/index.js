@@ -103,15 +103,15 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const code = socket.data.roomCode;
     if (!code) return;
-    const result = rooms.leaveRoom(code, socket.id);
-    if (result?.deleted) {
+    const room = rooms.leaveRoom(code, socket.id);
+    if (room?.deleted) {
       io.to(`spectate:${code}`).emit('room_deleted', { code });
-    } else if (result) {
+    } else if (room) {
       io.to(code).emit('room_update', {
         code,
-        names: result.names,
-        status: result.status,
-        state: serializeState(result),
+        names: room.names,
+        status: room.status,
+        state: serializeState(room),
       });
     }
   });

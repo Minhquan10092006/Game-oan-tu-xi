@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,8 +7,8 @@
     <meta name="description" content="Oẳn Tù Tì 2.0 - 2 chế độ: 2 người local và 8 người online.">
     <title>Oẳn Tù Tì 2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="multiplayer.css">
+    <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
@@ -175,9 +176,9 @@
 
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="game.js"></script>
-    <script src="ui.js"></script>
-    <script src="multiplayer.js"></script>
-    <script src="screen-manager.js"></script>
+    <script src="{% static 'web/js/game.js' %}"></script>
+    <script src="{% static 'web/js/ui.js' %}"></script>
+    <script src="{% static 'web/js/screen-manager.js' %}"></script>
+    <script src="{% static 'web/js/multiplayer.js' %}"></script>
 </body>
 </html>
