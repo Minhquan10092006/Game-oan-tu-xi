@@ -3,8 +3,6 @@
    ============================================ */
 
 let _currentScreen = 'menu';
-let _soloBoot = false;
-let _multiBoot = false;
 
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -15,14 +13,24 @@ function showScreen(name) {
     _currentScreen = name;
   }
 
-  if (name === 'solo' && !_soloBoot) {
-    _soloBoot = true;
-    if (typeof initSoloMode === 'function') initSoloMode();
+  if (name === 'solo') {
+    if (typeof initSoloMode === 'function') {
+      initSoloMode();
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        if (typeof initSoloMode === 'function') initSoloMode();
+      });
+    }
   }
 
-  if (name === 'multi' && !_multiBoot) {
-    _multiBoot = true;
-    if (typeof initMultiMode === 'function') initMultiMode();
+  if (name === 'multi') {
+    if (typeof initMultiMode === 'function') {
+      initMultiMode();
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        if (typeof initMultiMode === 'function') initMultiMode();
+      });
+    }
   }
 
   history.replaceState(null, '', name === 'menu' ? location.pathname : `#${name}`);

@@ -439,3 +439,148 @@
     font-size: 3rem;
   }
 }
+
+/* ---- Move log trong mỗi slot ---- */
+.mg-move-log-wrap {
+  width: 88px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.mg-move-log-title {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: 'Orbitron', monospace;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.mg-move-log {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: none;
+}
+.mg-move-log::-webkit-scrollbar { display: none; }
+
+.mg-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  padding: 2px 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.03);
+  border-left: 2px solid transparent;
+  animation: logFadeIn .25s ease;
+}
+
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mg-log-entry.p1 { border-left-color: var(--accent-p1); }
+.mg-log-entry.p2 { border-left-color: var(--accent-p2); }
+
+.mg-log-icon  { flex-shrink: 0; font-size: 0.6rem; }
+.mg-log-move  { font-family: 'Fira Code', 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+.mg-log-piece { color: var(--text-muted); flex-shrink: 0; display: none; }
+.mg-log-capture { flex-shrink: 0; font-size: 0.58rem; }
+.mg-log-capture.p1 { color: var(--accent-p1); }
+.mg-log-capture.p2 { color: var(--accent-p2); }
+
+/* Responsive: ẩn log khi quá hẹp */
+@media (max-width: 500px) {
+  .mg-move-log-wrap { display: none; }
+}
+
+
+/* ---- Move log trong mỗi slot ---- */
+.mg-move-log-wrap {
+  width: 88px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.mg-move-log-title {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: 'Orbitron', monospace;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.mg-move-log {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: none;
+}
+.mg-move-log::-webkit-scrollbar { display: none; }
+
+.mg-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  padding: 2px 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.03);
+  border-left: 2px solid transparent;
+  animation: logFadeIn .25s ease;
+}
+
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mg-log-entry.p1 { border-left-color: var(--accent-p1); }
+.mg-log-entry.p2 { border-left-color: var(--accent-p2); }
+
+.mg-log-icon    { flex-shrink: 0; font-size: 0.6rem; }
+.mg-log-move    { font-family: 'Fira Code', 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+.mg-log-piece   { color: var(--text-muted); flex-shrink: 0; }
+.mg-log-capture { flex-shrink: 0; font-size: 0.58rem; }
+.mg-log-capture.p1 { color: var(--accent-p1); }
+.mg-log-capture.p2 { color: var(--accent-p2); }
+
+@media (max-width: 500px) {
+  .mg-move-log-wrap { display: none; }
+}
+
+/* Phòng hiện tại của người chơi */
+.mini-game.active-my-room {
+  border: 2px solid var(--accent-purple);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+}
+
+.mini-game.active-my-room .mg-board {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+}
+
+.mg-quick-btn:hover {
+  filter: brightness(1.2);
+  transform: scale(1.05);
+}
+
+.mini-game:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  cursor: pointer;
+}

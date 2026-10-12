@@ -13,6 +13,7 @@ import logging
 from django.utils import timezone
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .models import Match, MatchMove
@@ -254,3 +255,96 @@ def _try_update_elo(match: Match, winner_player: int):
             update_elo_after_match(p2, p1)
     except Exception as e:
         logger.warning('ELO update failed for match %s: %s', match.pk, e)
+
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def ai_battle_start_view(request):
+    """
+    POST /api/matches/ai-battle/start/
+    Body: {"ai1_id": 1, "ai2_id": 2}
+
+    Tạo và chạy ngay một trận AI vs AI.
+    Trả về match ID và kết quả sau khi ván hoàn thành.
+    """
+    ai1_id = request.data.get('ai1_id')
+    ai2_id = request.data.get('ai2_id')
+
+    if not ai1_id or not ai2_id:
+        return Response(
+            {'error': True, 'message': 'Cần cung cấp ai1_id và ai2_id.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        ai1 = Submission.objects.get(pk=ai1_id, status='completed')
+        ai2 = Submission.objects.get(pk=ai2_id, status='completed')
+    except Submission.DoesNotExist:
+        return Response(
+            {'error': True, 'message': 'Một hoặc cả hai bài nộp không tồn tại hoặc chưa chấm xong.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    from matches.engine import GameState
+    gs = GameState()
+    match = Match.objects.create(
+        player1=request.user,
+        player1_name=ai1.ai_name,
+        player2_name=ai2.ai_name,
+        ai1=ai1,
+        ai2=ai2,
+        board_state=gs.to_dict(),
+        status='playing',
+        max_turns=200,
+    )
+
+    # Chạy trận đấu (synchronous)
+    from matches.ai_battle import run_ai_battle
+    match = run_ai_battle(match)
+
+    moves = list(MatchMove.objects.filter(match=match).values(
+        'player', 'turn_number', 'from_row', 'from_col',
+        'to_row', 'to_col', 'piece_type', 'is_capture', 'captured_type',
+    ))
+
+    return Response({
+        'match_id': match.pk,
+        'status': match.status,
+        'winner': match.winner,
+        'win_reason': match.win_reason,
+        'total_moves': len(moves),
+        'moves': moves,
+        'ai1': {'id': ai1.pk, 'name': ai1.ai_name, 'elo': ai1.elo},
+        'ai2': {'id': ai2.pk, 'name': ai2.ai_name, 'elo': ai2.elo},
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ai_battle_status_view(request, pk: int):
+    """GET /api/matches/<pk>/battle/ — Trả trạng thái + toàn bộ nước đi của trận."""
+    try:
+        match = Match.objects.get(pk=pk)
+    except Match.DoesNotExist:
+        return Response({'error': True, 'message': 'Không tìm thấy trận.'}, status=404)
+
+    moves = list(MatchMove.objects.filter(match=match).order_by('id').values(
+        'player', 'turn_number', 'from_row', 'from_col',
+        'to_row', 'to_col', 'piece_type', 'is_capture', 'captured_type',
+    ))
+
+    ai1 = match.ai1
+    ai2 = match.ai2
+    return Response({
+        'match_id': match.pk,
+        'status': match.status,
+        'winner': match.winner,
+        'win_reason': match.win_reason,
+        'board_state': match.board_state,
+        'total_moves': len(moves),
+        'moves': moves,
+        'ai1': {'id': ai1.pk, 'name': ai1.ai_name, 'elo': ai1.elo} if ai1 else None,
+        'ai2': {'id': ai2.pk, 'name': ai2.ai_name, 'elo': ai2.elo} if ai2 else None,
+    })
+

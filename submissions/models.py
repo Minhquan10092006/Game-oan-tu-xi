@@ -52,6 +52,11 @@ class Submission(models.Model):
     # Thông báo lỗi (nếu có)
     error_message = models.TextField(blank=True)
 
+    # ELO cho AI (dùng trong chế độ AI vs AI)
+    elo = models.IntegerField(default=1200)
+    ai_wins = models.IntegerField(default=0)
+    ai_losses = models.IntegerField(default=0)
+
     submitted_at = models.DateTimeField(auto_now_add=True)
     judged_at = models.DateTimeField(null=True, blank=True)
 

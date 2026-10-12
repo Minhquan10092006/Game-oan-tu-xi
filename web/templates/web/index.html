@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
     <link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">
 </head>
-<body>
+<body data-username="{{ request.user.username|default:'' }}">
     <canvas id="bg-canvas"></canvas>
 
     <!-- ============================================
@@ -54,6 +54,16 @@
                         Chấm tự động qua Judge0 sandbox.
                     </div>
                     <span class="mode-tag" style="background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3)">AI JUDGE</span>
+                </a>
+
+                <a class="mode-card" href="/ai-battle/" style="text-decoration:none;color:inherit">
+                    <span class="mode-icon">⚔️</span>
+                    <div class="mode-name">AI BATTLE</div>
+                    <div class="mode-desc">
+                        Cho 2 AI đấu nhau trực tiếp.<br>
+                        Xem từng nước đi, cập nhật ELO tự động.
+                    </div>
+                    <span class="mode-tag" style="background:rgba(244,67,54,.12);color:#f44336;border:1px solid rgba(244,67,54,.3)">AI VS AI</span>
                 </a>
 
                 <a class="mode-card" href="/ranking/" style="text-decoration:none;color:inherit">
@@ -190,15 +200,17 @@
             <input id="mp-room-code" placeholder="Mã phòng (VD: A1)" maxlength="8">
             <input id="mp-name" placeholder="Tên của bạn">
             <button id="btn-join" class="game-btn primary-btn">🎮 Vào phòng</button>
-            <span id="mp-status">Chưa kết nối</span>
+            <button id="btn-spectate" class="game-btn secondary-btn">👁 Xem phòng</button>
+            <button id="btn-leave" class="game-btn secondary-btn" style="display:none">🚪 Rời phòng</button>
+            <button id="btn-reset" class="game-btn secondary-btn" style="display:none">🔄 Ván mới</button>
+            <span id="mp-status">Đang kết nối...</span>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="{% static 'web/js/game.js' %}"></script>
     <script src="{% static 'web/js/ui.js' %}"></script>
-    <script src="{% static 'web/js/screen-manager.js' %}"></script>
     <script src="{% static 'web/js/multiplayer.js' %}"></script>
+    <script src="{% static 'web/js/screen-manager.js' %}"></script>
 </body>
 </html>

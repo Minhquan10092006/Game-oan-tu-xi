@@ -36,7 +36,6 @@
 ## Yêu cầu hệ thống
 
 - **Python**: 3.10+ (project dùng 3.15)
-- **Node.js**: 18+ (cho game server Socket.IO)
 - **Windows**: Đã test trên Windows 10/11
 
 ---
@@ -99,22 +98,14 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 8. Chạy Django server
+### 8. Chạy Django server (hỗ trợ cả HTTP & WebSocket)
 
 ```cmd
 python manage.py runserver
 ```
 
-Django sẽ chạy tại: http://localhost:8000
-
-### 9. (Tùy chọn) Cài Node.js packages và chạy game server Socket.IO
-
-```cmd
-npm install
-node server/index.js
-```
-
-Game Socket.IO chạy tại: http://localhost:3000
+Django (Daphne ASGI) sẽ chạy tại: http://localhost:8000
+Cả chế độ 2 người, 8 người multiplayer realtime và spectator đều chạy trực tiếp trên Django server này.
 
 ---
 
@@ -158,10 +149,10 @@ JUDGE0_API_KEY=your-auth-token-if-configured
 ## Chạy tests
 
 ```cmd
-python manage.py test matches judge submissions --verbosity=2
+python manage.py test matches judge submissions web --verbosity=2
 ```
 
-Kết quả mong đợi: **72 tests passed**.
+Kết quả mong đợi: **76 tests passed**.
 
 ---
 

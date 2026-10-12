@@ -52,5 +52,38 @@ def ai_judge(request):
     return render(request, 'web/ai_judge.html', {'user': request.user})
 
 
+@login_required(login_url='/login/?next=/ai-battle/')
+def ai_battle_view(request):
+    from submissions.models import Submission
+    my_subs = Submission.objects.filter(
+        submitter=request.user, status='completed'
+    ).order_by('-submitted_at')
+    return render(request, 'web/ai_battle.html', {
+        'user': request.user,
+        'my_subs': my_subs,
+    })
+
+
 def ranking_view(request):
     return render(request, 'web/ranking.html')
+
+
+def rooms_api(request):
+    from django.http import JsonResponse
+    from .room_manager import RoomManager, MAX_SPECTATORS
+    rm = RoomManager.get_instance()
+    rooms_data = [
+        {
+            'code': r.code,
+            'names': list(r.names),
+            'status': r.status,
+            'spectatorCount': len(r.spectators),
+            'maxSpectators': MAX_SPECTATORS,
+            'turnNumber': r.state.turn_number,
+            'currentPlayer': r.state.current_player,
+            'gameOver': r.state.game_over,
+            'winner': r.state.winner,
+        }
+        for r in rm.rooms.values()
+    ]
+    return JsonResponse(rooms_data, safe=False)
