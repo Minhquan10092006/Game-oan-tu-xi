@@ -5,12 +5,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    # Game frontend
+    # Demo tối giản: giao diện upload + API replay. Các route Judge0/ELO cũ không được public.
     path('', include('web.urls')),
-    # REST API
-    path('api/submissions/', include('submissions.urls')),
     path('api/matches/', include('matches.urls')),
-    path('api/judge/', include('judge.urls')),
-    path('api/ranking/', include('web.api_urls')),
 ]

@@ -21,8 +21,8 @@ def create_demo_match(request):
     p1, p2 = request.FILES.get("player1_file"), request.FILES.get("player2_file")
     if not p1 or not p2:
         return JsonResponse({"error": "Cần tải lên bot Player 1 và Player 2."}, status=400)
-    if any(Path(f.name).suffix.lower() not in (".py", ".cpp") or f.size > MAX_UPLOAD for f in (p1, p2)):
-        return JsonResponse({"error": "Chỉ chấp nhận .py/.cpp, tối đa 256 KB mỗi file."}, status=400)
+    if any(Path(f.name).suffix.lower() != ".py" or f.size > MAX_UPLOAD for f in (p1, p2)):
+        return JsonResponse({"error": "Chỉ chấp nhận hai file Python (.py), tối đa 256 KB mỗi file."}, status=400)
     preset = request.POST.get("preset", "classic_9x9")
     try:
         max_plies = min(max(int(request.POST.get("max_plies", 300)), 1), 300)
@@ -30,7 +30,7 @@ def create_demo_match(request):
         with tempfile.TemporaryDirectory(prefix="ott-upload-") as directory:
             paths = []
             for idx, upload in enumerate((p1, p2), 1):
-                path = Path(directory) / f"player{idx}{Path(upload.name).suffix.lower()}"
+                path = Path(directory) / f"player{idx}.py"
                 with path.open("wb") as dest:
                     for chunk in upload.chunks(): dest.write(chunk)
                 paths.append(path)
