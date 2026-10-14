@@ -9,6 +9,11 @@ def index(request):
     return render(request, 'web/index.html')
 
 
+def battlecode_demo(request):
+    """Public local demo for uploading two bot files and replaying their match."""
+    return render(request, 'web/battlecode_demo.html')
+
+
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('/')

@@ -1,5 +1,38 @@
 # ⚔️ Oẳn Tù Tì 2.0
 
+## Battlecode demo (không dùng Judge0)
+
+Luồng demo mới chạy hai bot độc lập theo JSON stdin/stdout, kiểm tra nước đi hoàn toàn ở server và trả toàn bộ replay để frontend phát lại. Lõi luật ở `matches/game_engine.py`; runner ở `matches/bot_runner.py` và `matches/match_manager.py`.
+
+Chạy kiểm thử luồng đầy đủ:
+
+```bash
+python manage.py test matches.tests_battlecode
+```
+
+API demo:
+
+- `GET /api/matches/boards/` — các preset `classic_9x9`, `rectangle_7x11`, `cross_9x9`, `obstacles_9x9`.
+- `POST /api/matches/demo/` (multipart) — `player1_file`, `player2_file`, tùy chọn `preset`, `max_plies`, `timeout`.
+- `GET /api/matches/demo/{match_id}/` — metadata, events, snapshots và kết quả replay.
+- `GET /api/matches/demo/{match_id}/state/` — snapshot cuối.
+
+Chạy giao diện local:
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+Sau đó mở **http://127.0.0.1:8000/battlecode/**. Chọn hai file trong `bots/`, chọn preset, bấm **Bắt đầu trận**, rồi dùng Play/Pause, Step, Replay và chọn tốc độ để xem diễn biến. Màn hình này không yêu cầu đăng nhập.
+
+Bot mẫu nằm trong `bots/student1_bot.py` và `bots/student2_bot.py`. Mỗi lượt bot nhận một JSON, rồi chỉ in một JSON `{ "move": {"piece_id", "from", "to"}, "userdata": ... }`. Tọa độ dùng `[row, col]` từ 1. Không ghi log ra stdout.
+
+```bash
+python bots/student1_bot.py < bots/sample_input.json
+python bots/student2_bot.py < bots/sample_input.json
+```
+
 Game cờ chiến thuật dựa trên luật Oẳn Tù Tì — 4 chế độ: chơi local, online 8 người, nộp AI Python và bảng xếp hạng ELO.
 
 ---

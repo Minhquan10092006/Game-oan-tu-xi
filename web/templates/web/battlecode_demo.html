@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Battlecode Oẳn Tù Tì</title>
+  <style>
+    :root{--bg:#09111f;--panel:#101d31;--line:#29415e;--text:#ecf4ff;--muted:#9ab0c9;--p1:#f05b61;--p2:#5fa8ff;--accent:#77d8a5}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif}.wrap{max-width:1200px;margin:auto;padding:28px 18px}h1{margin:0 0 6px}h2{font-size:1rem;margin:0 0 14px}.sub{color:var(--muted);margin:0 0 24px}.layout{display:grid;grid-template-columns:300px 1fr;gap:20px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}label{display:block;margin:14px 0 6px;color:var(--muted);font-size:.86rem}input,select,button{font:inherit}input,select{width:100%;background:#0a1525;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px}button{border:0;border-radius:8px;padding:10px 14px;background:var(--accent);color:#092016;font-weight:700;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#203754;color:var(--text)}.status{margin-top:14px;min-height:42px;color:var(--muted);white-space:pre-wrap}.arena-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:15px}.turn{font-weight:700}.p1{color:var(--p1)}.p2{color:var(--p2)}.board-wrap{overflow:auto}.board{display:grid;gap:2px;max-width:630px;aspect-ratio:1;border:2px solid var(--line);background:var(--line)}.cell{min-width:38px;min-height:38px;background:#14243a;display:flex;align-items:center;justify-content:center;position:relative;font-weight:bold}.cell:nth-child(odd){background:#122138}.cell.blocked{background:repeating-linear-gradient(45deg,#334356,#334356 5px,#1c2939 5px,#1c2939 10px)}.cell.goal-p1{box-shadow:inset 0 0 0 3px var(--p1)}.cell.goal-p2{box-shadow:inset 0 0 0 3px var(--p2)}.cell.last{background:#365678!important}.piece{border-radius:50%;width:78%;aspect-ratio:1;display:grid;place-items:center;border:2px solid currentColor;font-size:clamp(12px,2vw,21px)}.piece.p1{color:var(--p1);background:#371d2a}.piece.p2{color:var(--p2);background:#162c4b}.controls{display:flex;flex-wrap:wrap;gap:8px;margin:17px 0}.progress{color:var(--muted);font-size:.86rem}.history{max-height:220px;overflow:auto;border-top:1px solid var(--line);padding-top:10px}.event{padding:7px 3px;border-bottom:1px solid #20344d;font-size:.88rem}.result{font-weight:700;color:var(--accent)}@media(max-width:760px){.layout{grid-template-columns:1fr}.board{min-width:400px}.wrap{padding:18px 12px}}
+  </style>
+</head>
+<body><main class="wrap">
+  <h1>Battlecode Oẳn Tù Tì</h1><p class="sub">Tải hai bot Python/C++, server chạy toàn bộ trận và trình phát dưới đây chỉ phát lại lịch sử đã được engine xác nhận.</p>
+  <div class="layout">
+    <section class="panel"><h2>Tạo trận đấu</h2>
+      <form id="upload-form"><label>Player 1 (.py hoặc .cpp)</label><input required name="player1_file" type="file" accept=".py,.cpp">
+        <label>Player 2 (.py hoặc .cpp)</label><input required name="player2_file" type="file" accept=".py,.cpp">
+        <label>Preset bàn cờ</label><select name="preset" id="preset"></select>
+        <label>Số nước tối đa (1–300)</label><input name="max_plies" type="number" min="1" max="300" value="100">
+        <label>Timeout mỗi nước (giây)</label><input name="timeout" type="number" min="0.1" max="10" step="0.1" value="2">
+        <p><button id="start" type="submit">Bắt đầu trận</button></p></form>
+      <div class="status" id="status">Đang tải preset…</div>
+    </section>
+    <section class="panel"><div class="arena-top"><div id="turn" class="turn">Chưa có trận đấu</div><div id="result"></div></div>
+      <div class="board-wrap"><div id="board" class="board" aria-label="Bàn cờ"></div></div>
+      <div class="controls"><button id="play" disabled>▶ Play</button><button id="step" class="secondary" disabled>Step</button><button id="restart" class="secondary" disabled>↺ Replay</button><label style="margin:0 0 0 auto">Tốc độ <select id="speed" style="width:auto"><option value="2000">0.5×</option><option value="1000" selected>1×</option><option value="500">2×</option><option value="250">4×</option></select></label></div>
+      <div class="progress" id="progress"></div><div class="history" id="history"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id); let match=null, frame=0, timer=null;
+const labels={rock:'B',paper:'Ba',scissors:'K'};
+function message(text, error=false){$('status').textContent=text;$('status').style.color=error?'#ff8990':'var(--muted)'}
+async function loadBoards(){try{const data=await fetch('/api/matches/boards/').then(r=>r.json());for(const [id,b] of Object.entries(data)){const o=new Option(`${id} (${b.rows}×${b.cols})`,id);$('preset').add(o)}message('Chọn hai file bot rồi bấm Bắt đầu trận.')}catch(e){message('Không tải được preset: '+e,true)}}
+function snapshotFor(index){if(index===0)return match.events[0].state_after;const e=match.events[index];return e.type==='move'?e.state_after:(e.final_state||match.events[0].state_after)}
+function draw(){if(!match)return;const state=snapshotFor(frame), b=state.board, cells=new Map(state.pieces.map(p=>[p.at.join(','),p]));$('board').style.gridTemplateColumns=`repeat(${b.cols},1fr)`;$('board').innerHTML='';for(let r=1;r<=b.rows;r++)for(let c=1;c<=b.cols;c++){const el=document.createElement('div'), key=`${r},${c}`, p=cells.get(key);el.className='cell';if((b.blocked_cells||[]).some(x=>x[0]===r&&x[1]===c))el.classList.add('blocked');if(b.goals.P1[0]===r&&b.goals.P1[1]===c)el.classList.add('goal-p1');if(b.goals.P2[0]===r&&b.goals.P2[1]===c)el.classList.add('goal-p2');const current=match.events[frame];if(current?.type==='move'&&current.to[0]===r&&current.to[1]===c)el.classList.add('last');if(p){el.innerHTML=`<span class="piece ${p.owner.toLowerCase()}">${labels[p.type]}</span>`;el.title=`${p.owner}: ${p.type} (${p.id})`} $('board').append(el)}
+ const done=state.status==='finished';$('turn').innerHTML=done?'Trận đã kết thúc':`Lượt: <span class="${state.current_player.toLowerCase()}">${state.current_player}</span>`;$('result').textContent=done?`${state.result==='draw'?'Hòa':state.winner+' thắng'} — ${state.reason.message}`:'';$('result').className='result';$('progress').textContent=`Bước ${frame}/${match.events.length-1} · ${state.ply} ply`;
+ const moves=match.events.filter(x=>x.type==='move').slice(0,Math.max(0,frame)).map(e=>`<div class="event"><b class="${e.player.toLowerCase()}">${e.player}</b> ${labels[e.piece_type]} ${e.from.join(',')} → ${e.to.join(',')}${e.captured_piece?' · bắt '+e.captured_piece.type:''}</div>`);$('history').innerHTML=moves.join('')||'<div class="event">Bàn cờ ban đầu</div>';
+}
+function stop(){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}function advance(){if(frame>=match.events.length-1){stop();return}frame++;draw();if(frame>=match.events.length-1)stop()}function controls(enabled){for(const id of ['play','step','restart'])$(id).disabled=!enabled}
+$('upload-form').addEventListener('submit',async e=>{e.preventDefault();stop();$('start').disabled=true;message('Đang chạy bot và tạo replay…');try{const response=await fetch('/api/matches/demo/',{method:'POST',body:new FormData(e.target)}), data=await response.json();if(!response.ok)throw Error(data.error||'Không tạo được trận');match=await fetch(`/api/matches/demo/${data.match_id}/`).then(r=>r.json());frame=0;draw();controls(true);message(`Đã tạo trận ${data.match_id}. Nhấn Play để xem lại.`)}catch(err){message(err.message,true)}finally{$('start').disabled=false}});
+$('play').onclick=()=>{if(!match)return;if(timer){stop();return}if(frame>=match.events.length-1)frame=0;draw();$('play').textContent='⏸ Pause';timer=setInterval(advance,Number($('speed').value))};$('step').onclick=()=>{stop();advance()};$('restart').onclick=()=>{stop();frame=0;draw()};$('speed').onchange=()=>{if(timer){stop();$('play').click()}};loadBoards();
+</script></body></html>
