@@ -230,9 +230,10 @@ def ai_move_view(request, pk: int):
 def _resolve_submission(match: Match, player: int,
                          submission_id=None) -> Submission | None:
     """Tìm submission AI cho player."""
+    # Dùng review_status='approved' thay status='completed' (đã bỏ migration 0003)
     if submission_id:
         try:
-            return Submission.objects.get(pk=submission_id, status='completed')
+            return Submission.objects.get(pk=submission_id, review_status='approved')
         except Submission.DoesNotExist:
             return None
 
@@ -278,11 +279,12 @@ def ai_battle_start_view(request):
         )
 
     try:
-        ai1 = Submission.objects.get(pk=ai1_id, status='completed')
-        ai2 = Submission.objects.get(pk=ai2_id, status='completed')
+        # Dùng review_status='approved' thay vì status='completed' (đã bỏ)
+        ai1 = Submission.objects.get(pk=ai1_id, review_status='approved')
+        ai2 = Submission.objects.get(pk=ai2_id, review_status='approved')
     except Submission.DoesNotExist:
         return Response(
-            {'error': True, 'message': 'Một hoặc cả hai bài nộp không tồn tại hoặc chưa chấm xong.'},
+            {'error': True, 'message': 'Một hoặc cả hai bài nộp không tồn tại hoặc chưa được admin duyệt.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -315,8 +317,19 @@ def ai_battle_start_view(request):
         'win_reason': match.win_reason,
         'total_moves': len(moves),
         'moves': moves,
-        'ai1': {'id': ai1.pk, 'name': ai1.ai_name, 'elo': ai1.elo},
-        'ai2': {'id': ai2.pk, 'name': ai2.ai_name, 'elo': ai2.elo},
+        # Thông tin AI kèm contributor (người đóng góp code)
+        'ai1': {
+            'id': ai1.pk,
+            'name': ai1.ai_name,
+            'version': ai1.version,
+            'contributor': ai1.submitter.username,
+        },
+        'ai2': {
+            'id': ai2.pk,
+            'name': ai2.ai_name,
+            'version': ai2.version,
+            'contributor': ai2.submitter.username,
+        },
     }, status=status.HTTP_201_CREATED)
 
 

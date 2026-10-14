@@ -94,7 +94,7 @@
     <a class="sb-item" href="/battlecode/">🐍 Battlecode</a>
     <a class="sb-item" href="/history/">📋 Lịch sử</a>
     <a class="sb-item active" href="/season-admin/">🏆 Mùa giải</a>
-    <a class="sb-item" href="#sub-section">🤖 Code AI nộp</a>
+    <a class="sb-item" href="/admin/code-review/">🤖 Duyệt Code AI</a>
   </nav>
   <div class="sb-bottom">
     <div class="sb-user">
@@ -201,12 +201,17 @@
     </div>
 
     <!-- ── CODE AI CỦA USER ────────────────────────────────── -->
-    <h2 id="sub-section" style="font-size:1rem;font-weight:700;margin:28px 0 14px">🤖 Code AI đã nộp</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px">
+      <h2 id="sub-section" style="font-size:1rem;font-weight:700">🤖 Code AI đã nộp</h2>
+      <a href="/admin/code-review/" style="padding:7px 16px;border-radius:7px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font:.8rem 'Inter',sans-serif;text-decoration:none;font-weight:600">
+        🔍 Trang duyệt code →
+      </a>
+    </div>
     <div class="tw">
       <table>
         <thead><tr>
           <th>Thời gian</th><th>User</th><th>Tên AI</th><th>Phiên bản</th>
-          <th>Trạng thái</th><th>Điểm</th><th>Code</th>
+          <th>Trạng thái duyệt</th><th>Duyệt bởi</th><th>Code</th>
         </tr></thead>
         <tbody>
           {% for s in all_submissions %}
@@ -216,13 +221,18 @@
             <td>{{ s.ai_name }}</td>
             <td style="color:var(--muted)">v{{ s.version }}</td>
             <td>
-              {% if s.status == 'completed' %}<span class="badge" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)">✓ Hoàn thành</span>
-              {% elif s.status == 'running' %}<span class="badge" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)">⏳ Đang chạy</span>
-              {% elif s.status == 'pending' %}<span class="badge" style="background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.15)">Chờ</span>
-              {% elif s.status == 'failed' or s.status == 'error' %}<span class="badge b-error">✗ Lỗi</span>
-              {% else %}<span class="badge" style="background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.15)">{{ s.status }}</span>{% endif %}
+              {# review_status: pending / approved / rejected #}
+              {% if s.review_status == 'approved' %}
+                <span class="badge" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)">✅ Đã duyệt</span>
+              {% elif s.review_status == 'rejected' %}
+                <span class="badge b-error" title="{{ s.reject_reason }}">❌ Từ chối</span>
+              {% else %}
+                <span class="badge" style="background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.15)">⏳ Chờ duyệt</span>
+              {% endif %}
             </td>
-            <td>{% if s.score is not None %}<span style="color:var(--accent);font-weight:600">{{ s.score|floatformat:1 }}</span>{% else %}<span style="color:var(--muted)">—</span>{% endif %}</td>
+            <td style="font-size:.76rem;color:var(--muted)">
+              {% if s.approved_by %}{{ s.approved_by.username }}{% else %}—{% endif %}
+            </td>
             <td>
               <button onclick="showCode('{{ s.pk }}','{{ s.submitter.username }}','{{ s.ai_name }}')"
                       style="padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:rgba(99,102,241,.08);color:#a5b4fc;font:.74rem 'Inter',sans-serif;cursor:pointer">

@@ -25,7 +25,7 @@ from matches.engine import GameState, build_ai_input, parse_ai_output, validate_
 from matches.models import Match, MatchMove
 from submissions.models import Submission
 from judge.client import get_client, Judge0Error, Judge0Unavailable
-from web.models import calculate_elo
+# calculate_elo đã bị bỏ (không còn ELO trên Submission)
 
 logger = logging.getLogger(__name__)
 
@@ -145,22 +145,12 @@ def run_ai_battle(match: Match) -> Match:
 
 
 def _update_ai_elo(match: Match):
-    """Cập nhật ELO cho 2 AI submission sau trận."""
+    """
+    ELO/wins/losses đã bị bỏ khỏi Submission model (migration 0003).
+    Chỉ đánh dấu used_in_battle cho cả hai AI submission.
+    """
     ai1: Optional[Submission] = match.ai1
     ai2: Optional[Submission] = match.ai2
-    if not ai1 or not ai2:
-        return
-
-    winner = match.winner
-    if winner == 1:
-        new_w, new_l = calculate_elo(ai1.elo, ai2.elo)
-        ai1.elo, ai1.ai_wins   = new_w, ai1.ai_wins + 1
-        ai2.elo, ai2.ai_losses = new_l, ai2.ai_losses + 1
-    elif winner == 2:
-        new_w, new_l = calculate_elo(ai2.elo, ai1.elo)
-        ai2.elo, ai2.ai_wins   = new_w, ai2.ai_wins + 1
-        ai1.elo, ai1.ai_losses = new_l, ai1.ai_losses + 1
-    # Hoà: không đổi ELO
-
-    ai1.save(update_fields=['elo', 'ai_wins', 'ai_losses'])
-    ai2.save(update_fields=['elo', 'ai_wins', 'ai_losses'])
+    for sub in (ai1, ai2):
+        if sub and not sub.used_in_battle:
+            Submission.objects.filter(pk=sub.pk).update(used_in_battle=True)

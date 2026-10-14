@@ -13,5 +13,9 @@ urlpatterns = [
     path('season-admin/<int:pk>/delete/', views.season_delete, name='season-delete'),
     path('ranking/', views.ranking_view, name='ranking'),
     path('ai/', views.ai_submit, name='ai-submit'),
+    path('ai-battle/', views.ai_battle, name='ai-battle'),
+    # Admin: xem source code một submission (JSON)
     path('admin/submission/<int:pk>/code/', views.admin_submission_code, name='admin-sub-code'),
+    # Admin: trang duyệt code cộng đồng (HTML)
+    path('admin/code-review/', views.admin_code_review, name='admin-code-review'),
 ]

@@ -1,12 +1,11 @@
 """
 submissions/views.py
 --------------------
-REST API endpoints cho bài nộp.
+REST API cho bài nộp code AI.
 
-POST /api/submissions/             — tạo bài nộp mới, bắt đầu chấm
-GET  /api/submissions/             — liệt kê bài nộp của bản thân
-GET  /api/submissions/{id}/        — chi tiết bài nộp
-GET  /api/submissions/{id}/result/ — kết quả chấm chi tiết
+Đã bỏ: logic gọi Judge0, chấm điểm, JudgeResult.
+Giữ lại: nộp code, xem danh sách, xem chi tiết.
+Thêm mới (admin): approve, reject, delete, list-all.
 """
 import logging
 from django.utils import timezone
@@ -14,67 +13,56 @@ from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from .models import Submission, JudgeResult
+from .models import Submission
 from .serializers import (
     SubmissionCreateSerializer,
     SubmissionDetailSerializer,
     SubmissionListSerializer,
+    ApprovedBotSerializer,
 )
-from judge.grader import Grader
-from judge.client import Judge0Error, Judge0Unavailable
 
 logger = logging.getLogger(__name__)
 
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    """Chỉ owner mới được sửa. Không cho phép đọc bài của người khác."""
+# ── Helpers ───────────────────────────────────────────────────────────
 
-    def has_object_permission(self, request, view, obj):
-        return obj.submitter == request.user
+class IsAdminUser(permissions.BasePermission):
+    """Chỉ cho phép staff / superuser."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user and request.user.is_authenticated
+            and (request.user.is_staff or request.user.is_superuser)
+        )
 
+
+# ── User API ──────────────────────────────────────────────────────────
 
 class SubmissionListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/submissions/  → danh sách bài nộp của user hiện tại
-    POST /api/submissions/  → tạo bài nộp mới
+    POST /api/submissions/  → tạo bài nộp mới (chỉ lưu, không chấm)
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return SubmissionCreateSerializer
-        return SubmissionListSerializer
+        return SubmissionCreateSerializer if self.request.method == 'POST' else SubmissionListSerializer
 
     def get_queryset(self):
-        return (
-            Submission.objects
-            .filter(submitter=self.request.user)
-            .order_by('-submitted_at')
-        )
-
-    def perform_create(self, serializer):
-        submission = serializer.save()
-        # Bắt đầu chấm bài bất đồng bộ (chạy trong cùng thread vì chưa có Celery)
-        # Trong production nên dùng Celery task
-        _grade_submission(submission)
+        return Submission.objects.filter(submitter=self.request.user).order_by('-submitted_at')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        # Trả chi tiết sau khi tạo
-        instance = serializer.instance
-        detail = SubmissionDetailSerializer(instance, context={'request': request})
+        submission = serializer.save()
+        detail = SubmissionDetailSerializer(submission, context={'request': request})
+        logger.info('New submission: user=%s ai=%s v%s', request.user, submission.ai_name, submission.version)
         return Response(detail.data, status=status.HTTP_201_CREATED)
 
 
 class SubmissionDetailView(generics.RetrieveAPIView):
-    """
-    GET /api/submissions/{id}/ → chi tiết bài nộp
-    Chỉ owner được xem.
-    """
+    """GET /api/submissions/{id}/ → chi tiết bài nộp (chỉ owner)."""
     serializer_class = SubmissionDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Submission.objects.filter(submitter=self.request.user)
@@ -82,84 +70,107 @@ class SubmissionDetailView(generics.RetrieveAPIView):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def submission_result_view(request, pk: int):
+def approved_bots_list(request):
     """
-    GET /api/submissions/{id}/result/ → kết quả chấm chi tiết
-    Chỉ owner được xem.
+    GET /api/submissions/approved/
+    Trả danh sách tất cả code đã được admin duyệt.
+    Dùng để populate dropdown trong battlecode.
+    """
+    bots = Submission.objects.filter(review_status='approved').select_related('submitter')
+    serializer = ApprovedBotSerializer(bots, many=True)
+    return Response(serializer.data)
+
+
+# ── Admin API ─────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_submission_list(request):
+    """
+    GET /api/submissions/admin/list/
+    Danh sách tất cả bài nộp (admin only).
+    Hỗ trợ filter: ?status=pending|approved|rejected
+    """
+    qs = Submission.objects.select_related('submitter', 'approved_by').order_by('-submitted_at')
+    review_status = request.GET.get('status')
+    if review_status in ('pending', 'approved', 'rejected'):
+        qs = qs.filter(review_status=review_status)
+    serializer = SubmissionDetailSerializer(qs, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def admin_approve_submission(request, pk):
+    """
+    POST /api/submissions/admin/{id}/approve/
+    Admin duyệt một bài nộp — chuyển review_status → 'approved'.
     """
     try:
-        sub = Submission.objects.get(pk=pk, submitter=request.user)
+        sub = Submission.objects.get(pk=pk)
     except Submission.DoesNotExist:
-        return Response(
-            {'error': True, 'message': 'Bài nộp không tồn tại hoặc không có quyền truy cập.'},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({'error': 'Không tìm thấy bài nộp.'}, status=status.HTTP_404_NOT_FOUND)
 
-    detailed = JudgeResult.objects.filter(submission=sub)
-    result_data = {
-        'submission_id': sub.pk,
-        'status': sub.status,
-        'score': sub.score,
-        'error_message': sub.error_message,
-        'judged_at': sub.judged_at,
-        'groups': [
-            {
-                'group': r.group,
-                'passed': r.passed,
-                'score': r.score,
-                'max_score': r.max_score,
-                'message': r.message,
-                'details': r.details,
-            }
-            for r in detailed
-        ],
-        'summary': sub.judge_result,
-    }
-    return Response(result_data)
+    sub.review_status = 'approved'
+    sub.approved_by = request.user
+    sub.approved_at = timezone.now()
+    sub.reject_reason = ''          # xoá lý do từ chối cũ nếu có
+    sub.save(update_fields=['review_status', 'approved_by', 'approved_at', 'reject_reason'])
+
+    logger.info('Admin %s approved submission #%s (%s by %s)',
+                request.user, sub.pk, sub.ai_name, sub.submitter)
+    return Response({
+        'ok': True,
+        'id': sub.pk,
+        'review_status': sub.review_status,
+        'approved_by': request.user.username,
+        'approved_at': sub.approved_at.isoformat(),
+    })
 
 
-# ------------------------------------------------------------------ #
-# Internal: chấm bài                                                   #
-# ------------------------------------------------------------------ #
-
-def _grade_submission(submission: Submission):
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def admin_reject_submission(request, pk):
     """
-    Gọi Grader và lưu kết quả vào DB.
-    Chạy synchronous — trong production thay bằng Celery task.
+    POST /api/submissions/admin/{id}/reject/
+    Body (JSON, optional): { "reason": "..." }
+    Admin từ chối bài nộp — chuyển review_status → 'rejected'.
     """
-    submission.status = 'running'
-    submission.save(update_fields=['status'])
-
     try:
-        grader = Grader()
-        report = grader.grade(submission.pk, submission.source_code)
-    except Exception as e:
-        logger.exception('Grading failed for submission %s', submission.pk)
-        submission.status = 'error'
-        submission.error_message = f'Lỗi hệ thống chấm bài: {type(e).__name__}'
-        submission.judged_at = timezone.now()
-        submission.save(update_fields=['status', 'error_message', 'judged_at'])
-        return
+        sub = Submission.objects.get(pk=pk)
+    except Submission.DoesNotExist:
+        return Response({'error': 'Không tìm thấy bài nộp.'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Lưu kết quả từng nhóm
-    JudgeResult.objects.filter(submission=submission).delete()
-    for g in report.groups:
-        JudgeResult.objects.create(
-            submission=submission,
-            group=g.group,
-            passed=g.passed,
-            score=g.score,
-            max_score=g.max_score,
-            message=g.message,
-            details=g.details,
-        )
+    reason = (request.data.get('reason') or '').strip()
+    sub.review_status = 'rejected'
+    sub.reject_reason = reason
+    sub.approved_by = None
+    sub.approved_at = None
+    sub.save(update_fields=['review_status', 'reject_reason', 'approved_by', 'approved_at'])
 
-    # Cập nhật submission
-    submission.status = 'completed' if not report.error else 'error'
-    submission.score = report.total_score
-    submission.judge_result = report.to_dict()
-    submission.error_message = report.error
-    submission.judged_at = timezone.now()
-    submission.save(update_fields=[
-        'status', 'score', 'judge_result', 'error_message', 'judged_at',
-    ])
+    logger.info('Admin %s rejected submission #%s (%s by %s). Reason: %s',
+                request.user, sub.pk, sub.ai_name, sub.submitter, reason or '(none)')
+    return Response({
+        'ok': True,
+        'id': sub.pk,
+        'review_status': sub.review_status,
+        'reject_reason': sub.reject_reason,
+    })
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def admin_delete_submission(request, pk):
+    """
+    DELETE /api/submissions/admin/{id}/delete/
+    Admin xoá hẳn bài nộp vi phạm.
+    """
+    try:
+        sub = Submission.objects.get(pk=pk)
+    except Submission.DoesNotExist:
+        return Response({'error': 'Không tìm thấy bài nộp.'}, status=status.HTTP_404_NOT_FOUND)
+
+    sub_info = f'#{sub.pk} {sub.ai_name} by {sub.submitter}'
+    sub.delete()
+    logger.info('Admin %s deleted submission %s', request.user, sub_info)
+    return Response({'ok': True, 'deleted': sub_info})

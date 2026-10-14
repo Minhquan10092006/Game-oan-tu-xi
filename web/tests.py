@@ -191,3 +191,102 @@ class MultiplayerWebSocketTests(TestCase):
         self.assertTrue(leave_res.get("ok"))
 
         await c.disconnect()
+
+
+
+class EloModelTests(TestCase):
+    """Test logic ELO trong web/models.py."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.user1 = User.objects.create_user(username='elo_p1', password='pass')
+        self.user2 = User.objects.create_user(username='elo_p2', password='pass')
+
+    def test_calculate_elo_equal_players(self):
+        """Hai người cùng ELO 1200: thắng được +16."""
+        from web.models import calculate_elo
+        new_w, new_l = calculate_elo(1200, 1200)
+        self.assertEqual(new_w, 1216)
+        self.assertEqual(new_l, 1184)
+
+    def test_calculate_elo_higher_wins_less(self):
+        """Người ELO cao thắng người ELO thấp được ít hơn."""
+        from web.models import calculate_elo
+        new_w, new_l = calculate_elo(1600, 1200)
+        # Delta phải nhỏ hơn 16 (ưu thế lớn)
+        self.assertLess(new_w - 1600, 16)
+        self.assertGreater(new_w, 1600)
+
+    def test_calculate_elo_lower_wins_more(self):
+        """Người ELO thấp thắng người ELO cao được nhiều hơn."""
+        from web.models import calculate_elo
+        new_w, new_l = calculate_elo(1200, 1600)
+        # Delta phải lớn hơn 16 (upset)
+        self.assertGreater(new_w - 1200, 16)
+
+    def test_update_elo_after_match_updates_profiles(self):
+        """update_elo_after_match tăng wins/elo winner, tăng losses/giảm elo loser."""
+        from web.models import update_elo_after_match, UserProfile
+        w_profile, l_profile = update_elo_after_match(self.user1, self.user2)
+
+        self.assertGreater(w_profile.elo, 1200)
+        self.assertLess(l_profile.elo, 1200)
+        self.assertEqual(w_profile.wins, 1)
+        self.assertEqual(l_profile.losses, 1)
+
+    def test_userprofile_auto_created(self):
+        """UserProfile được tự động tạo khi tạo user mới."""
+        from web.models import UserProfile
+        self.assertTrue(UserProfile.objects.filter(user=self.user1).exists())
+
+    def test_win_rate_zero_games(self):
+        """win_rate = 0 khi chưa có trận nào."""
+        from web.models import UserProfile
+        profile, _ = UserProfile.objects.get_or_create(user=self.user1)
+        self.assertEqual(profile.win_rate, 0.0)
+        self.assertEqual(profile.total_games, 0)
+
+    def test_ranking_api_returns_sorted_elo(self):
+        """GET /api/ranking/ trả danh sách sắp xếp ELO giảm dần."""
+        from web.models import UserProfile
+        # user1 ELO 1500, user2 ELO 1100
+        p1, _ = UserProfile.objects.get_or_create(user=self.user1)
+        p1.elo = 1500
+        p1.save()
+        p2, _ = UserProfile.objects.get_or_create(user=self.user2)
+        p2.elo = 1100
+        p2.save()
+
+        client = Client()
+        resp = client.get('/api/ranking/')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        # Tìm user1 và user2 trong kết quả
+        names = [d['username'] for d in data]
+        self.assertIn('elo_p1', names)
+        self.assertIn('elo_p2', names)
+        # user1 phải đứng trước user2 (ELO cao hơn)
+        idx1 = names.index('elo_p1')
+        idx2 = names.index('elo_p2')
+        self.assertLess(idx1, idx2)
+
+    def test_room_manager_stores_user_id(self):
+        """join_room với user_id lưu đúng vào room.user_ids."""
+        from web.room_manager import RoomManager
+        rm = RoomManager()
+        result = rm.join_room('TEST1', 'ch_name_1', 'Alice', user_id=self.user1.pk)
+        self.assertNotIn('error', result)
+        room = result['room']
+        self.assertEqual(room.user_ids[0], self.user1.pk)
+        self.assertIsNone(room.user_ids[1])
+
+    def test_room_manager_leave_clears_user_id(self):
+        """leave_room xóa user_id khỏi slot."""
+        from web.room_manager import RoomManager
+        rm = RoomManager()
+        rm.join_room('TEST2', 'ch_x', 'Alice', user_id=self.user1.pk)
+        rm.leave_room('TEST2', 'ch_x')
+        room = rm.get_room('TEST2')
+        if room:  # phòng không mặc định có thể bị xóa khi trống
+            self.assertIsNone(room.user_ids[0])

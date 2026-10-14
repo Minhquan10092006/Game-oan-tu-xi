@@ -72,12 +72,14 @@ class Room:
         self.state = GameState()
         self.players: list[Optional[str]] = [None, None]  # [channel_name P1, channel_name P2]
         self.names: list[str] = ['Đang chờ...', 'Đang chờ...']
+        # Django user IDs (int | None) — dùng để cập nhật ELO sau ván
+        self.user_ids: list[Optional[int]] = [None, None]
         self.spectators: list[dict] = []  # list of {'channel_name': str, 'name': str}
         self.status: str = 'waiting'  # 'waiting' | 'playing' | 'finished'
         self.created_at: float = time.time()
 
     def reset(self):
-        """Khởi động lại bàn cờ mới trong phòng."""
+        """Khởi động lại bàn cờ mới trong phòng, giữ nguyên người chơi."""
         self.state = GameState()
         self.status = 'playing' if all(p is not None for p in self.players) else 'waiting'
 
@@ -112,7 +114,8 @@ class RoomManager:
             return None
         return self.rooms.get(code.upper().strip())
 
-    def join_room(self, code: str, channel_name: str, player_name: str) -> dict:
+    def join_room(self, code: str, channel_name: str, player_name: str,
+                  user_id: Optional[int] = None) -> dict:
         code = code.upper().strip()
         room = self.get_room(code)
         if not room:
@@ -121,6 +124,9 @@ class RoomManager:
         # Reconnect nếu socket này đã ở trong phòng
         if channel_name in room.players:
             slot = room.players.index(channel_name)
+            # Cập nhật user_id nếu reconnect (trường hợp auth sau)
+            if user_id is not None:
+                room.user_ids[slot] = user_id
             return {'room': room, 'player_number': slot + 1}
 
         # Tìm slot trống
@@ -131,6 +137,7 @@ class RoomManager:
 
         room.players[slot] = channel_name
         room.names[slot] = player_name or f'Player {slot + 1}'
+        room.user_ids[slot] = user_id  # lưu Django user id (None nếu guest)
         if all(p is not None for p in room.players):
             room.status = 'playing'
         return {'room': room, 'player_number': slot + 1}
@@ -173,6 +180,7 @@ class RoomManager:
             idx = room.players.index(channel_name)
             room.players[idx] = None
             room.names[idx] = 'Đã rời'
+            room.user_ids[idx] = None   # xóa user_id khi rời
             room.status = 'waiting'
 
         room.spectators = [s for s in room.spectators if s['channel_name'] != channel_name]
@@ -185,6 +193,7 @@ class RoomManager:
             else:
                 room.state = GameState()
                 room.names = ['Đang chờ...', 'Đang chờ...']
+                room.user_ids = [None, None]
                 room.status = 'waiting'
 
         return room

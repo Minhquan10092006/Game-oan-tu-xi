@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.utils import timezone
 from django.http import JsonResponse
 from .models import UserProfile, Season, MatchHistory
@@ -189,12 +190,15 @@ def season_delete(request, pk):
 # ── admin: xem source code submission ────────────────────────────────
 
 def admin_submission_code(request, pk):
-    """Trả source_code của submission cho admin — JSON."""
+    """
+    Trả source_code của một submission cho admin — JSON.
+    Đã cập nhật: trả review_status thay vì status/score (đã bỏ).
+    """
     if not _is_admin(request.user):
         return JsonResponse({'error': 'Không có quyền'}, status=403)
     from submissions.models import Submission
     try:
-        sub = Submission.objects.get(pk=pk)
+        sub = Submission.objects.select_related('submitter', 'approved_by').get(pk=pk)
     except Submission.DoesNotExist:
         return JsonResponse({'error': 'Không tìm thấy'}, status=404)
     return JsonResponse({
@@ -203,16 +207,59 @@ def admin_submission_code(request, pk):
         'ai_name': sub.ai_name,
         'version': sub.version,
         'source_code': sub.source_code,
-        'status': sub.status,
-        'score': sub.score,
+        'review_status': sub.review_status,
+        'reject_reason': sub.reject_reason,
+        'approved_by': sub.approved_by.username if sub.approved_by else None,
+        'approved_at': sub.approved_at.isoformat() if sub.approved_at else None,
         'submitted_at': sub.submitted_at.isoformat(),
+        'used_in_battle': sub.used_in_battle,
+    })
+
+
+# ── admin: trang duyệt code cộng đồng ────────────────────────────────
+
+@login_required(login_url='/')
+def admin_code_review(request):
+    """
+    Trang admin duyệt code AI do user nộp.
+    Hiển thị danh sách, cho phép xem/approve/reject/delete ngay trên trang.
+    """
+    if not _is_admin(request.user):
+        return redirect('/')
+
+    from submissions.models import Submission
+
+    # Filter theo status nếu có
+    status_filter = request.GET.get('status', '')
+    qs = Submission.objects.select_related('submitter', 'approved_by').order_by('-submitted_at')
+    if status_filter in ('pending', 'approved', 'rejected'):
+        qs = qs.filter(review_status=status_filter)
+
+    # Thống kê nhanh
+    counts = Submission.objects.aggregate(
+        total=Count('id'),
+        pending=Count('id', filter=Q(review_status='pending')),
+        approved=Count('id', filter=Q(review_status='approved')),
+        rejected=Count('id', filter=Q(review_status='rejected')),
+    )
+
+    return render(request, 'web/admin_code_review.html', {
+        'user': request.user,
+        'is_admin': True,
+        'submissions': qs,
+        'status_filter': status_filter,
+        'counts': counts,
     })
 
 
 # ── legacy ────────────────────────────────────────────────────────────
 
 def ranking_view(request):
-    return render(request, 'web/ranking.html')
+    """Trang bảng xếp hạng ELO — truyền user để template highlight hàng của mình."""
+    return render(request, 'web/ranking.html', {
+        'user': request.user,
+        'is_admin': _is_admin(request.user),
+    })
 
 
 @login_required(login_url='/')
@@ -223,6 +270,34 @@ def ai_submit(request):
     return render(request, 'web/ai_judge.html', {
         'user': request.user,
         'my_subs': my_subs,
+        'is_guest': request.session.get('is_guest', False),
+        'is_admin': _is_admin(request.user),
+    })
+
+
+@login_required(login_url='/')
+def ai_battle(request):
+    """
+    Trang battle AI vs AI.
+    Truyền vào template:
+      - my_subs: code đã duyệt của chính user (để chọn ở optgroup đầu)
+      - community_bots: tất cả code đã duyệt (kể cả của user, để optgroup "cộng đồng")
+    """
+    from submissions.models import Submission
+    # Code của chính user đã được duyệt
+    my_subs = Submission.objects.filter(
+        submitter=request.user,
+        review_status='approved',
+    ).order_by('ai_name', '-version')
+    # Toàn bộ code đã duyệt (mọi user) — hiển thị trong optgroup cộng đồng
+    community_bots = Submission.objects.filter(
+        review_status='approved',
+    ).select_related('submitter').order_by('submitter__username', 'ai_name')
+
+    return render(request, 'web/ai_battle.html', {
+        'user': request.user,
+        'my_subs': my_subs,
+        'community_bots': community_bots,
         'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
     })
