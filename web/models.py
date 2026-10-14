@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import json
 
 User = get_user_model()
 
@@ -77,3 +78,57 @@ def update_elo_after_match(winner_user, loser_user):
     l_profile.save(update_fields=['elo', 'losses', 'updated_at'])
 
     return w_profile, l_profile
+
+
+class Season(models.Model):
+    name = models.CharField(max_length=120, verbose_name='Tên mùa giải')
+    description = models.TextField(blank=True, verbose_name='Mô tả')
+    start_date = models.DateField(verbose_name='Ngày bắt đầu')
+    end_date = models.DateField(null=True, blank=True, verbose_name='Ngày kết thúc')
+    is_active = models.BooleanField(default=True, verbose_name='Đang hoạt động')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='created_seasons')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Mùa giải'
+        verbose_name_plural = 'Mùa giải'
+
+    def __str__(self):
+        return f'{"🟢" if self.is_active else "🔴"} {self.name}'
+
+
+class MatchHistory(models.Model):
+    RESULT_CHOICES = [('p1_win','P1 thắng'),('p2_win','P2 thắng'),('draw','Hòa'),('error','Lỗi')]
+
+    match_id = models.CharField(max_length=64, unique=True)
+    player = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='match_histories')
+    season = models.ForeignKey(Season, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='matches')
+    board_preset = models.CharField(max_length=60, default='classic_9x9')
+    result = models.CharField(max_length=10, choices=RESULT_CHOICES)
+    winner = models.CharField(max_length=10, blank=True)
+    total_plies = models.IntegerField(default=0)
+    reason_code = models.CharField(max_length=60, blank=True)
+    reason_message = models.TextField(blank=True)
+    replay_data = models.TextField(blank=True)
+    player1_filename = models.CharField(max_length=255, blank=True)
+    player2_filename = models.CharField(max_length=255, blank=True)
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-played_at']
+        verbose_name = 'Lịch sử trận đấu'
+        verbose_name_plural = 'Lịch sử trận đấu'
+
+    def __str__(self):
+        who = self.player.username if self.player else 'Guest'
+        return f'{who} — {self.board_preset} — {self.result} ({self.played_at:%Y-%m-%d %H:%M})'
+
+    def get_replay(self):
+        try:
+            return json.loads(self.replay_data) if self.replay_data else None
+        except Exception:
+            return None
