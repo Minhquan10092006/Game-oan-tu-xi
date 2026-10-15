@@ -1,0 +1,18 @@
+# Django core
+Django==6.1.2
+
+# ASGI server (thay thế Node.js cho WebSocket)
+daphne==4.1.2
+channels==4.2.2
+
+# REST API
+djangorestframework==3.18.3
+
+# CORS headers
+django-cors-headers==4.6.0
+
+# HTTP requests tới Judge0
+requests==2.32.3
+
+# Môi trường biến
+python-dotenv==1.1.0

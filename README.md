@@ -405,3 +405,4 @@ python manage.py test matches judge submissions web --verbosity=2
 ```
 
 Kết quả mong đợi: **76 tests passed**.
+

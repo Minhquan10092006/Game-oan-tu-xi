@@ -1,0 +1,428 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oẳn Tù Tì 2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">
+    <style>
+        /* ── AUTH OVERLAY ─────────────────────────────────────── */
+        #auth-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(5,5,20,.92);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        #auth-overlay.hidden { display: none; }
+        .auth-box {
+            background: #0d0d22;
+            border: 1px solid rgba(99,102,241,.3);
+            border-radius: 20px;
+            padding: 36px 32px;
+            width: 100%; max-width: 440px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.6);
+        }
+        .auth-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem; font-weight: 900;
+            background: linear-gradient(135deg,#a78bfa,#60a5fa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; text-align: center; margin-bottom: 4px;
+        }
+        .auth-tagline { text-align:center; color:#475569; font-size:.8rem; margin-bottom:24px; }
+        .auth-tabs {
+            display: grid; grid-template-columns: 1fr 1fr;
+            background: rgba(255,255,255,.04); border-radius: 10px; padding: 4px;
+            margin-bottom: 22px;
+        }
+        .auth-tab {
+            padding: 9px; text-align: center; border-radius: 7px;
+            border: none; background: transparent; color: #475569;
+            font: 500 .84rem 'Inter',sans-serif; cursor: pointer; transition: all .2s;
+        }
+        .auth-tab.active { background: rgba(99,102,241,.25); color: #a5b4fc; font-weight: 600; }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .auth-lbl { display:block; font-size:.73rem; color:#64748b; text-transform:uppercase;
+                    letter-spacing:.04em; margin: 12px 0 4px; }
+        .auth-lbl:first-of-type { margin-top:0; }
+        .auth-input {
+            width: 100%; background: rgba(255,255,255,.04);
+            border: 1px solid rgba(99,102,241,.2); border-radius: 9px;
+            color: #e2e8f0; padding: 11px 13px; font: .9rem 'Inter',sans-serif;
+            transition: border-color .2s;
+        }
+        .auth-input:focus { outline: none; border-color: #6366f1; }
+        .auth-err { color:#f87171; font-size:.74rem; margin-top:3px; }
+        .auth-alert {
+            background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+            border-radius: 8px; color:#fca5a5; padding:9px 12px;
+            font-size:.82rem; margin-bottom:14px;
+        }
+        .auth-btn-primary {
+            margin-top: 18px; width: 100%; padding: 12px;
+            background: linear-gradient(135deg,#6366f1,#8b5cf6);
+            border: none; border-radius: 9px; color: #fff;
+            font: 600 .92rem 'Inter',sans-serif; cursor: pointer; transition: opacity .2s;
+        }
+        .auth-btn-primary:hover { opacity:.9; }
+        .auth-divider {
+            display:flex; align-items:center; gap:10px;
+            margin: 16px 0; color:#334155; font-size:.76rem;
+        }
+        .auth-divider::before,.auth-divider::after {
+            content:''; flex:1; height:1px; background:rgba(255,255,255,.07);
+        }
+        .auth-btn-guest {
+            width: 100%; padding: 11px;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.1); border-radius: 9px;
+            color: #64748b; font: 500 .86rem 'Inter',sans-serif; cursor: pointer; transition: all .2s;
+        }
+        .auth-btn-guest:hover { background: rgba(255,255,255,.08); color:#94a3b8; }
+        .auth-guest-note { text-align:center; font-size:.7rem; color:#334155; margin-top:10px; }
+
+        /* ── TOP BAR (khi đã login) ───────────────────────────── */
+        #top-bar {
+            position: fixed; top:0; left:0; right:0; z-index:1000;
+            display: flex; align-items:center; justify-content:space-between;
+            padding: 0 20px; height: 52px;
+            background: rgba(5,5,20,.85); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(99,102,241,.15);
+        }
+        #top-bar .tb-logo {
+            font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700;
+            color:#7c6fff;
+        }
+        #top-bar .tb-user {
+            display:flex; align-items:center; gap:8px; font-size:.82rem; color:#64748b;
+        }
+        .tb-guest-tag {
+            background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.25);
+            color:#fbbf24; font-size:.7rem; padding:2px 8px; border-radius:10px;
+        }
+        .tb-admin-tag {
+            background:rgba(99,102,241,.15); border:1px solid rgba(99,102,241,.3);
+            color:#a5b4fc; font-size:.7rem; padding:2px 8px; border-radius:10px;
+        }
+        .tb-btn {
+            padding:5px 12px; border-radius:7px; font:.78rem 'Inter',sans-serif;
+            cursor:pointer; text-decoration:none; transition:all .15s;
+        }
+        .tb-btn-out {
+            background:transparent; border:1px solid rgba(239,68,68,.3); color:#f87171;
+        }
+        .tb-btn-out:hover { background:rgba(239,68,68,.08); }
+
+        /* đẩy nội dung xuống khi có top-bar */
+        body.has-topbar { padding-top: 52px; }
+
+        /* ── SEASON PILL ──────────────────────────────────────── */
+        .season-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.2);
+            border-radius: 20px; padding: 4px 14px;
+            font-size: .78rem; color: #34d399; margin-bottom: 4px;
+        }
+        .season-dot { width:6px;height:6px;border-radius:50%;background:#34d399;
+                      animation:spulse 2s infinite; }
+        @keyframes spulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+        /* ── MENU CARD VARIANTS ───────────────────────────────── */
+        .mode-tag.battlecode { background:rgba(119,216,165,.12);color:#77d8a5;border:1px solid rgba(119,216,165,.3); }
+        .mode-tag.history-tag { background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.3); }
+        .mode-tag.season-tag { background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25); }
+        .mode-tag.p2  { background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3); }
+        .mode-tag.p8  { background:rgba(64,220,180,.12);color:#40dcb4;border:1px solid rgba(64,220,180,.3); }
+    </style>
+</head>
+<body data-username="{{ user.username|default:'' }}" {% if authed %}class="has-topbar"{% endif %}>
+<canvas id="bg-canvas"></canvas>
+
+<!-- ══ AUTH OVERLAY (chỉ hiện khi chưa đăng nhập) ══════════════════ -->
+<div id="auth-overlay" {% if authed %}class="hidden"{% endif %}>
+  <div class="auth-box">
+    <div class="auth-logo">⚔️ OẲN TÙ TÌ 2.0</div>
+    <p class="auth-tagline">Đăng nhập để bắt đầu chiến đấu</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab {% if auth_mode == 'login' %}active{% endif %}" onclick="authTab('login',this)">Đăng nhập</button>
+      <button class="auth-tab {% if auth_mode == 'register' %}active{% endif %}" onclick="authTab('register',this)">Đăng ký</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="af-login" class="auth-form {% if auth_mode == 'login' %}active{% endif %}">
+      {% if auth_error and auth_mode == 'login' %}
+        <div class="auth-alert">{{ auth_error }}</div>
+      {% endif %}
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="login">
+        <label class="auth-lbl">Tên đăng nhập</label>
+        <input class="auth-input" type="text" name="username" required autofocus placeholder="username">
+        <label class="auth-lbl">Mật khẩu</label>
+        <input class="auth-input" type="password" name="password" required placeholder="••••••">
+        <button type="submit" class="auth-btn-primary">Đăng nhập →</button>
+      </form>
+      <div class="auth-divider">hoặc</div>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="guest">
+        <button type="submit" class="auth-btn-guest">👤 Tiếp tục với tư cách Khách</button>
+      </form>
+      <p class="auth-guest-note">Khách có thể chơi nhưng không lưu lịch sử.</p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="af-register" class="auth-form {% if auth_mode == 'register' %}active{% endif %}">
+      {% if auth_error and auth_mode == 'register' %}
+        <div class="auth-alert">{{ auth_error }}</div>
+      {% endif %}
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="register">
+        <label class="auth-lbl">Tên đăng nhập</label>
+        <input class="auth-input" type="text" name="reg_username" required placeholder="username"
+               value="{{ request.POST.reg_username|default:'' }}">
+        {% if reg_errors.username %}<p class="auth-err">{{ reg_errors.username }}</p>{% endif %}
+        <label class="auth-lbl">Mật khẩu</label>
+        <input class="auth-input" type="password" name="reg_password1" required placeholder="Tối thiểu 6 ký tự">
+        {% if reg_errors.password1 %}<p class="auth-err">{{ reg_errors.password1 }}</p>{% endif %}
+        <label class="auth-lbl">Xác nhận mật khẩu</label>
+        <input class="auth-input" type="password" name="reg_password2" required placeholder="Nhập lại mật khẩu">
+        {% if reg_errors.password2 %}<p class="auth-err">{{ reg_errors.password2 }}</p>{% endif %}
+        <button type="submit" class="auth-btn-primary">Tạo tài khoản →</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOP BAR (chỉ hiện khi đã đăng nhập) ════════════════════════ -->
+{% if authed %}
+<div id="top-bar">
+  <span class="tb-logo">⚔️ OTT 2.0</span>
+  <div class="tb-user">
+    {% if is_guest %}
+      <span class="tb-guest-tag">Khách</span>
+    {% else %}
+      <span>{{ user.username }}</span>
+      {% if is_admin %}<span class="tb-admin-tag">Admin</span>{% endif %}
+    {% endif %}
+    <a href="/logout/" class="tb-btn tb-btn-out">Thoát</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ SCREEN 1: MENU ══════════════════════════════════════════════ -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-container">
+    <h1 class="menu-title">
+      <span class="title-icon">⚔️</span>
+      OẲN TÙ TÌ <span class="version">2.0</span>
+      <span class="title-icon">⚔️</span>
+    </h1>
+
+    {% if active_season and authed %}
+    <div style="text-align:center;margin-bottom:12px">
+      <span class="season-pill"><span class="season-dot"></span>{{ active_season.name }}</span>
+    </div>
+    {% endif %}
+
+    <p class="menu-subtitle">Chọn chế độ chơi</p>
+
+    <div class="mode-grid">
+
+      <!-- 2 NGƯỜI -->
+      <button class="mode-card" onclick="showScreen('solo')">
+        <span class="mode-icon">👥</span>
+        <div class="mode-name">2 NGƯỜI</div>
+        <div class="mode-desc">Chơi cùng máy — luân phiên theo lượt.<br>Không cần mạng.</div>
+        <span class="mode-tag p2">SOLO / HOT-SEAT</span>
+      </button>
+
+      <!-- 8 NGƯỜI -->
+      <button class="mode-card" onclick="showScreen('multi')">
+        <span class="mode-icon">🌐</span>
+        <div class="mode-name">8 NGƯỜI</div>
+        <div class="mode-desc">4 phòng đấu song song realtime.<br>Spectator xem cả 4 trận cùng lúc.</div>
+        <span class="mode-tag p8">ONLINE / MULTIPLAYER</span>
+      </button>
+
+      <!-- BATTLECODE -->
+      <a class="mode-card" href="/battlecode/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">🐍</span>
+        <div class="mode-name">BATTLECODE</div>
+        <div class="mode-desc">Nộp hai file Python, server chạy toàn bộ trận.<br>Replay từng nước đã xác nhận.</div>
+        <span class="mode-tag battlecode">BOT VS BOT</span>
+      </a>
+
+      <!-- NỘP AI -->
+      <a class="mode-card" href="/ai/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">🤖</span>
+        <div class="mode-name">NỘP AI</div>
+        <div class="mode-desc">Viết chương trình Python điều khiển quân cờ.<br>Admin nhận và quản lý code AI của bạn.</div>
+        <span class="mode-tag" style="background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3)">AI SUBMIT</span>
+      </a>
+
+      <!-- LỊCH SỬ -->
+      {% if authed and not is_guest %}
+      <a class="mode-card" href="/history/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">📋</span>
+        <div class="mode-name">LỊCH SỬ</div>
+        <div class="mode-desc">Xem lại toàn bộ các trận đã đấu.<br>Replay bất kỳ trận nào.</div>
+        <span class="mode-tag history-tag">REPLAY</span>
+      </a>
+      {% endif %}
+
+      <!-- MÙA GIẢI (admin only) -->
+      {% if is_admin %}
+      <a class="mode-card" href="/season-admin/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">🏆</span>
+        <div class="mode-name">MÙA GIẢI</div>
+        <div class="mode-desc">Tạo và quản lý mùa giải.<br>Xem thống kê toàn server.</div>
+        <span class="mode-tag season-tag">ADMIN</span>
+      </a>
+      <!-- DUYỆT CODE AI (admin only) -->
+      <a class="mode-card" href="/admin/code-review/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">🤖</span>
+        <div class="mode-name">DUYỆT CODE AI</div>
+        <div class="mode-desc">Xem, duyệt hoặc từ chối code AI<br>do người dùng nộp lên.</div>
+        <span class="mode-tag season-tag">ADMIN</span>
+      </a>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: SOLO ══════════════════════════════════════════════ -->
+<div id="screen-solo" class="screen">
+  <div id="app">
+    <header id="game-header">
+      <button class="back-btn" onclick="showScreen('menu')">← Menu</button>
+      <div class="header-glow"></div>
+      <h1 id="game-title">
+        <span class="title-icon">⚔️</span>
+        <span class="title-text">OẲN TÙ TÌ <span class="version">2.0</span></span>
+        <span class="title-icon">⚔️</span>
+      </h1>
+      <p class="subtitle">2 Người — Chơi cùng máy</p>
+    </header>
+    <div id="game-info-bar">
+      <div id="player1-info" class="player-info active-player">
+        <div class="player-avatar p1-avatar">🔴</div>
+        <div class="player-details">
+          <span class="player-name">Player 1</span>
+          <span class="player-goal">🎯 Đến ô (9, 9)</span>
+          <div class="piece-count" id="p1-pieces">
+            <span class="piece-badge rock">🪨×0</span>
+            <span class="piece-badge paper">📄×0</span>
+            <span class="piece-badge scissors">✂️×0</span>
+          </div>
+        </div>
+      </div>
+      <div id="turn-indicator">
+        <div class="turn-orb" id="turn-orb"></div>
+        <span id="turn-text">Lượt Player 1</span>
+        <span id="turn-number">Turn 1</span>
+      </div>
+      <div id="player2-info" class="player-info">
+        <div class="player-avatar p2-avatar">🔵</div>
+        <div class="player-details">
+          <span class="player-name">Player 2</span>
+          <span class="player-goal">🎯 Đến ô (1, 1)</span>
+          <div class="piece-count" id="p2-pieces">
+            <span class="piece-badge rock">🪨×0</span>
+            <span class="piece-badge paper">📄×0</span>
+            <span class="piece-badge scissors">✂️×0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <main id="game-area">
+      <div id="board-wrapper">
+        <div class="coord-labels top-labels" id="top-labels"></div>
+        <div class="board-with-rows">
+          <div class="coord-labels row-labels" id="left-labels"></div>
+          <div id="board" role="grid" aria-label="Game board 9x9"></div>
+          <div class="coord-labels row-labels" id="right-labels"></div>
+        </div>
+        <div class="coord-labels top-labels" id="bottom-labels"></div>
+      </div>
+      <aside id="side-panel">
+        <div class="panel-section" id="move-log-section">
+          <h2 class="panel-title">📜 Lịch Sử Nước Đi</h2>
+          <div id="move-log"></div>
+        </div>
+        <div class="panel-section" id="legend-section">
+          <h2 class="panel-title">📖 Chú Thích</h2>
+          <div class="legend-grid">
+            <div class="legend-item"><span class="legend-icon rock-icon p1">🪨</span> Búa (Rock)</div>
+            <div class="legend-item"><span class="legend-icon paper-icon p1">📄</span> Bao (Paper)</div>
+            <div class="legend-item"><span class="legend-icon scissors-icon p1">✂️</span> Kéo (Scissors)</div>
+          </div>
+          <div class="legend-rules">
+            <div class="rule">🪨 → ✂️ <span>Búa ăn Kéo</span></div>
+            <div class="rule">✂️ → 📄 <span>Kéo ăn Bao</span></div>
+            <div class="rule">📄 → 🪨 <span>Bao ăn Búa</span></div>
+          </div>
+        </div>
+        <div class="panel-section" id="controls-section">
+          <button id="btn-new-game" class="game-btn primary-btn" onclick="newGame()">🔄 Ván Mới</button>
+          <button id="btn-undo" class="game-btn secondary-btn" onclick="undoMove()">↩️ Hoàn Tác</button>
+        </div>
+      </aside>
+    </main>
+    <div id="status-bar"><span id="status-message">Chọn một quân cờ để bắt đầu</span></div>
+    <div id="victory-overlay" class="hidden">
+      <div id="victory-modal">
+        <div class="victory-particles" id="victory-particles"></div>
+        <div class="trophy">🏆</div>
+        <h2 id="victory-title">Chiến Thắng!</h2>
+        <p id="victory-message"></p>
+        <button class="game-btn primary-btn" onclick="newGame()">🔄 Chơi Lại</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: MULTI ══════════════════════════════════════════════ -->
+<div id="screen-multi" class="screen">
+  <header id="multi-header">
+    <button class="back-btn" onclick="showScreen('menu')">← Menu</button>
+    <h1>⚔️ OẲN TÙ TÌ 2.0 — <span class="mp-tag">8 NGƯỜI / 4 TRẬN</span></h1>
+    <p class="subtitle">Theo dõi 4 ván đấu cùng lúc</p>
+  </header>
+  <div id="multi-grid">
+    <div class="mini-game" data-slot="0"></div>
+    <div class="mini-game" data-slot="1"></div>
+    <div class="mini-game" data-slot="2"></div>
+    <div class="mini-game" data-slot="3"></div>
+  </div>
+  <div id="multi-controls">
+    <input id="mp-room-code" placeholder="Mã phòng (VD: A1)" maxlength="8">
+    <input id="mp-name" placeholder="Tên của bạn">
+    <button id="btn-join" class="game-btn primary-btn">🎮 Vào phòng</button>
+    <button id="btn-spectate" class="game-btn secondary-btn">👁 Xem phòng</button>
+    <button id="btn-leave" class="game-btn secondary-btn" style="display:none">🚪 Rời phòng</button>
+    <button id="btn-reset" class="game-btn secondary-btn" style="display:none">🔄 Ván mới</button>
+    <span id="mp-status">Đang kết nối...</span>
+  </div>
+</div>
+
+<!-- Scripts gốc -->
+<script src="{% static 'web/js/game.js' %}"></script>
+<script src="{% static 'web/js/ui.js' %}"></script>
+<script src="{% static 'web/js/multiplayer.js' %}"></script>
+<script src="{% static 'web/js/screen-manager.js' %}"></script>
+<script>
+  function authTab(tab, btn) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('af-' + tab).classList.add('active');
+  }
+</script>
+</body>
+</html>
