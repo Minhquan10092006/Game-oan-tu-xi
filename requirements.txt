@@ -16,3 +16,7 @@ requests==2.32.3
 
 # Môi trường biến
 python-dotenv==1.1.0
+
+# Database khi deploy (PostgreSQL / Render / Supabase)
+dj-database-url>=3.1.0
+psycopg2-binary>=2.9.10
