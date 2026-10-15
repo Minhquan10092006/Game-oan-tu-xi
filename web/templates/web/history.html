@@ -14,6 +14,8 @@
     .nav-links{display:flex;gap:4px}
     .nav-links a{padding:6px 12px;border-radius:7px;font-size:.8rem;text-decoration:none;color:var(--muted);transition:all .15s}
     .nav-links a:hover,.nav-links a.active{background:rgba(124,111,255,.15);color:#a5b4fc}
+    .nav-links a.back-home{border:1px solid #29415e;color:#9ab0c9}
+    .nav-links a.back-home:hover{border-color:#7c6fff;color:#e0e0f0;background:rgba(124,111,255,.08)}
     .nav-right{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)}
     .btn-out{padding:5px 12px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#f87171;font:.78rem 'Inter',sans-serif;cursor:pointer;text-decoration:none;transition:all .15s}
     .btn-out:hover{background:rgba(239,68,68,.08)}
@@ -48,7 +50,7 @@
 <nav>
   <a class="nav-logo" href="/">⚔️ OTT 2.0</a>
   <div class="nav-links">
-    <a href="/">Menu</a>
+    <a href="/" class="back-home">⬅ Menu</a>
     <a href="/battlecode/">Battlecode</a>
     <a href="/history/" class="active">Lịch sử</a>
     {% if is_admin %}<a href="/season-admin/">Mùa giải</a>{% endif %}

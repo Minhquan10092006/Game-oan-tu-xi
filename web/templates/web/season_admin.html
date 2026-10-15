@@ -29,6 +29,8 @@
     .main{flex:1;overflow-y:auto}
     .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.01);position:sticky;top:0;z-index:10}
     .topbar h1{font-size:1.1rem;font-weight:700}
+    .btn-back{padding:6px 14px;border-radius:7px;border:1px solid rgba(99,102,241,.3);background:none;color:#a5b4fc;font:.8rem 'Inter',sans-serif;text-decoration:none;transition:all .15s}
+    .btn-back:hover{background:rgba(99,102,241,.12);border-color:var(--accent)}
     .content{padding:26px}
     /* messages */
     .msg{padding:9px 13px;border-radius:8px;font-size:.82rem;margin-bottom:10px}
@@ -111,6 +113,7 @@
 <div class="main">
   <div class="topbar">
     <h1>🏆 Quản lý Mùa giải</h1>
+    <a href="/" class="btn-back">⬅ Menu</a>
   </div>
   <div class="content">
     {% if messages %}
