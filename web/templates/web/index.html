@@ -138,6 +138,7 @@
         .mode-tag.season-tag { background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25); }
         .mode-tag.p2  { background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3); }
         .mode-tag.p8  { background:rgba(64,220,180,.12);color:#40dcb4;border:1px solid rgba(64,220,180,.3); }
+        .mode-tag.ranking-tag { background:rgba(240,192,64,.12);color:#f0c040;border:1px solid rgba(240,192,64,.3); }
     </style>
 </head>
 <body data-username="{{ user.username|default:'' }}" {% if authed %}class="has-topbar"{% endif %}>
@@ -263,6 +264,14 @@
         <div class="mode-name">NỘP AI</div>
         <div class="mode-desc">Viết chương trình Python điều khiển quân cờ.<br>Admin nhận và quản lý code AI của bạn.</div>
         <span class="mode-tag" style="background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3)">AI SUBMIT</span>
+      </a>
+
+      <!-- RANKING -->
+      <a class="mode-card" href="/ranking/" style="text-decoration:none;color:inherit">
+        <span class="mode-icon">🏆</span>
+        <div class="mode-name">RANKING</div>
+        <div class="mode-desc">Bảng xếp hạng ELO toàn server.<br>Xem vị trí của bạn và top 50.</div>
+        <span class="mode-tag ranking-tag">LEADERBOARD</span>
       </a>
 
       <!-- LỊCH SỬ -->
