@@ -296,10 +296,10 @@ class GameState:
             return
 
         opponent = 2 if player == 1 else 1
-        if not self.get_player_pieces(opponent):
+        if any(self.count_pieces(opponent)[kind] == 0 for kind in ('rock', 'paper', 'scissors')):
             self.game_over = True
             self.winner = player
-            self.win_reason = f'Player {player} đã loại hết quân đối thủ!'
+            self.win_reason = f'Player {player} đã bắt hết một loại quân đối thủ!'
 
     def _check_stalemate(self):
         pieces = self.get_player_pieces(self.current_player)

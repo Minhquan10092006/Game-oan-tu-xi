@@ -51,6 +51,8 @@ class SubmissionListCreateView(generics.ListCreateAPIView):
         return Submission.objects.filter(submitter=self.request.user).order_by('-submitted_at')
 
     def create(self, request, *args, **kwargs):
+        if request.session.get('is_guest'):
+            return Response({'error': 'Hãy tạo tài khoản chính thức để nộp bài.'}, status=403)
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         submission = serializer.save()
@@ -171,6 +173,8 @@ def admin_delete_submission(request, pk):
         return Response({'error': 'Không tìm thấy bài nộp.'}, status=status.HTTP_404_NOT_FOUND)
 
     sub_info = f'#{sub.pk} {sub.ai_name} by {sub.submitter}'
+    if sub.used_in_battle:
+        return Response({'error': 'Bài đã thi đấu phải được giữ để đối chiếu; không thể xóa.'}, status=409)
     sub.delete()
     logger.info('Admin %s deleted submission %s', request.user, sub_info)
     return Response({'ok': True, 'deleted': sub_info})

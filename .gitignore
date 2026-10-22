@@ -8,6 +8,9 @@ __pycache__/
 venv/
 env/
 ENV/
+.venv/
+tournament-data/
+private-exports/
 
 # Database
 db.sqlite3

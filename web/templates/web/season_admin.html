@@ -4,15 +4,14 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Quản lý Mùa giải — Oẳn Tù Tì</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
   <style>
     :root{--bg:#050510;--panel:#0c0c20;--panel2:#12122a;--line:rgba(99,102,241,.2);--text:#e2e8f0;--muted:#64748b;--accent:#6366f1;--p1:#f87171;--p2:#60a5fa;--green:#34d399;--yellow:#fbbf24}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px 'Inter',system-ui,sans-serif;display:flex;min-height:100vh}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px 'Segoe UI',system-ui,sans-serif;display:flex;min-height:100vh}
     /* sidebar */
     aside{width:210px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-    .sb-logo{padding:20px 18px 16px;font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700;color:var(--accent);border-bottom:1px solid var(--line)}
-    .sb-logo span{display:block;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:400;color:var(--muted);margin-top:2px}
+    .sb-logo{padding:20px 18px 16px;font-family:'Segoe UI',sans-serif;font-size:.9rem;font-weight:700;color:var(--accent);border-bottom:1px solid var(--line)}
+    .sb-logo span{display:block;font-family:'Segoe UI',sans-serif;font-size:.68rem;font-weight:400;color:var(--muted);margin-top:2px}
     .sb-nav{padding:10px 8px;flex:1}
     .sb-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:7px;margin-bottom:2px;text-decoration:none;color:var(--muted);font-size:.82rem;transition:all .15s}
     .sb-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
@@ -23,7 +22,7 @@
     .sb-info{flex:1;min-width:0}
     .sb-info .nm{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .sb-info .rl{font-size:.68rem;color:var(--yellow)}
-    .logout-a{display:block;width:100%;padding:8px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#f87171;font:.8rem 'Inter',sans-serif;cursor:pointer;text-align:center;text-decoration:none;transition:all .15s}
+    .logout-a{display:block;width:100%;padding:8px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#f87171;font:.8rem 'Segoe UI',sans-serif;cursor:pointer;text-align:center;text-decoration:none;transition:all .15s}
     .logout-a:hover{background:rgba(239,68,68,.08)}
     /* main */
     .main{flex:1;overflow-y:auto}
@@ -48,9 +47,9 @@
     .create-card h3{font-size:.88rem;font-weight:600;margin-bottom:14px;color:#a5b4fc}
     .form-row{display:grid;grid-template-columns:2fr 2fr 1.5fr auto;gap:10px;align-items:end}
     .fg label{display:block;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-    .fg input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:9px 10px;font:.83rem 'Inter',sans-serif}
+    .fg input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:9px 10px;font:.83rem 'Segoe UI',sans-serif}
     .fg input:focus{outline:none;border-color:var(--accent)}
-    .btn-create{padding:9px 20px;background:var(--accent);border:none;border-radius:7px;color:#fff;font:.83rem 'Inter',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+    .btn-create{padding:9px 20px;background:var(--accent);border:none;border-radius:7px;color:#fff;font:.83rem 'Segoe UI',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s}
     .btn-create:hover{opacity:.9}
     /* season cards */
     .sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:13px;margin-bottom:26px}
@@ -65,7 +64,7 @@
     .sc-meta{font-size:.74rem;color:var(--muted);margin-bottom:12px}
     .sc-meta .mc{color:var(--accent);font-weight:600}
     .sc-actions{display:flex;gap:7px;flex-wrap:wrap}
-    .bx{padding:5px 12px;border-radius:6px;font:.74rem 'Inter',sans-serif;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s}
+    .bx{padding:5px 12px;border-radius:6px;font:.74rem 'Segoe UI',sans-serif;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s}
     .bx-end{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:#f87171}
     .bx-end:hover{background:rgba(239,68,68,.16)}
     .bx-start{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.25);color:var(--green)}
@@ -206,7 +205,7 @@
     <!-- ── CODE AI CỦA USER ────────────────────────────────── -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px">
       <h2 id="sub-section" style="font-size:1rem;font-weight:700">🤖 Code AI đã nộp</h2>
-      <a href="/admin/code-review/" style="padding:7px 16px;border-radius:7px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font:.8rem 'Inter',sans-serif;text-decoration:none;font-weight:600">
+      <a href="/admin/code-review/" style="padding:7px 16px;border-radius:7px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font:.8rem 'Segoe UI',sans-serif;text-decoration:none;font-weight:600">
         🔍 Trang duyệt code →
       </a>
     </div>
@@ -238,7 +237,7 @@
             </td>
             <td>
               <button onclick="showCode('{{ s.pk }}','{{ s.submitter.username }}','{{ s.ai_name }}')"
-                      style="padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:rgba(99,102,241,.08);color:#a5b4fc;font:.74rem 'Inter',sans-serif;cursor:pointer">
+                      style="padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:rgba(99,102,241,.08);color:#a5b4fc;font:.74rem 'Segoe UI',sans-serif;cursor:pointer">
                 👁 Xem
               </button>
             </td>
@@ -263,11 +262,11 @@
       <button onclick="closeCode()" style="background:transparent;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px">✕</button>
     </div>
     <div style="overflow-y:auto;padding:16px;flex:1">
-      <pre id="modal-code" style="background:#080818;border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:14px;font:13px 'Fira Code',monospace;color:#e2e8f0;white-space:pre-wrap;word-break:break-all;margin:0"></pre>
+      <pre id="modal-code" style="background:#080818;border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:14px;font:13px Consolas,monospace;color:#e2e8f0;white-space:pre-wrap;word-break:break-all;margin:0"></pre>
     </div>
     <div style="padding:12px 18px;border-top:1px solid rgba(99,102,241,.2);display:flex;justify-content:flex-end">
-      <button onclick="downloadCode()" style="padding:7px 16px;background:var(--accent);border:none;border-radius:7px;color:#fff;font:.82rem 'Inter',sans-serif;cursor:pointer;margin-right:8px">⬇ Tải xuống</button>
-      <button onclick="closeCode()" style="padding:7px 16px;background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--muted);font:.82rem 'Inter',sans-serif;cursor:pointer">Đóng</button>
+      <button onclick="downloadCode()" style="padding:7px 16px;background:var(--accent);border:none;border-radius:7px;color:#fff;font:.82rem 'Segoe UI',sans-serif;cursor:pointer;margin-right:8px">⬇ Tải xuống</button>
+      <button onclick="closeCode()" style="padding:7px 16px;background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--muted);font:.82rem 'Segoe UI',sans-serif;cursor:pointer">Đóng</button>
     </div>
   </div>
 </div>

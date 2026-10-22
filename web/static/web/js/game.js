@@ -342,13 +342,13 @@ class GameState {
             return;
         }
 
-        // Secondary: Opponent has no pieces left
+        // Win as soon as the opponent loses all pieces of one type.
         const opponent = player === 1 ? 2 : 1;
         const opponentPieces = this.getPlayerPieces(opponent);
-        if (opponentPieces.length === 0) {
+        if (['rock', 'paper', 'scissors'].some(kind => !opponentPieces.some(item => item.piece.type === kind))) {
             this.gameOver = true;
             this.winner = player;
-            this.winReason = `Player ${player} đã loại hết quân đối thủ!`;
+            this.winReason = `Player ${player} đã bắt hết một loại quân đối thủ!`;
             return;
         }
     }

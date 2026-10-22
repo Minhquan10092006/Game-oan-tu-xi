@@ -24,6 +24,10 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
+if not DEBUG and not os.environ.get('DJANGO_SECRET_KEY'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('Production yêu cầu DJANGO_SECRET_KEY riêng.')
+
 ALLOWED_HOSTS_ENV = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
 ALLOWED_HOSTS = ['*'] if DEBUG else [h.strip() for h in ALLOWED_HOSTS_ENV.split(',') if h.strip()]
 
@@ -101,15 +105,12 @@ DATABASES = {
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
-    try:
-        import dj_database_url
-        DATABASES['default'] = dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    except Exception:
-        pass
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 # ===========================================================
 # AUTHENTICATION

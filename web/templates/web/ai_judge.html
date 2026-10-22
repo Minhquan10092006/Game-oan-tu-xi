@@ -5,12 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nộp AI — Oẳn Tù Tì 2.0</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #0a0a1a;
       color: #e0e0f0;
       min-height: 100vh;
@@ -26,7 +25,7 @@
       gap: 16px;
     }
     header h1 {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       font-size: 1.3rem;
       color: #7c6fff;
     }
@@ -70,7 +69,7 @@
       padding: 24px;
     }
     .card h2 {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       font-size: 1rem;
       color: #7c6fff;
       margin-bottom: 20px;
@@ -112,7 +111,7 @@
       border-radius: 8px;
       color: #c9d1d9;
       padding: 14px;
-      font-family: 'Fira Code', monospace;
+      font-family: Consolas, monospace;
       font-size: 0.82rem;
       line-height: 1.6;
       resize: vertical;
@@ -127,7 +126,7 @@
       font-size: 0.75rem;
       color: #555;
       margin-top: 6px;
-      font-family: 'Fira Code', monospace;
+      font-family: Consolas, monospace;
     }
 
     .submit-btn {
@@ -222,7 +221,7 @@
       padding: 16px;
     }
     .protocol-box pre {
-      font-family: 'Fira Code', monospace;
+      font-family: Consolas, monospace;
       font-size: 0.78rem;
       color: #7fdbca;
       white-space: pre-wrap;
@@ -338,15 +337,14 @@ def main():
         return
     m = moves[0]
     print(json.dumps({'move': {
-        'from_row': m['from_row'], 'from_col': m['from_col'],
-        'to_row':   m['to_row'],   'to_col':   m['to_col']
+        'piece_id': m['piece_id'], 'from': m['from'], 'to': m['to']
     }}))
 
 main()"></textarea>
 
       <div class="code-hint">
         📥 stdin: JSON trạng thái bàn cờ &nbsp;|&nbsp;
-        📤 stdout: {"move": {"from_row":…,"from_col":…,"to_row":…,"to_col":…}} &nbsp;|&nbsp;
+        📤 stdout: {"move": {"piece_id":…, "from":[…,…], "to":[…,…]}} &nbsp;|&nbsp;
         🐞 Debug → stderr
       </div>
 
@@ -363,25 +361,24 @@ main()"></textarea>
         AI nhận <strong style="color:#e0e0f0">một JSON</strong> từ stdin, in ra <strong style="color:#e0e0f0">một JSON</strong> lên stdout.
       </p>
       <div class="protocol-box">
-        <pre>// INPUT (stdin)
+        <pre>// INPUT minh họa các trường chính; players chứa danh sách quân hai bên.
 {
-  "board": [[{"player":1,"type":"rock","id":"..."}|null, ...], ...],
-  "current_player": 1,        // 1 hoặc 2 — lượt của AI
-  "turn_number": 5,
-  "legal_moves": [            // CHỈ chọn trong danh sách này
-    {"from_row":2,"from_col":0,"to_row":3,"to_col":0,
-     "is_capture":false,"captured_type":null}
+  "protocol_version": "1.0",
+  "current_player": "P1",
+  "ply": 0,
+  "board": {"rows":9,"cols":9,"goals":{"P1":[9,9],"P2":[1,1]}},
+  "legal_moves": [
+    {"piece_id":"P1-R3","from":[3,1],"to":[4,1],
+     "capture":false,"wins_immediately":false}
   ],
-  "goal":          {"row":8,"col":8},
-  "opponent_goal": {"row":0,"col":0},
-  "game_over": false
+  "userdata": null
 }
 
 // OUTPUT (stdout)
-{"move": {"from_row":2,"from_col":0,"to_row":3,"to_col":0}}</pre>
+{"move":{"piece_id":"P1-R3","from":[3,1],"to":[4,1]},"userdata":null}</pre>
       </div>
       <p style="font-size:0.75rem;color:#555;margin-top:10px">
-        Toạ độ 0-indexed. P1 bắt đầu góc trên-trái, đích (8,8). P2 bắt đầu góc dưới-phải, đích (0,0).
+        Tọa độ bắt đầu từ 1. P1 đến (9,9), P2 đến (1,1). Python 3.12, file tối đa 64 KiB. Bot mẫu trong ai_sample.py dùng đúng giao thức này.
       </p>
     </div>
   </div>
@@ -416,7 +413,7 @@ main()"></textarea>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span class="status-badge approved">✅ Đã duyệt</span>
-          <span style="color:#888">Code đã được duyệt, có thể dùng trong battle.</span>
+          <span style="color:#888">Đã duyệt ban đầu; BTC chọn và khóa bản thi trên máy chấm riêng.</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span class="status-badge rejected">❌ Bị từ chối</span>
@@ -462,10 +459,10 @@ function escHtml(str) {
 
 async function submitCode() {
   const aiName = document.getElementById('ai-name').value.trim();
-  const code   = document.getElementById('code-editor').value.trim();
+  const code   = document.getElementById('code-editor').value;
 
   if (!aiName) { showError('Vui lòng nhập tên AI.'); return; }
-  if (!code)   { showError('Vui lòng nhập mã nguồn.'); return; }
+  if (!code.trim()) { showError('Vui lòng nhập mã nguồn.'); return; }
   showError('');
 
   const btn = document.getElementById('submit-btn');
@@ -555,7 +552,8 @@ async function loadHistory() {
               ${escHtml(s.ai_name)}
               <span style="color:#555;font-size:0.75rem"> v${s.version}</span>
             </div>
-            <div class="sub-meta">📅 ${date}</div>
+            <div class="sub-meta">Biên nhận #${s.id} · 📅 ${date}</div>
+            <details style="font-size:.75rem;overflow-wrap:anywhere"><summary>Mã kiểm tra SHA-256</summary>${escHtml(s.source_sha256 || '')}</details>
             ${s.reject_reason ? `<div class="reject-reason">Lý do: ${escHtml(s.reject_reason)}</div>` : ''}
           </div>
           <span class="status-badge ${cfg.cls}">${cfg.label}</span>

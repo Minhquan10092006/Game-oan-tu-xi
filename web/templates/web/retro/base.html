@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000080">
+  <meta name="description" content="Oẳn Tù Tì 2.0 — sân chơi lập trình chiến thuật dành cho sinh viên K71. Viết bot Python, thử chiến thuật và theo dõi từng nước đi.">
+  <title>{% block title %}Oẳn Tù Tì 2.0 · Đấu trường thuật toán K71{% endblock %}</title>
+  {% block legacy_styles %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'web/css/retro.css' %}">
+  <script src="{% static 'web/js/retro.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="retro-site {% block body_class %}{% endblock %}" data-username="{{ user.username|default:'' }}">
+  <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>
+  {% include 'web/retro/header.html' %}
+  <main id="main-content" class="site-shell" tabindex="-1">{% block content %}{% endblock %}</main>
+  {% include 'web/retro/footer.html' %}
+</body>
+</html>

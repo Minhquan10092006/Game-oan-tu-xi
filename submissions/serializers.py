@@ -2,12 +2,16 @@
 submissions/serializers.py — không còn judge logic.
 """
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Submission
 
 
 class SubmissionCreateSerializer(serializers.ModelSerializer):
     """Tạo bài nộp mới: chỉ cần ai_name + source_code."""
+    source_code = serializers.CharField(trim_whitespace=False)
 
     class Meta:
         model = Submission
@@ -30,8 +34,14 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Tên AI không được rỗng.')
         return value.strip()
 
+    @transaction.atomic
     def create(self, validated_data):
         user = self.context['request'].user
+        # Serialize version allocation and quota checks for each account on PostgreSQL.
+        get_user_model().objects.select_for_update().get(pk=user.pk)
+        today = timezone.localdate()
+        if Submission.objects.filter(submitter=user, submitted_at__date=today).count() >= settings.SUBMISSION_RATE_LIMIT_PER_DAY:
+            raise serializers.ValidationError('Đã hết số lượt nộp trong ngày.')
         # Tự động tăng version cho cùng tên AI
         last = (
             Submission.objects
@@ -49,7 +59,7 @@ class SubmissionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Submission
-        fields = ['id', 'ai_name', 'version', 'review_status', 'reject_reason', 'submitted_at']
+        fields = ['id', 'ai_name', 'version', 'review_status', 'reject_reason', 'submitted_at', 'source_sha256']
         read_only_fields = fields
 
 
@@ -62,7 +72,7 @@ class SubmissionDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'submitter_username', 'ai_name', 'version',
             'review_status', 'reject_reason',
-            'source_code', 'submitted_at', 'approved_at', 'used_in_battle',
+            'source_code', 'source_sha256', 'submitted_at', 'approved_at', 'used_in_battle',
         ]
         read_only_fields = fields
 

@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Duyệt Code AI — Admin | Oẳn Tù Tì</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg:     #050510; --panel:  #0c0c20; --panel2: #12122a;
@@ -14,12 +13,12 @@
       --red: #f87171; --blue: #60a5fa;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font: 15px 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
+    body { background: var(--bg); color: var(--text); font: 15px 'Segoe UI', system-ui, sans-serif; display: flex; min-height: 100vh; }
 
     /* Sidebar */
     aside { width: 210px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .sb-logo { padding: 20px 18px 16px; font-family: 'Orbitron', sans-serif; font-size: .9rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--line); }
-    .sb-logo span { display: block; font-family: 'Inter', sans-serif; font-size: .68rem; font-weight: 400; color: var(--muted); margin-top: 2px; }
+    .sb-logo { padding: 20px 18px 16px; font-family: 'Segoe UI', sans-serif; font-size: .9rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--line); }
+    .sb-logo span { display: block; font-family: 'Segoe UI', sans-serif; font-size: .68rem; font-weight: 400; color: var(--muted); margin-top: 2px; }
     .sb-nav { padding: 10px 8px; flex: 1; }
     .sb-item { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 7px; margin-bottom: 2px; text-decoration: none; color: var(--muted); font-size: .82rem; transition: all .15s; }
     .sb-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
@@ -29,7 +28,7 @@
     .sb-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: #fff; flex-shrink: 0; }
     .sb-info .nm { font-size: .8rem; font-weight: 600; }
     .sb-info .rl { font-size: .68rem; color: var(--yellow); }
-    .logout-a { display: block; width: 100%; padding: 8px; border-radius: 7px; border: 1px solid rgba(239,68,68,.3); background: transparent; color: var(--red); font: .8rem 'Inter', sans-serif; cursor: pointer; text-align: center; text-decoration: none; transition: all .15s; }
+    .logout-a { display: block; width: 100%; padding: 8px; border-radius: 7px; border: 1px solid rgba(239,68,68,.3); background: transparent; color: var(--red); font: .8rem 'Segoe UI', sans-serif; cursor: pointer; text-align: center; text-decoration: none; transition: all .15s; }
     .logout-a:hover { background: rgba(239,68,68,.08); }
 
     /* Main */
@@ -57,7 +56,7 @@
 
     /* Filter bar */
     .filter-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-    .filter-btn { padding: 7px 18px; border: 1px solid var(--line); border-radius: 20px; background: transparent; color: var(--muted); font: .82rem 'Inter', sans-serif; cursor: pointer; text-decoration: none; transition: all .15s; }
+    .filter-btn { padding: 7px 18px; border: 1px solid var(--line); border-radius: 20px; background: transparent; color: var(--muted); font: .82rem 'Segoe UI', sans-serif; cursor: pointer; text-decoration: none; transition: all .15s; }
     .filter-btn:hover { border-color: var(--accent); color: var(--text); }
     .filter-btn.active { background: rgba(99,102,241,.15); border-color: var(--accent); color: #a5b4fc; }
 
@@ -77,7 +76,7 @@
 
     /* Action buttons */
     .actions { display: flex; gap: 5px; flex-wrap: wrap; }
-    .btn { padding: 5px 11px; border-radius: 6px; font: .74rem 'Inter', sans-serif; font-weight: 600; cursor: pointer; border: 1px solid; transition: all .15s; white-space: nowrap; }
+    .btn { padding: 5px 11px; border-radius: 6px; font: .74rem 'Segoe UI', sans-serif; font-weight: 600; cursor: pointer; border: 1px solid; transition: all .15s; white-space: nowrap; }
     .btn-view    { background: rgba(99,102,241,.08); border-color: rgba(99,102,241,.3); color: #a5b4fc; }
     .btn-view:hover    { background: rgba(99,102,241,.16); }
     .btn-approve { background: rgba(52,211,153,.08); border-color: rgba(52,211,153,.3); color: var(--green); }
@@ -102,12 +101,12 @@
     .modal-close { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; padding: 2px 8px; flex-shrink: 0; }
     .modal-body { overflow-y: auto; padding: 16px 20px; flex: 1; }
     .modal-foot { padding: 12px 20px; border-top: 1px solid rgba(99,102,241,.2); display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
-    .code-block { background: #080818; border: 1px solid rgba(99,102,241,.15); border-radius: 8px; padding: 16px; font: 13px 'Fira Code', monospace; color: #e2e8f0; white-space: pre-wrap; word-break: break-all; margin: 0; }
+    .code-block { background: #080818; border: 1px solid rgba(99,102,241,.15); border-radius: 8px; padding: 16px; font: 13px Consolas, monospace; color: #e2e8f0; white-space: pre-wrap; word-break: break-all; margin: 0; }
 
     /* Reject modal */
     .sm-box { background: #0c0c20; border: 1px solid rgba(239,68,68,.3); border-radius: 12px; width: 100%; max-width: 460px; padding: 24px; }
     .sm-box h3 { font-size: 1rem; margin-bottom: 14px; color: var(--red); }
-    .sm-box textarea { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 7px; color: var(--text); padding: 10px 12px; font: .85rem 'Inter', sans-serif; resize: vertical; min-height: 80px; }
+    .sm-box textarea { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 7px; color: var(--text); padding: 10px 12px; font: .85rem 'Segoe UI', sans-serif; resize: vertical; min-height: 80px; }
     .sm-box textarea:focus { outline: none; border-color: var(--red); }
     .sm-foot { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
 

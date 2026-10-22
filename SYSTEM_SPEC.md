@@ -1,5 +1,7 @@
 # Đặc tả hệ thống Battlecode Oẳn Tù Tì
 
+> **Tài liệu lịch sử.** Từ bản k71-v1.0, luật và phương án triển khai hiện hành nằm trong [docs/LUAT_THI_DAU_K71.md](docs/LUAT_THI_DAU_K71.md), [docs/CHAM_DIEM_XEP_HANG.md](docs/CHAM_DIEM_XEP_HANG.md) và [docs/HUONG_DAN_CHAY_GIAI.md](docs/HUONG_DAN_CHAY_GIAI.md). Giải chỉ nhận Python; demo web dùng bot mẫu, code nộp chạy trên máy chấm Docker riêng.
+
 > Tài liệu đầu vào cho AI coding agent triển khai demo. Ưu tiên một bản chạy được end-to-end trước, sau đó mới mở rộng. Đặc tả này thay thế các phần README cũ liên quan đến AI Judge/Judge0, chấm điểm bài nộp, ELO, tài khoản, phòng 8 người, spectator và database. **Không tích hợp AI Judge/Judge0**; chỉ xây dựng nền tảng để hai bot tự động đấu với nhau và người dùng xem lại diễn biến.
 
 ## 1. Mục tiêu và phạm vi demo

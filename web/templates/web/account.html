@@ -1,0 +1,39 @@
+{% extends 'web/retro/base.html' %}
+{% block title %}{% if auth_mode == 'register' %}Đăng ký{% else %}Đăng nhập{% endif %} · Oẳn Tù Tì 2.0{% endblock %}
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-intro">
+    <div class="eyebrow"><span class="new-badge">PLAYER 01</span> YOUR NEXT MOVE</div>
+    <h1>{% if auth_mode == 'register' %}Ý TƯỞNG CỦA BẠN.<br>ĐẤU TRƯỜNG CỦA CHÚNG TA.{% else %}CHÀO MỪNG<br>TRỞ LẠI,<br>NGƯỜI CHƠI!{% endif %}</h1>
+    <p>Từ một nước đi đơn giản đến cả một chiến thuật. Hành trình bắt đầu ở đây.</p>
+    <ul><li>Lưu và quản lý các phiên bản bot Python.</li><li>Xem lại từng nước đi trong trận mẫu.</li><li>Thử ý tưởng, học từ đối thủ, rồi thử lại.</li></ul>
+    <div class="counter-item"><strong>READY_</strong><span>NƯỚC ĐI NHỎ. Ý TƯỞNG LỚN.</span></div>
+  </section>
+  <section class="retro-window auth-window" aria-labelledby="account-title">
+    <div class="window-title"><span id="account-title">{% if auth_mode == 'register' %}new_player.exe — Tạo tài khoản{% else %}welcome_back.exe — Đăng nhập{% endif %}</span><span class="window-controls" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+    <div class="window-body">
+      <nav class="auth-tabs" aria-label="Tài khoản"><a href="/login/?next={{ next_url|urlencode }}" {% if auth_mode == 'login' %}aria-current="page"{% endif %}>Đăng nhập</a><a href="/register/?next={{ next_url|urlencode }}" {% if auth_mode == 'register' %}aria-current="page"{% endif %}>Đăng ký</a></nav>
+      {% if auth_error %}<div class="form-alert" role="alert">{{ auth_error }}</div>{% endif %}
+      {% if reg_errors %}<div class="form-alert" role="alert">Chưa tạo được tài khoản. Vui lòng kiểm tra các mục bên dưới.</div>{% endif %}
+      {% if auth_mode == 'register' %}
+      <form method="post" action="/register/" class="retro-form">
+        {% csrf_token %}<input type="hidden" name="action" value="register"><input type="hidden" name="next" value="{{ next_url }}">
+        <div class="form-field"><label for="reg-username">Tên đăng nhập</label><input id="reg-username" name="reg_username" autocomplete="username" minlength="3" maxlength="150" required value="{{ request.POST.reg_username|default:'' }}" aria-describedby="username-help{% if reg_errors.username %} username-error{% endif %}" {% if reg_errors.username %}aria-invalid="true"{% endif %}><p class="form-hint" id="username-help">Từ 3 đến 150 ký tự.</p>{% if reg_errors.username %}<p class="form-error" id="username-error">{{ reg_errors.username }}</p>{% endif %}</div>
+        <div class="form-field"><label for="reg-password">Mật khẩu</label><input id="reg-password" name="reg_password1" type="password" autocomplete="new-password" minlength="6" required aria-describedby="password-help{% if reg_errors.password1 %} password-error{% endif %}" {% if reg_errors.password1 %}aria-invalid="true"{% endif %}><p class="form-hint" id="password-help">Tối thiểu 6 ký tự. Nên dùng mật khẩu riêng cho tài khoản này.</p>{% if reg_errors.password1 %}<p class="form-error" id="password-error">{{ reg_errors.password1 }}</p>{% endif %}</div>
+        <div class="form-field"><label for="reg-confirm">Nhập lại mật khẩu</label><input id="reg-confirm" name="reg_password2" type="password" autocomplete="new-password" required {% if reg_errors.password2 %}aria-invalid="true" aria-describedby="confirm-error"{% endif %}>{% if reg_errors.password2 %}<p class="form-error" id="confirm-error">{{ reg_errors.password2 }}</p>{% endif %}</div>
+        <button class="retro-button primary full-width" type="submit">Tạo tài khoản →</button>
+        <p class="auth-disclaimer">Đây là tài khoản trải nghiệm. Đăng ký dự thi chính thức sẽ theo thông báo của ban tổ chức.</p>
+      </form>
+      {% else %}
+      <form method="post" action="/login/" class="retro-form">
+        {% csrf_token %}<input type="hidden" name="action" value="login"><input type="hidden" name="next" value="{{ next_url }}">
+        <div class="form-field"><label for="login-username">Tên đăng nhập</label><input id="login-username" name="username" autocomplete="username" required value="{{ request.POST.username|default:'' }}"></div>
+        <div class="form-field"><label for="login-password">Mật khẩu</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="retro-button primary full-width" type="submit">Đăng nhập →</button>
+      </form>
+      {% endif %}
+      <form method="post" action="/login/" class="guest-form">{% csrf_token %}<input type="hidden" name="action" value="guest"><input type="hidden" name="next" value="{{ next_url }}"><button class="retro-button full-width" type="submit">Tiếp tục với tư cách khách</button><p class="auth-disclaimer">Thử các chế độ chơi trước. Bạn cần tài khoản chính thức để nộp bot.</p></form>
+    </div>
+  </section>
+</div>
+{% endblock %}

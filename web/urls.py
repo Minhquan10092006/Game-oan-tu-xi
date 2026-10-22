@@ -3,6 +3,9 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('play/', views.play, name='play'),
+    path('login/', views.account, name='login'),
+    path('register/', views.account, {'mode': 'register'}, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('battlecode/', views.battlecode_demo, name='battlecode'),
     path('history/', views.match_history, name='history'),

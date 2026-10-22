@@ -75,10 +75,11 @@ def run_ai_battle(match: Match) -> Match:
             result = client.submit_and_wait(submission.source_code, stdin, lang_id)
         except (Judge0Unavailable, Judge0Error) as e:
             logger.warning('AI Battle Judge0 error turn %d: %s', turn_count, e)
-            state.game_over = True
-            state.winner = 2 if player == 1 else 1
-            state.win_reason = f'P{player} AI lỗi Judge0 — thua mặc định'
-            break
+            match.status = 'error'
+            match.winner = None
+            match.win_reason = 'Lỗi hạ tầng Judge0; chưa tính điểm, cần BTC xử lý.'
+            match.save(update_fields=['status', 'winner', 'win_reason'])
+            return match
 
         move = parse_ai_output(result.stdout)
         if move is None:

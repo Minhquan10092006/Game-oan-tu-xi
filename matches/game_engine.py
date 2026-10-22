@@ -5,6 +5,7 @@ from collections import Counter
 from copy import deepcopy
 
 TYPES = ("rock", "paper", "scissors")
+RULES_VERSION = "k71-v1.0"
 BEATS = {"rock": "scissors", "scissors": "paper", "paper": "rock"}
 DIRS = tuple((dr, dc) for dr in (-1, 0, 1) for dc in (-1, 0, 1) if dr or dc)
 
@@ -90,7 +91,7 @@ class GameState:
         r, c = cell
         cells = self.board.get("playable_cells")
         return 1 <= r <= self.board["rows"] and 1 <= c <= self.board["cols"] and (cells is None or list(cell) in cells) and list(cell) not in self.board.get("blocked_cells", [])
-    def _key(self): return (self.current_player, tuple(sorted((p["id"], p["owner"], p["type"], *p["at"]) for p in self.pieces)))
+    def _key(self): return (self.current_player, tuple(sorted((p["owner"], p["type"], *p["at"]) for p in self.pieces)))
     def _mark_position(self): self.repetitions[self._key()] += 1
     def legal_moves(self, player=None):
         player = player or self.current_player; cells = self._cell_map(); moves = []
@@ -106,7 +107,7 @@ class GameState:
                 capture = target is not None
                 moves.append({"piece_id": piece["id"], "from": list(fr), "to": to,
                               "capture_piece_id": target["id"] if target else None, "capture": capture,
-                              "wins_immediately": to == self.board["goals"][player] or (capture and len([p for p in self.pieces if p["owner"] != player]) == 1)})
+                              "wins_immediately": to == self.board["goals"][player] or (capture and sum(p["owner"] != player and p["type"] == target["type"] for p in self.pieces) == 1)})
         return moves
     def finish(self, winner, result, code, message):
         self.status, self.winner, self.result = "finished", winner, result
@@ -117,6 +118,13 @@ class GameState:
             self.finish(other, "win", "no_legal_moves", f"{self.current_player} thua do hết nước đi")
         return self.finished
     def apply_move(self, proposed):
+        if self.finished:
+            raise ValueError("Trận đấu đã kết thúc")
+        if not isinstance(proposed, dict) or not isinstance(proposed.get("piece_id"), str):
+            raise ValueError("move phải chứa piece_id kiểu chuỗi")
+        for key in ("from", "to"):
+            if not isinstance(proposed.get(key), list) or len(proposed[key]) != 2 or any(type(x) is not int for x in proposed[key]):
+                raise ValueError("Tọa độ phải là mảng hai số nguyên")
         legal = self.legal_moves()
         match = next((m for m in legal if isinstance(proposed, dict) and all(proposed.get(k) == m[k] for k in ("piece_id", "from", "to"))), None)
         if not match: raise ValueError("Nước đi không nằm trong legal_moves")
@@ -126,12 +134,12 @@ class GameState:
         self.ply += 1
         event = {"type": "move", "ply": self.ply, "player": player, "piece_id": piece["id"], "piece_type": piece["type"], "from": match["from"], "to": match["to"], "captured_piece": deepcopy(captured), "message": f"{player}: {piece['type']} {match['from']} → {match['to']}"}
         if match["to"] == self.board["goals"][player]: self.finish(player, "win", "goal_reached", f"{player} đến đích")
-        elif not any(p["owner"] != player for p in self.pieces): self.finish(player, "win", "all_pieces_captured", f"{player} bắt hết quân đối thủ")
-        elif self.ply >= self.max_plies: self.finish(None, "draw", "max_plies", "Hòa do chạm giới hạn nước")
+        elif captured and not any(p["owner"] != player and p["type"] == captured["type"] for p in self.pieces): self.finish(player, "win", "type_eliminated", f"{player} bắt hết loại {captured['type']} của đối thủ")
         else:
             self.current_player = "P2" if player == "P1" else "P1"; self._mark_position()
-            if self.repetitions[self._key()] >= 3: self.finish(None, "draw", "threefold_repetition", "Hòa do lặp trạng thái 3 lần")
-            else: self.check_turn_start()
+            self.check_turn_start()
+            if not self.finished and self.repetitions[self._key()] >= 3: self.finish(None, "draw", "threefold_repetition", "Hòa do lặp trạng thái 3 lần")
+            if not self.finished and self.ply >= self.max_plies: self.finish(None, "draw", "max_plies", "Hòa do chạm giới hạn nước")
         event["state_after"] = self.snapshot(); return event
     def snapshot(self):
         return {"board": {k: deepcopy(v) for k, v in self.board.items() if k != "initial_pieces"}, "pieces": deepcopy(self.pieces), "current_player": self.current_player, "ply": self.ply, "status": self.status, "winner": self.winner, "result": self.result, "reason": deepcopy(self.reason)}

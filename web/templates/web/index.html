@@ -1,437 +1,83 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oẳn Tù Tì 2.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">
-    <style>
-        /* ── AUTH OVERLAY ─────────────────────────────────────── */
-        #auth-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background: rgba(5,5,20,.92);
-            backdrop-filter: blur(10px);
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        #auth-overlay.hidden { display: none; }
-        .auth-box {
-            background: #0d0d22;
-            border: 1px solid rgba(99,102,241,.3);
-            border-radius: 20px;
-            padding: 36px 32px;
-            width: 100%; max-width: 440px;
-            box-shadow: 0 30px 80px rgba(0,0,0,.6);
-        }
-        .auth-logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.3rem; font-weight: 900;
-            background: linear-gradient(135deg,#a78bfa,#60a5fa);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; text-align: center; margin-bottom: 4px;
-        }
-        .auth-tagline { text-align:center; color:#475569; font-size:.8rem; margin-bottom:24px; }
-        .auth-tabs {
-            display: grid; grid-template-columns: 1fr 1fr;
-            background: rgba(255,255,255,.04); border-radius: 10px; padding: 4px;
-            margin-bottom: 22px;
-        }
-        .auth-tab {
-            padding: 9px; text-align: center; border-radius: 7px;
-            border: none; background: transparent; color: #475569;
-            font: 500 .84rem 'Inter',sans-serif; cursor: pointer; transition: all .2s;
-        }
-        .auth-tab.active { background: rgba(99,102,241,.25); color: #a5b4fc; font-weight: 600; }
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-        .auth-lbl { display:block; font-size:.73rem; color:#64748b; text-transform:uppercase;
-                    letter-spacing:.04em; margin: 12px 0 4px; }
-        .auth-lbl:first-of-type { margin-top:0; }
-        .auth-input {
-            width: 100%; background: rgba(255,255,255,.04);
-            border: 1px solid rgba(99,102,241,.2); border-radius: 9px;
-            color: #e2e8f0; padding: 11px 13px; font: .9rem 'Inter',sans-serif;
-            transition: border-color .2s;
-        }
-        .auth-input:focus { outline: none; border-color: #6366f1; }
-        .auth-err { color:#f87171; font-size:.74rem; margin-top:3px; }
-        .auth-alert {
-            background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
-            border-radius: 8px; color:#fca5a5; padding:9px 12px;
-            font-size:.82rem; margin-bottom:14px;
-        }
-        .auth-btn-primary {
-            margin-top: 18px; width: 100%; padding: 12px;
-            background: linear-gradient(135deg,#6366f1,#8b5cf6);
-            border: none; border-radius: 9px; color: #fff;
-            font: 600 .92rem 'Inter',sans-serif; cursor: pointer; transition: opacity .2s;
-        }
-        .auth-btn-primary:hover { opacity:.9; }
-        .auth-divider {
-            display:flex; align-items:center; gap:10px;
-            margin: 16px 0; color:#334155; font-size:.76rem;
-        }
-        .auth-divider::before,.auth-divider::after {
-            content:''; flex:1; height:1px; background:rgba(255,255,255,.07);
-        }
-        .auth-btn-guest {
-            width: 100%; padding: 11px;
-            background: rgba(255,255,255,.04);
-            border: 1px solid rgba(255,255,255,.1); border-radius: 9px;
-            color: #64748b; font: 500 .86rem 'Inter',sans-serif; cursor: pointer; transition: all .2s;
-        }
-        .auth-btn-guest:hover { background: rgba(255,255,255,.08); color:#94a3b8; }
-        .auth-guest-note { text-align:center; font-size:.7rem; color:#334155; margin-top:10px; }
-
-        /* ── TOP BAR (khi đã login) ───────────────────────────── */
-        #top-bar {
-            position: fixed; top:0; left:0; right:0; z-index:1000;
-            display: flex; align-items:center; justify-content:space-between;
-            padding: 0 20px; height: 52px;
-            background: rgba(5,5,20,.85); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(99,102,241,.15);
-        }
-        #top-bar .tb-logo {
-            font-family:'Orbitron',sans-serif; font-size:.9rem; font-weight:700;
-            color:#7c6fff;
-        }
-        #top-bar .tb-user {
-            display:flex; align-items:center; gap:8px; font-size:.82rem; color:#64748b;
-        }
-        .tb-guest-tag {
-            background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.25);
-            color:#fbbf24; font-size:.7rem; padding:2px 8px; border-radius:10px;
-        }
-        .tb-admin-tag {
-            background:rgba(99,102,241,.15); border:1px solid rgba(99,102,241,.3);
-            color:#a5b4fc; font-size:.7rem; padding:2px 8px; border-radius:10px;
-        }
-        .tb-btn {
-            padding:5px 12px; border-radius:7px; font:.78rem 'Inter',sans-serif;
-            cursor:pointer; text-decoration:none; transition:all .15s;
-        }
-        .tb-btn-out {
-            background:transparent; border:1px solid rgba(239,68,68,.3); color:#f87171;
-        }
-        .tb-btn-out:hover { background:rgba(239,68,68,.08); }
-
-        /* đẩy nội dung xuống khi có top-bar */
-        body.has-topbar { padding-top: 52px; }
-
-        /* ── SEASON PILL ──────────────────────────────────────── */
-        .season-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.2);
-            border-radius: 20px; padding: 4px 14px;
-            font-size: .78rem; color: #34d399; margin-bottom: 4px;
-        }
-        .season-dot { width:6px;height:6px;border-radius:50%;background:#34d399;
-                      animation:spulse 2s infinite; }
-        @keyframes spulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-        /* ── MENU CARD VARIANTS ───────────────────────────────── */
-        .mode-tag.battlecode { background:rgba(119,216,165,.12);color:#77d8a5;border:1px solid rgba(119,216,165,.3); }
-        .mode-tag.history-tag { background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.3); }
-        .mode-tag.season-tag { background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25); }
-        .mode-tag.p2  { background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3); }
-        .mode-tag.p8  { background:rgba(64,220,180,.12);color:#40dcb4;border:1px solid rgba(64,220,180,.3); }
-        .mode-tag.ranking-tag { background:rgba(240,192,64,.12);color:#f0c040;border:1px solid rgba(240,192,64,.3); }
-    </style>
-</head>
-<body data-username="{{ user.username|default:'' }}" {% if authed %}class="has-topbar"{% endif %}>
-<canvas id="bg-canvas"></canvas>
-
-<!-- ══ AUTH OVERLAY (chỉ hiện khi chưa đăng nhập) ══════════════════ -->
-<div id="auth-overlay" {% if authed %}class="hidden"{% endif %}>
-  <div class="auth-box">
-    <div class="auth-logo">⚔️ OẲN TÙ TÌ 2.0</div>
-    <p class="auth-tagline">Đăng nhập để bắt đầu chiến đấu</p>
-
-    <div class="auth-tabs">
-      <button class="auth-tab {% if auth_mode == 'login' %}active{% endif %}" onclick="authTab('login',this)">Đăng nhập</button>
-      <button class="auth-tab {% if auth_mode == 'register' %}active{% endif %}" onclick="authTab('register',this)">Đăng ký</button>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="af-login" class="auth-form {% if auth_mode == 'login' %}active{% endif %}">
-      {% if auth_error and auth_mode == 'login' %}
-        <div class="auth-alert">{{ auth_error }}</div>
-      {% endif %}
-      <form method="post">{% csrf_token %}
-        <input type="hidden" name="action" value="login">
-        <label class="auth-lbl">Tên đăng nhập</label>
-        <input class="auth-input" type="text" name="username" required autofocus placeholder="username">
-        <label class="auth-lbl">Mật khẩu</label>
-        <input class="auth-input" type="password" name="password" required placeholder="••••••">
-        <button type="submit" class="auth-btn-primary">Đăng nhập →</button>
-      </form>
-      <div class="auth-divider">hoặc</div>
-      <form method="post">{% csrf_token %}
-        <input type="hidden" name="action" value="guest">
-        <button type="submit" class="auth-btn-guest">👤 Tiếp tục với tư cách Khách</button>
-      </form>
-      <p class="auth-guest-note">Khách có thể chơi nhưng không lưu lịch sử.</p>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="af-register" class="auth-form {% if auth_mode == 'register' %}active{% endif %}">
-      {% if auth_error and auth_mode == 'register' %}
-        <div class="auth-alert">{{ auth_error }}</div>
-      {% endif %}
-      <form method="post">{% csrf_token %}
-        <input type="hidden" name="action" value="register">
-        <label class="auth-lbl">Tên đăng nhập</label>
-        <input class="auth-input" type="text" name="reg_username" required placeholder="username"
-               value="{{ request.POST.reg_username|default:'' }}">
-        {% if reg_errors.username %}<p class="auth-err">{{ reg_errors.username }}</p>{% endif %}
-        <label class="auth-lbl">Mật khẩu</label>
-        <input class="auth-input" type="password" name="reg_password1" required placeholder="Tối thiểu 6 ký tự">
-        {% if reg_errors.password1 %}<p class="auth-err">{{ reg_errors.password1 }}</p>{% endif %}
-        <label class="auth-lbl">Xác nhận mật khẩu</label>
-        <input class="auth-input" type="password" name="reg_password2" required placeholder="Nhập lại mật khẩu">
-        {% if reg_errors.password2 %}<p class="auth-err">{{ reg_errors.password2 }}</p>{% endif %}
-        <button type="submit" class="auth-btn-primary">Tạo tài khoản →</button>
-      </form>
-    </div>
-  </div>
+{% extends 'web/retro/base.html' %}
+{% block content %}
+<div class="news-ticker">
+  <span class="ticker-label">BẢN TIN ↗</span>
+  <span class="sr-only">Chào mừng đến đấu trường K71. Thử chiến thuật, viết bot Python, xem lại từng nước đi.</span>
+  <div class="ticker-track" aria-hidden="true"><div class="ticker-content"><b>HELLO, K71!</b><em>★</em>THỬ CHIẾN THUẬT. VIẾT BOT. THÁCH ĐẤU.<em>★</em><b>09 × 09 Ô CỜ — VÔ VÀN Ý TƯỞNG</b><em>★</em>YOUR NEXT MOVE STARTS HERE.<em>★</em><b>HELLO, K71!</b></div></div>
 </div>
 
-<!-- ══ TOP BAR (chỉ hiện khi đã đăng nhập) ════════════════════════ -->
-{% if authed %}
-<div id="top-bar">
-  <span class="tb-logo">⚔️ OTT 2.0</span>
-  <div class="tb-user">
-    {% if is_guest %}
-      <span class="tb-guest-tag">Khách</span>
-    {% else %}
-      <span>{{ user.username }}</span>
-      {% if is_admin %}<span class="tb-admin-tag">Admin</span>{% endif %}
-    {% endif %}
-    <a href="/logout/" class="tb-btn tb-btn-out">Thoát</a>
-  </div>
-</div>
-{% endif %}
-
-<!-- ══ SCREEN 1: MENU ══════════════════════════════════════════════ -->
-<div id="screen-menu" class="screen active">
-  <div class="menu-container">
-    <h1 class="menu-title">
-      <span class="title-icon">⚔️</span>
-      OẲN TÙ TÌ <span class="version">2.0</span>
-      <span class="title-icon">⚔️</span>
-    </h1>
-
-    {% if active_season and authed %}
-    <div style="text-align:center;margin-bottom:12px">
-      <span class="season-pill"><span class="season-dot"></span>{{ active_season.name }}</span>
+<section class="retro-window hero" aria-labelledby="hero-title">
+  <div class="window-title"><span>✦ welcome_to_the_arena.exe</span><span class="window-controls" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+  <div class="window-body hero-body">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="new-badge">NEW!</span> OẲN TÙ TÌ 2.0 / K71</div>
+      <h1 id="hero-title"><span>NƯỚC ĐI NHỎ.</span><span class="headline-blue">Ý TƯỞNG<br>LỚN.</span></h1>
+      <p>Kéo, Búa, Bao đã có luật chơi mới. Biến những dòng <strong>code Python</strong> của bạn thành chiến thuật, đưa đội quân lên bàn cờ và để thuật toán lên tiếng.</p>
+      <div class="hero-actions">
+        {% if user.is_authenticated and not is_guest %}
+          <a class="retro-button primary" href="/play/">Vào đấu trường ↗</a>
+        {% else %}
+          <a class="retro-button primary" href="/register/">Đăng ký tài khoản ↗</a>
+        {% endif %}
+        <a class="retro-button white" href="/battlecode/">▷ Xem trận mẫu</a>
+      </div>
+      <p class="hero-note">Chưa biết viết bot? Bắt đầu từ một nước đi.</p>
     </div>
-    {% endif %}
-
-    <p class="menu-subtitle">Chọn chế độ chơi</p>
-
-    <div class="mode-grid">
-
-      <!-- 2 NGƯỜI -->
-      <button class="mode-card" onclick="showScreen('solo')">
-        <span class="mode-icon">👥</span>
-        <div class="mode-name">2 NGƯỜI</div>
-        <div class="mode-desc">Chơi cùng máy — luân phiên theo lượt.<br>Không cần mạng.</div>
-        <span class="mode-tag p2">SOLO / HOT-SEAT</span>
-      </button>
-
-      <!-- 8 NGƯỜI -->
-      <button class="mode-card" onclick="showScreen('multi')">
-        <span class="mode-icon">🌐</span>
-        <div class="mode-name">8 NGƯỜI</div>
-        <div class="mode-desc">4 phòng đấu song song realtime.<br>Spectator xem cả 4 trận cùng lúc.</div>
-        <span class="mode-tag p8">ONLINE / MULTIPLAYER</span>
-      </button>
-
-      <!-- BATTLECODE -->
-      <a class="mode-card" href="/battlecode/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">🐍</span>
-        <div class="mode-name">BATTLECODE</div>
-        <div class="mode-desc">Nộp hai file Python, server chạy toàn bộ trận.<br>Replay từng nước đã xác nhận.</div>
-        <span class="mode-tag battlecode">BOT VS BOT</span>
-      </a>
-
-      <!-- NỘP AI -->
-      <a class="mode-card" href="/ai/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">🤖</span>
-        <div class="mode-name">NỘP AI</div>
-        <div class="mode-desc">Viết chương trình Python điều khiển quân cờ.<br>Admin nhận và quản lý code AI của bạn.</div>
-        <span class="mode-tag" style="background:rgba(124,111,255,.15);color:#7c6fff;border:1px solid rgba(124,111,255,.3)">AI SUBMIT</span>
-      </a>
-
-      <!-- RANKING -->
-      <a class="mode-card" href="/ranking/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">🏆</span>
-        <div class="mode-name">RANKING</div>
-        <div class="mode-desc">Bảng xếp hạng ELO toàn server.<br>Xem vị trí của bạn và top 50.</div>
-        <span class="mode-tag ranking-tag">LEADERBOARD</span>
-      </a>
-
-      <!-- LỊCH SỬ -->
-      {% if authed and not is_guest %}
-      <a class="mode-card" href="/history/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">📋</span>
-        <div class="mode-name">LỊCH SỬ</div>
-        <div class="mode-desc">Xem lại toàn bộ các trận đã đấu.<br>Replay bất kỳ trận nào.</div>
-        <span class="mode-tag history-tag">REPLAY</span>
-      </a>
-      {% endif %}
-
-      <!-- MÙA GIẢI (admin only) -->
-      {% if is_admin %}
-      <a class="mode-card" href="/season-admin/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">🏆</span>
-        <div class="mode-name">MÙA GIẢI</div>
-        <div class="mode-desc">Tạo và quản lý mùa giải.<br>Xem thống kê toàn server.</div>
-        <span class="mode-tag season-tag">ADMIN</span>
-      </a>
-      <!-- DUYỆT CODE AI (admin only) -->
-      <a class="mode-card" href="/admin/code-review/" style="text-decoration:none;color:inherit">
-        <span class="mode-icon">🤖</span>
-        <div class="mode-name">DUYỆT CODE AI</div>
-        <div class="mode-desc">Xem, duyệt hoặc từ chối code AI<br>do người dùng nộp lên.</div>
-        <span class="mode-tag season-tag">ADMIN</span>
-      </a>
-      {% endif %}
-
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN 2: SOLO ══════════════════════════════════════════════ -->
-<div id="screen-solo" class="screen">
-  <div id="app">
-    <header id="game-header">
-      <button class="back-btn" onclick="showScreen('menu')">← Menu</button>
-      <div class="header-glow"></div>
-      <h1 id="game-title">
-        <span class="title-icon">⚔️</span>
-        <span class="title-text">OẲN TÙ TÌ <span class="version">2.0</span></span>
-        <span class="title-icon">⚔️</span>
-      </h1>
-      <p class="subtitle">2 Người — Chơi cùng máy</p>
-    </header>
-    <div id="game-info-bar">
-      <div id="player1-info" class="player-info active-player">
-        <div class="player-avatar p1-avatar">🔴</div>
-        <div class="player-details">
-          <span class="player-name">Player 1</span>
-          <span class="player-goal">🎯 Đến ô (9, 9)</span>
-          <div class="piece-count" id="p1-pieces">
-            <span class="piece-badge rock">🪨×0</span>
-            <span class="piece-badge paper">📄×0</span>
-            <span class="piece-badge scissors">✂️×0</span>
-          </div>
+    <div class="retro-window board-window">
+      <div class="window-title"><span>board_preview.bmp</span><span aria-hidden="true">▣</span></div>
+      <div class="window-body">
+        <div class="board-caption"><span>VỊ TRÍ KHỞI ĐẦU</span><span>9 × 9</span></div>
+        <div class="pixel-board" role="img" aria-label="Bàn cờ 9 nhân 9. Đội đỏ ở góc trên trái, đội xanh ở góc dưới phải; mỗi đội có 3 Kéo, 3 Búa và 3 Bao.">
+          {% for cell in hero_cells %}<div class="pixel-cell {{ cell.owner }}{% if cell.goal %} goal{% endif %}" aria-hidden="true">{% if cell.symbol %}<span>{{ cell.symbol }}</span>{% endif %}</div>{% endfor %}
         </div>
-      </div>
-      <div id="turn-indicator">
-        <div class="turn-orb" id="turn-orb"></div>
-        <span id="turn-text">Lượt Player 1</span>
-        <span id="turn-number">Turn 1</span>
-      </div>
-      <div id="player2-info" class="player-info">
-        <div class="player-avatar p2-avatar">🔵</div>
-        <div class="player-details">
-          <span class="player-name">Player 2</span>
-          <span class="player-goal">🎯 Đến ô (1, 1)</span>
-          <div class="piece-count" id="p2-pieces">
-            <span class="piece-badge rock">🪨×0</span>
-            <span class="piece-badge paper">📄×0</span>
-            <span class="piece-badge scissors">✂️×0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <main id="game-area">
-      <div id="board-wrapper">
-        <div class="coord-labels top-labels" id="top-labels"></div>
-        <div class="board-with-rows">
-          <div class="coord-labels row-labels" id="left-labels"></div>
-          <div id="board" role="grid" aria-label="Game board 9x9"></div>
-          <div class="coord-labels row-labels" id="right-labels"></div>
-        </div>
-        <div class="coord-labels top-labels" id="bottom-labels"></div>
-      </div>
-      <aside id="side-panel">
-        <div class="panel-section" id="move-log-section">
-          <h2 class="panel-title">📜 Lịch Sử Nước Đi</h2>
-          <div id="move-log"></div>
-        </div>
-        <div class="panel-section" id="legend-section">
-          <h2 class="panel-title">📖 Chú Thích</h2>
-          <div class="legend-grid">
-            <div class="legend-item"><span class="legend-icon rock-icon p1">🪨</span> Búa (Rock)</div>
-            <div class="legend-item"><span class="legend-icon paper-icon p1">📄</span> Bao (Paper)</div>
-            <div class="legend-item"><span class="legend-icon scissors-icon p1">✂️</span> Kéo (Scissors)</div>
-          </div>
-          <div class="legend-rules">
-            <div class="rule">🪨 → ✂️ <span>Búa ăn Kéo</span></div>
-            <div class="rule">✂️ → 📄 <span>Kéo ăn Bao</span></div>
-            <div class="rule">📄 → 🪨 <span>Bao ăn Búa</span></div>
-          </div>
-        </div>
-        <div class="panel-section" id="controls-section">
-          <button id="btn-new-game" class="game-btn primary-btn" onclick="newGame()">🔄 Ván Mới</button>
-          <button id="btn-undo" class="game-btn secondary-btn" onclick="undoMove()">↩️ Hoàn Tác</button>
-        </div>
-      </aside>
-    </main>
-    <div id="status-bar"><span id="status-message">Chọn một quân cờ để bắt đầu</span></div>
-    <div id="victory-overlay" class="hidden">
-      <div id="victory-modal">
-        <div class="victory-particles" id="victory-particles"></div>
-        <div class="trophy">🏆</div>
-        <h2 id="victory-title">Chiến Thắng!</h2>
-        <p id="victory-message"></p>
-        <button class="game-btn primary-btn" onclick="newGame()">🔄 Chơi Lại</button>
+        <div class="board-legend"><span class="red-ink">■ P1 / ĐI TRƯỚC</span><span class="blue-ink">■ P2 / PHẢN CÔNG</span></div>
+        <div class="board-sticker">QUEN TAY OẲN TÙ TÌ.<br>THỬ TÀI THUẬT TOÁN!</div>
       </div>
     </div>
   </div>
+  <div class="hero-status"><span>● Sẵn sàng cho nước đi đầu tiên</span><span>PYTHON · CHIẾN THUẬT · SÁNG TẠO</span></div>
+</section>
+
+<div class="counter-strip" aria-label="Thông số trò chơi">
+  <div class="counter-item"><strong>09 × 09</strong><span>KÍCH THƯỚC BÀN CỜ</span></div>
+  <div class="counter-item"><strong>03</strong><span>LOẠI QUÂN: KÉO · BÚA · BAO</span></div>
+  <div class="counter-item"><strong>08</strong><span>HƯỚNG DI CHUYỂN</span></div>
+  <div class="counter-item"><strong>3 / 1 / 0</strong><span>ĐIỂM THẮNG · HÒA · THUA</span></div>
 </div>
 
-<!-- ══ SCREEN 3: MULTI ══════════════════════════════════════════════ -->
-<div id="screen-multi" class="screen">
-  <header id="multi-header">
-    <button class="back-btn" onclick="showScreen('menu')">← Menu</button>
-    <h1>⚔️ OẲN TÙ TÌ 2.0 — <span class="mp-tag">8 NGƯỜI / 4 TRẬN</span></h1>
-    <p class="subtitle">Theo dõi 4 ván đấu cùng lúc</p>
-  </header>
-  <div id="multi-grid">
-    <div class="mini-game" data-slot="0"></div>
-    <div class="mini-game" data-slot="1"></div>
-    <div class="mini-game" data-slot="2"></div>
-    <div class="mini-game" data-slot="3"></div>
+<hr class="groove">
+
+<section class="content-section" id="luat-choi" aria-labelledby="rules-title">
+  <div class="section-heading"><div><h2 id="rules-title">LUẬT QUEN. VÁN ĐẤU MỚI.</h2><p>Ba loại quân. Một bàn cờ. Chiến thuật do bạn quyết định.</p></div><span class="section-number">01 / LUẬT CHƠI</span></div>
+  <div class="rule-layout">
+    <div class="retro-window"><div class="window-title">combat_rules.txt</div><ul class="rule-cycle"><li><span class="rule-letter">B</span> Búa thắng Kéo <span class="rule-arrow" aria-hidden="true">→</span></li><li><span class="rule-letter">K</span> Kéo thắng Bao <span class="rule-arrow" aria-hidden="true">→</span></li><li><span class="rule-letter">Ba</span> Bao thắng Búa <span class="rule-arrow" aria-hidden="true">↺</span></li></ul></div>
+    <table class="rule-table"><caption class="sr-only">Tóm tắt luật thi đấu K71</caption><tbody>
+      <tr><th scope="row">Di chuyển</th><td>Mỗi lượt đi một quân, một ô theo tám hướng. Không bỏ lượt.</td></tr>
+      <tr><th scope="row">Bắt quân</th><td>Chỉ bắt loại quân mình khắc chế. Cùng loại thì chặn nhau.</td></tr>
+      <tr><th scope="row">Chiến thắng</th><td>Đến ô đích, bắt hết một loại quân đối thủ, hoặc khiến đối thủ hết nước đi.</td></tr>
+      <tr><th scope="row">Hòa</th><td>Lặp trạng thái ba lần hoặc đủ 300 nước khi chưa có bên thắng.</td></tr>
+    </tbody></table>
   </div>
-  <div id="multi-controls">
-    <input id="mp-room-code" placeholder="Mã phòng (VD: A1)" maxlength="8">
-    <input id="mp-name" placeholder="Tên của bạn">
-    <button id="btn-join" class="game-btn primary-btn">🎮 Vào phòng</button>
-    <button id="btn-spectate" class="game-btn secondary-btn">👁 Xem phòng</button>
-    <button id="btn-leave" class="game-btn secondary-btn" style="display:none">🚪 Rời phòng</button>
-    <button id="btn-reset" class="game-btn secondary-btn" style="display:none">🔄 Ván mới</button>
-    <span id="mp-status">Đang kết nối...</span>
+  <p class="rule-footnote">[i] Thể lệ k71-v1.0 đang là bản đề xuất. Ban tổ chức sẽ công bố quy định chính thức trước giải. ELO luyện tập không dùng để trao giải.</p>
+</section>
+
+<hr class="groove">
+
+<section id="tham-gia" aria-labelledby="steps-title" class="content-section">
+  <div class="section-heading"><div><h2 id="steps-title">TỪ “HELLO” ĐẾN ĐẤU TRƯỜNG.</h2><p>Không cần một thuật toán hoàn hảo để bắt đầu.</p></div><span class="section-number">02 / THAM GIA</span></div>
+  <div class="step-grid">
+    <article class="retro-window step-card"><div class="window-title">01 · start_here.txt</div><div class="window-body"><span class="step-code" aria-hidden="true">01_</span><h3>Tạo tài khoản</h3><p>Đăng ký để lưu bài nộp và theo dõi lịch sử. Hoặc vào với tư cách khách để thử trước.</p></div></article>
+    <article class="retro-window step-card"><div class="window-title">02 · your_bot.py</div><div class="window-body"><span class="step-code" aria-hidden="true">02_</span><h3>Viết nước đi của bạn</h3><p>Đọc trạng thái bàn cờ, chọn nước hợp lệ và trả kết quả bằng Python. Cải tiến từ bot mẫu từng chút một.</p></div></article>
+    <article class="retro-window step-card"><div class="window-title">03 · game_on.exe</div><div class="window-body"><span class="step-code" aria-hidden="true">03_</span><h3>Nộp bot. Xem kết quả.</h3><p>Gửi bài để ban tổ chức kiểm tra. Khi thi đấu, từng nước đi được lưu lại để xem và đối chiếu.</p></div></article>
   </div>
+</section>
+
+<hr class="groove">
+
+<div class="info-layout">
+  <section class="retro-window" aria-labelledby="notice-title"><div class="window-title">▤ bulletin_board.txt</div><div class="window-body notice-paper"><div class="eyebrow">THÔNG BÁO / K71</div><h3 id="notice-title">Đấu trường đang khởi động.</h3>{% if active_season %}<p><strong>Mùa hiện tại: {{ active_season.name }}</strong></p>{% endif %}<p>Bạn đang trải nghiệm bản demo. Lịch thi, thời hạn nộp bài và giải thưởng sẽ được thông báo sau khi nhà trường phê duyệt.</p><p>Tạo tài khoản tại đây chưa đồng nghĩa với đăng ký dự thi chính thức.</p><a href="/play/">Khám phá các chế độ chơi →</a></div></section>
+  <section class="retro-window" aria-labelledby="faq-title"><div class="window-title" id="faq-title">? · Có thể bạn đang thắc mắc</div><div class="faq-list"><details><summary>Mới học Python có tham gia được không?</summary><p>Có. Hãy bắt đầu bằng việc chọn một nước trong danh sách nước hợp lệ, rồi dần thêm cách ưu tiên bắt quân hoặc tiến về đích.</p></details><details><summary>Tôi có thể xem thử trước khi đăng ký?</summary><p>Có. Chọn xem trận mẫu, sau đó “Tiếp tục với tư cách khách”. Bạn có thể phát, tạm dừng và xem lại diễn biến.</p></details><details><summary>Điểm giải được tính như thế nào?</summary><p>Đề xuất: thắng 3 điểm, hòa 1 điểm, thua 0 điểm. Hai bot đổi bên trong hai ván. Kết quả giải được BTC công bố riêng.</p></details><details><summary>Code của tôi có được chạy ngay trên web?</summary><p>Web nhận và lưu bài. Ban tổ chức chạy bot trên máy chấm riêng; bản demo trực tuyến chỉ chạy các chiến thuật mẫu.</p></details></div></section>
 </div>
 
-<!-- Scripts gốc -->
-<script src="{% static 'web/js/game.js' %}"></script>
-<script src="{% static 'web/js/ui.js' %}"></script>
-<script src="{% static 'web/js/multiplayer.js' %}"></script>
-<script src="{% static 'web/js/screen-manager.js' %}"></script>
-<script>
-  function authTab(tab, btn) {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('af-' + tab).classList.add('active');
-  }
-</script>
-</body>
-</html>
+<section class="final-cta" aria-labelledby="cta-title"><div class="final-cta-inner"><div><h2 id="cta-title">ĐẾN LƯỢT BẠN. <span class="rainbow" aria-hidden="true">★ GAME ON!</span></h2><p>Một dòng code hôm nay. Một chiến thuật mới ngày mai.</p></div>{% if user.is_authenticated and not is_guest %}<a class="retro-button yellow" href="/ai/">Nộp bot của bạn ↗</a>{% else %}<a class="retro-button yellow" href="/register/">Tạo tài khoản ngay ↗</a>{% endif %}</div></section>
+{% endblock %}

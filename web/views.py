@@ -5,10 +5,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
 from django.http import JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 from .models import UserProfile, Season, MatchHistory
 
 
@@ -24,7 +26,39 @@ def _ensure_profile(user):
 # ── auth wall ────────────────────────────────────────────────────────
 
 def index(request):
-    """Nếu đã đăng nhập → trang chủ; nếu chưa → auth overlay ngay trên index."""
+    """Public competition landing page; authentication is a separate destination."""
+    if request.method == 'POST':
+        return account(request)  # Compatibility with existing sign-in forms.
+    from matches.game_engine import board_presets
+    pieces = {tuple(p['at']): p for p in board_presets()['classic_9x9']['initial_pieces']}
+    symbols = {'rock': 'B', 'paper': 'Ba', 'scissors': 'K'}
+    cells = []
+    for row in range(1, 10):
+        for col in range(1, 10):
+            piece = pieces.get((row, col))
+            cells.append({'owner': piece['owner'] if piece else '',
+                          'symbol': symbols[piece['type']] if piece else '',
+                          'goal': (row, col) in ((1, 1), (9, 9))})
+    return render(request, 'web/index.html', {
+        'hero_cells': cells, 'page': 'home', 'is_guest': request.session.get('is_guest', False),
+        'active_season': Season.objects.filter(is_active=True).first(),
+    })
+
+
+@login_required(login_url='/login/')
+def play(request):
+    return render(request, 'web/play.html', {
+        'authed': True, 'user': request.user, 'page': 'play',
+        'is_guest': request.session.get('is_guest', False), 'is_admin': _is_admin(request.user),
+        'active_season': Season.objects.filter(is_active=True).first(),
+    })
+
+
+def account(request, mode='login'):
+    """Dedicated sign-in/register pages with a same-origin return destination."""
+    next_url = request.POST.get('next') or request.GET.get('next') or '/play/'
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        next_url = '/play/'
     is_guest = request.session.get('is_guest', False)
     active_season = Season.objects.filter(is_active=True).first()
     context = {
@@ -35,7 +69,9 @@ def index(request):
         'active_season': active_season,
         'auth_error': '',
         'reg_errors': {},
-        'auth_mode': 'login',
+        'auth_mode': mode,
+        'page': mode,
+        'next_url': next_url,
     }
 
     if request.method == 'POST':
@@ -47,7 +83,8 @@ def index(request):
             user = authenticate(request, username=username, password=password)
             if user:
                 login(request, user); _ensure_profile(user)
-                return redirect('/')
+                request.session.pop('is_guest', None)
+                return redirect(next_url)
             context['auth_error'] = 'Tên đăng nhập hoặc mật khẩu không đúng.'
             context['auth_mode'] = 'login'
 
@@ -57,8 +94,8 @@ def index(request):
             pw1   = request.POST.get('reg_password1', '')
             pw2   = request.POST.get('reg_password2', '')
             errs  = {}
-            if not uname or len(uname) < 3:
-                errs['username'] = 'Tối thiểu 3 ký tự.'
+            if not uname or not 3 <= len(uname) <= 150:
+                errs['username'] = 'Tên đăng nhập cần từ 3 đến 150 ký tự.'
             elif User.objects.filter(username=uname).exists():
                 errs['username'] = 'Tên đăng nhập đã tồn tại.'
             if len(pw1) < 6:
@@ -68,7 +105,8 @@ def index(request):
             if not errs:
                 user = User.objects.create_user(username=uname, password=pw1)
                 _ensure_profile(user); login(request, user)
-                return redirect('/')
+                request.session.pop('is_guest', None)
+                return redirect(next_url)
             context['reg_errors'] = errs
 
         elif action == 'guest':
@@ -76,9 +114,9 @@ def index(request):
             user  = User.objects.create_user(username=gname, password=uuid.uuid4().hex)
             _ensure_profile(user); login(request, user)
             request.session['is_guest'] = True
-            return redirect('/')
+            return redirect(next_url)
 
-    return render(request, 'web/index.html', context)
+    return render(request, 'web/account.html', context)
 
 
 # ── logout ───────────────────────────────────────────────────────────
@@ -93,10 +131,11 @@ def logout_view(request):
 
 # ── battlecode ───────────────────────────────────────────────────────
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def battlecode_demo(request):
     active_season = Season.objects.filter(is_active=True).first()
     return render(request, 'web/battlecode_demo.html', {
+        'page': 'play',
         'user': request.user,
         'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
@@ -106,7 +145,7 @@ def battlecode_demo(request):
 
 # ── lịch sử ──────────────────────────────────────────────────────────
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def match_history(request):
     matches = MatchHistory.objects.filter(player=request.user).order_by('-played_at')
     return render(request, 'web/history.html', {
@@ -116,7 +155,7 @@ def match_history(request):
     })
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def match_detail(request, match_id):
     match = get_object_or_404(MatchHistory, match_id=match_id, player=request.user)
     return render(request, 'web/match_detail.html', {
@@ -128,7 +167,7 @@ def match_detail(request, match_id):
 
 # ── mùa giải (admin) ─────────────────────────────────────────────────
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def season_admin(request):
     if not _is_admin(request.user):
         return redirect('/')
@@ -146,7 +185,7 @@ def season_admin(request):
     })
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 @require_POST
 def season_create(request):
     if not _is_admin(request.user): return redirect('/')
@@ -164,7 +203,7 @@ def season_create(request):
     return redirect('/season-admin/')
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 @require_POST
 def season_toggle(request, pk):
     if not _is_admin(request.user): return redirect('/')
@@ -177,7 +216,7 @@ def season_toggle(request, pk):
     return redirect('/season-admin/')
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 @require_POST
 def season_delete(request, pk):
     if not _is_admin(request.user): return redirect('/')
@@ -218,7 +257,7 @@ def admin_submission_code(request, pk):
 
 # ── admin: trang duyệt code cộng đồng ────────────────────────────────
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def admin_code_review(request):
     """
     Trang admin duyệt code AI do user nộp.
@@ -258,11 +297,14 @@ def ranking_view(request):
     """Trang bảng xếp hạng ELO — truyền user để template highlight hàng của mình."""
     return render(request, 'web/ranking.html', {
         'user': request.user,
+        'page': 'ranking',
+        'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
     })
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
+@ensure_csrf_cookie
 def ai_submit(request):
     """Trang nộp code AI — user upload, admin nhận."""
     from submissions.models import Submission
@@ -275,7 +317,7 @@ def ai_submit(request):
     })
 
 
-@login_required(login_url='/')
+@login_required(login_url='/login/')
 def ai_battle(request):
     """
     Trang battle AI vs AI.

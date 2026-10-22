@@ -31,7 +31,7 @@
 }
 
 .menu-title {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: clamp(1.8rem, 5vw, 3.5rem);
   font-weight: 900;
   display: flex;
@@ -95,7 +95,7 @@
 }
 
 .mode-name {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 8px;
@@ -114,7 +114,7 @@
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.7rem;
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   letter-spacing: 1px;
   font-weight: 600;
 }
@@ -142,7 +142,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -182,7 +182,7 @@
 }
 
 #multi-header h1 {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
   background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6, #3b82f6);
   background-size: 300% 300%;
@@ -236,7 +236,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: 0.85rem;
 }
 
@@ -246,7 +246,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 0.72rem;
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
 }
 
 .mg-player {
@@ -352,7 +352,7 @@
 }
 
 .mg-gameover .winner {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-weight: 900;
   font-size: 1rem;
   color: var(--accent-gold);
@@ -390,7 +390,7 @@
   color: var(--text-primary);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   font-size: 0.8rem;
   width: 160px;
 }
@@ -408,7 +408,7 @@
 #mp-status {
   font-size: 0.72rem;
   color: var(--text-muted);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   margin-left: 8px;
 }
 
@@ -453,7 +453,7 @@
 .mg-move-log-title {
   font-size: 0.6rem;
   color: var(--text-muted);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   padding-bottom: 3px;
   border-bottom: 1px solid var(--border-subtle);
   text-align: center;
@@ -491,7 +491,7 @@
 .mg-log-entry.p2 { border-left-color: var(--accent-p2); }
 
 .mg-log-icon  { flex-shrink: 0; font-size: 0.6rem; }
-.mg-log-move  { font-family: 'Fira Code', 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+.mg-log-move  { font-family: Consolas, 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
 .mg-log-piece { color: var(--text-muted); flex-shrink: 0; display: none; }
 .mg-log-capture { flex-shrink: 0; font-size: 0.58rem; }
 .mg-log-capture.p1 { color: var(--accent-p1); }
@@ -516,7 +516,7 @@
 .mg-move-log-title {
   font-size: 0.6rem;
   color: var(--text-muted);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   padding-bottom: 3px;
   border-bottom: 1px solid var(--border-subtle);
   text-align: center;
@@ -554,7 +554,7 @@
 .mg-log-entry.p2 { border-left-color: var(--accent-p2); }
 
 .mg-log-icon    { flex-shrink: 0; font-size: 0.6rem; }
-.mg-log-move    { font-family: 'Fira Code', 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+.mg-log-move    { font-family: Consolas, 'Courier New', monospace; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
 .mg-log-piece   { color: var(--text-muted); flex-shrink: 0; }
 .mg-log-capture { flex-shrink: 0; font-size: 0.58rem; }
 .mg-log-capture.p1 { color: var(--accent-p1); }

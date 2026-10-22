@@ -1,0 +1,30 @@
+{% extends 'web/retro/base.html' %}
+{% load static %}
+{% block title %}Đấu trường · Oẳn Tù Tì 2.0{% endblock %}
+{% block body_class %}retro-play{% endblock %}
+{% block legacy_styles %}<link rel="stylesheet" href="{% static 'web/css/style.css' %}"><link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-play.css' %}">{% endblock %}
+{% block content %}
+<section id="screen-menu" class="screen active">
+  <div class="retro-window launcher-window">
+    <div class="window-title"><span>▦ program_manager.exe — Đấu trường</span><span class="window-controls" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
+    <div class="window-body">
+      <div class="section-heading"><div><div class="eyebrow">{% if is_guest %}PHIÊN TRẢI NGHIỆM / KHÁCH{% else %}PLAYER / {{ user.username }}{% endif %}</div><h1>CHỌN NƯỚC ĐI TIẾP THEO.</h1><p>Chơi một ván, xem bot thi đấu hoặc bắt tay viết chiến thuật.</p></div><a href="/logout/" class="retro-button">Đăng xuất</a></div>
+      <div class="launcher-grid">
+        <article class="retro-window launcher-card"><div class="window-title">01 · hai_nguoi.exe</div><div class="window-body"><span class="launcher-icon" aria-hidden="true">P1<br>↔ P2</span><h2>Chơi cùng máy</h2><p>Hai người luân phiên điều khiển quân cờ. Làm quen luật chơi bằng một ván đấu.</p><button class="retro-button full-width" onclick="showScreen('solo')">Chơi hai người →</button></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">02 · phong_dau.exe</div><div class="window-body"><span class="launcher-icon blue" aria-hidden="true">NET<br>↗ ↙</span><h2>Phòng trực tuyến</h2><p>Vào phòng cùng bạn bè hoặc theo dõi bốn bàn đấu đang diễn ra.</p><button class="retro-button full-width" onclick="showScreen('multi')">Mở phòng đấu →</button></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">03 · bot_arena.exe</div><div class="window-body"><span class="launcher-icon red" aria-hidden="true">&lt;/&gt;<br>VS</span><h2>Hai bot mẫu</h2><p>Để thuật toán lên tiếng. Xem trận mẫu và phát lại từng nước đi đã xác nhận.</p><a class="retro-button primary full-width" href="/battlecode/">Xem bot thi đấu →</a></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">04 · your_bot.py</div><div class="window-body"><span class="launcher-icon blue" aria-hidden="true">PY<br>↑</span><h2>Nộp chương trình</h2><p>{% if is_guest %}Tạo tài khoản chính thức để gửi và quản lý các phiên bản bot của bạn.{% else %}Gửi file Python, nhận mã biên nhận và theo dõi trạng thái duyệt bài.{% endif %}</p>{% if is_guest %}<a class="retro-button full-width" href="/register/?next=/ai/">Đăng ký để nộp bot →</a>{% else %}<a class="retro-button full-width" href="/ai/">Nộp bot Python →</a>{% endif %}</div></article>
+        <article class="retro-window launcher-card"><div class="window-title">05 · replay.log</div><div class="window-body"><span class="launcher-icon" aria-hidden="true">↺<br>LOG</span><h2>Lịch sử trận</h2><p>Xem lại những trận của bạn. Từng nước đi đều là một gợi ý cho chiến thuật mới.</p><a class="retro-button full-width" href="/history/">Mở lịch sử →</a></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">06 · leaderboard.txt</div><div class="window-body"><span class="launcher-icon red" aria-hidden="true">#1<br>★</span><h2>ELO luyện tập</h2><p>Theo dõi bảng ELO trải nghiệm. Điểm giải K71 được ban tổ chức công bố riêng.</p><a class="retro-button full-width" href="/ranking/">Xem bảng ELO →</a></div></article>
+      </div>
+      {% if is_admin %}<div class="admin-shortcuts"><strong>QUẢN TRỊ:</strong> <a href="/season-admin/">Quản lý mùa giải</a><a href="/admin/code-review/">Duyệt bài nộp</a></div>{% endif %}
+    </div>
+  </div>
+</section>
+{% include 'web/retro/game_screens.html' %}
+<script src="{% static 'web/js/game.js' %}"></script>
+<script src="{% static 'web/js/ui.js' %}"></script>
+<script src="{% static 'web/js/multiplayer.js' %}"></script>
+<script src="{% static 'web/js/screen-manager.js' %}"></script>
+{% endblock %}

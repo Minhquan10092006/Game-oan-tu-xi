@@ -1,5 +1,7 @@
 # Hướng dẫn cài đặt — Hệ thống chấm bài AI Python
 
+> Tài liệu này mô tả luồng Judge0 cũ. Bản K71 hiện hành dùng [README](README.md) và [hướng dẫn chạy giải](docs/HUONG_DAN_CHAY_GIAI.md); demo không chạy file nộp trong web.
+
 ## Sơ đồ kiến trúc
 
 ```

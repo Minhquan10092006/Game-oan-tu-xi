@@ -1,0 +1,26 @@
+<header class="site-shell site-header">
+  <div class="desktop-bar"><span><span class="system-dot" aria-hidden="true"></span> K71 / ĐẤU TRƯỜNG THUẬT TOÁN</span><span class="desktop-meta">BẢN TRẢI NGHIỆM · v1.0</span></div>
+  <div class="masthead">
+    <a class="brand" href="/" aria-label="Oẳn Tù Tì 2.0 — Trang chủ">
+      <span class="brand-mark" aria-hidden="true"><span>K</span><span>B</span><span>Ba</span><span>↗</span></span>
+      <span class="brand-copy"><strong>OẲN TÙ TÌ <span>2.0</span></strong><small>TRÒ CHƠI QUEN. TƯ DUY MỚI.</small></span>
+    </a>
+    <div class="account-links">
+      {% if user.is_authenticated and not is_guest %}
+        <span class="username">Xin chào, <strong>{{ user.username }}</strong></span>
+        <a class="retro-button primary" href="/play/">Vào đấu trường ↗</a>
+      {% else %}
+        <a class="login-link" href="/login/">Đăng nhập</a>
+        <a class="retro-button primary" href="/register/">Đăng ký tài khoản ↗</a>
+      {% endif %}
+    </div>
+  </div>
+  <nav class="tab-nav" aria-label="Điều hướng chính">
+    <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}><span aria-hidden="true">⌂</span> Trang chủ</a>
+    <a href="/#luat-choi">Luật chơi</a>
+    <a href="/#tham-gia">Cách tham gia</a>
+    <a href="/play/" {% if page == 'play' %}aria-current="page"{% endif %}>Đấu trường</a>
+    <a href="/ranking/" {% if page == 'ranking' %}aria-current="page"{% endif %}>ELO luyện tập</a>
+    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Dừng hiệu ứng</button>
+  </nav>
+</header>

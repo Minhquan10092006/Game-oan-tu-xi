@@ -11,6 +11,7 @@ Thay đổi so với phiên bản cũ:
 """
 
 import ast
+import hashlib
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
@@ -85,6 +86,10 @@ class Submission(models.Model):
             return False, f'Lỗi cú pháp dòng {e.lineno}: {e.msg}'
         except Exception as e:
             return False, str(e)
+
+    @property
+    def source_sha256(self):
+        return hashlib.sha256(self.source_code.encode('utf-8')).hexdigest()
 
     @property
     def is_approved(self):

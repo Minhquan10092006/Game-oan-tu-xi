@@ -73,7 +73,7 @@ html {
 }
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
@@ -123,7 +123,7 @@ body {
 }
 
 #game-title {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-weight: 900;
     font-size: clamp(1.6rem, 4vw, 2.8rem);
     display: flex;
@@ -234,7 +234,7 @@ body {
 }
 
 .player-name {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-weight: 700;
     font-size: 0.95rem;
     letter-spacing: 1px;
@@ -290,7 +290,7 @@ body {
 }
 
 #turn-text {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -339,7 +339,7 @@ body {
 .coord-labels span {
     width: var(--cell-size);
     text-align: center;
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.65rem;
     color: var(--text-muted);
     letter-spacing: 1px;
@@ -355,7 +355,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.65rem;
     color: var(--text-muted);
     width: auto;
@@ -592,7 +592,7 @@ body {
 }
 
 .panel-title {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -631,7 +631,7 @@ body {
     gap: 8px;
     padding: 4px 6px;
     border-radius: 4px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     font-size: 0.72rem;
     line-height: 1.4;
     animation: logSlideIn 0.3s ease-out;
@@ -642,7 +642,7 @@ body {
 
 .log-entry .log-turn {
     color: var(--text-muted);
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.62rem;
     min-width: 24px;
 }
@@ -711,7 +711,7 @@ body {
     padding: 10px 16px;
     border: none;
     border-radius: var(--radius-sm);
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 1px;
@@ -819,7 +819,7 @@ body {
 }
 
 #victory-title {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Segoe UI', monospace;
     font-size: 2rem;
     font-weight: 900;
     background: linear-gradient(135deg, var(--accent-gold), #fde68a);
@@ -959,7 +959,7 @@ body {
 }
 
 .menu-title {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: clamp(1.8rem, 5vw, 3.5rem);
   font-weight: 900;
   display: flex;
@@ -1023,7 +1023,7 @@ body {
 }
 
 .mode-name {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 8px;
@@ -1042,7 +1042,7 @@ body {
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.7rem;
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   letter-spacing: 1px;
   font-weight: 600;
 }
@@ -1070,7 +1070,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-family: 'Orbitron', monospace;
+  font-family: 'Segoe UI', monospace;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;

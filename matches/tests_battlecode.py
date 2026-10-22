@@ -4,6 +4,7 @@ from pathlib import Path
 from django.test import SimpleTestCase
 from .game_engine import GameState, board_presets, validate_board_config
 from .match_manager import MatchManager
+from .sample_bots import SampleBotRunner
 
 class GameEngineSpecTests(SimpleTestCase):
     def test_classic_is_one_based_and_has_nine_pieces_each(self):
@@ -25,9 +26,8 @@ class GameEngineSpecTests(SimpleTestCase):
         board["blocked_cells"] = [[1, 1]]
         with self.assertRaises(ValueError): validate_board_config(board)
 
-    def test_runner_replays_two_python_bots(self):
-        root = Path(__file__).resolve().parents[1]
-        result = MatchManager().run(root / "bots/student1_bot.py", root / "bots/student2_bot.py", max_plies=8)
+    def test_demo_replays_two_trusted_strategies_without_subprocess(self):
+        result = MatchManager(SampleBotRunner).run('aggressive', 'defensive', max_plies=8)
         self.assertEqual(result["status"], "finished")
         self.assertGreater(result["ply"], 0)
         self.assertEqual(result["reason"]["code"], "max_plies")
