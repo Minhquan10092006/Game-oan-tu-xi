@@ -6,6 +6,7 @@ Sinh viên viết Python điều khiển quân trên bàn 9 × 9. Thắng khi đ
 
 - [Luật thi đấu chi tiết](docs/LUAT_THI_DAU_K71.md): bàn cờ, bố trí, di chuyển, thắng/hòa/thua, giao thức, giới hạn, nộp bài và khiếu nại.
 - [Chấm điểm và xếp hạng](docs/CHAM_DIEM_XEP_HANG.md): 3–1–0, đổi bên, vòng bảng/chung kết, đối đầu, SB và đồng hạng.
+- [Luật, bốc thăm và sơ đồ giải](docs/LUAT_XEP_BANG_VA_SO_DO_GIAI.md): chia bảng, demo World Cup 48 đội, email và nhánh tới chung kết.
 - [Host demo và phương án tiết kiệm](docs/HOST_DEMO_VA_VAN_HANH.md): giữ Render demo, lựa chọn sau khi cấp kinh phí, chi phí tham chiếu và vận hành.
 - [Hướng dẫn chạy giải local](docs/HUONG_DAN_CHAY_GIAI.md): xuất bài, khóa hash, chạy Docker, tiếp tục sau sự cố và xuất kết quả.
 
@@ -15,7 +16,7 @@ Các điều lệ là bản đề xuất k71-v1.0 để trường phê duyệt t
 
 | Thành phần | Hành vi |
 |---|---|
-| Django web | Đăng nhập, nộp code, duyệt, biên nhận và hash bài |
+| Django web | Đăng nhập, đăng ký mùa giải, bốc thăm/bảng đấu, email khi cấu hình SMTP, nộp code, duyệt và biên nhận |
 | `/battlecode/` | Hai chiến thuật mẫu tin cậy, replay lưu DB, không cộng điểm giải |
 | File Python tải lên | Chỉ lưu bài; không chạy trực tiếp trong HTTP request |
 | Công cụ local | Khóa bài, vòng tròn hai lượt, Docker runner, lưu từng ván, resume, xếp hạng |

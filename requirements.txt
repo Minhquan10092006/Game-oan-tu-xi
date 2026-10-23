@@ -4,6 +4,7 @@ Django==6.1.2
 # ASGI server (thay thế Node.js cho WebSocket)
 daphne==4.1.2
 channels==4.2.2
+channels-redis==4.2.1
 
 # REST API
 djangorestframework==3.18.3

@@ -1,5 +1,11 @@
 from __future__ import annotations
 import json, uuid
+import logging
+import smtplib
+from pathlib import Path
+from django.conf import settings
+from django.core.mail import send_mass_mail
+from django.core.mail.message import BadHeaderError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -9,9 +15,16 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
-from .models import UserProfile, Season, MatchHistory
+from .models import (
+    UserProfile, Season, MatchHistory, TournamentFixture, TournamentGroup,
+    TournamentRound,
+)
+from .tournament import DrawError, draw_season, group_standings, record_fixture_result
+
+logger = logging.getLogger(__name__)
 
 
 # ── helpers ──────────────────────────────────────────────────────────
@@ -149,7 +162,7 @@ def battlecode_demo(request):
 def match_history(request):
     matches = MatchHistory.objects.filter(player=request.user).order_by('-played_at')
     return render(request, 'web/history.html', {
-        'user': request.user, 'matches': matches,
+        'user': request.user, 'matches': matches, 'page': 'play',
         'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
     })
@@ -174,6 +187,24 @@ def season_admin(request):
     from submissions.models import Submission
     seasons = Season.objects.all()
     all_submissions = Submission.objects.select_related('submitter').order_by('-submitted_at')
+    tournament_admin = []
+    for season in seasons:
+        group_round = season.rounds.filter(stage='group').first()
+        groups = list(group_round.groups.order_by('draw_order')) if group_round else []
+        tournament_admin.append({
+            'season': season,
+            'groups': [{
+                'group': group,
+                'standings': group_standings(group),
+                'fixtures': group.fixtures.select_related('entry1', 'entry2').order_by('match_number'),
+            } for group in groups],
+            'knockout_rounds': season.rounds.exclude(
+                stage__in=['group', 'third_place'],
+            ).prefetch_related('fixtures__entry1', 'fixtures__entry2', 'fixtures__winner').order_by('order'),
+            'third_place_round': season.rounds.filter(stage='third_place').prefetch_related(
+                'fixtures__entry1', 'fixtures__entry2', 'fixtures__winner',
+            ).first(),
+        })
     return render(request, 'web/season_admin.html', {
         'user': request.user, 'seasons': seasons,
         'is_admin': True,
@@ -182,6 +213,7 @@ def season_admin(request):
         'total_submissions': all_submissions.count(),
         'recent_matches': MatchHistory.objects.select_related('player','season').order_by('-played_at')[:20],
         'all_submissions': all_submissions[:50],
+        'tournament_admin': tournament_admin,
     })
 
 
@@ -193,12 +225,42 @@ def season_create(request):
     if not name:
         messages.error(request, 'Tên mùa giải không được trống.')
         return redirect('/season-admin/')
-    Season.objects.create(
+    try:
+        max_team_size = min(max(int(request.POST.get('max_team_size', 4) or 4), 2), 8)
+    except (TypeError, ValueError):
+        max_team_size = 4
+    entry_mode = request.POST.get('entry_mode', 'both')
+    if entry_mode not in {'individual', 'team', 'both'}:
+        entry_mode = 'both'
+    deadline_raw = request.POST.get('registration_deadline', '').strip()
+    deadline = parse_datetime(deadline_raw) if deadline_raw else None
+    if deadline_raw and deadline is None:
+        messages.error(request, 'Hạn đăng ký không hợp lệ.')
+        return redirect('/season-admin/')
+    if deadline and timezone.is_naive(deadline):
+        deadline = timezone.make_aware(deadline, timezone.get_current_timezone())
+    season = Season.objects.create(
         name=name,
         description=request.POST.get('description','').strip(),
         start_date=request.POST.get('start_date') or timezone.now().date(),
+        entry_mode=entry_mode,
+        max_team_size=max_team_size,
+        registration_deadline=deadline,
         is_active=True, created_by=request.user,
     )
+    stages = [
+        ('group', 'Vòng bảng', 'Hai lượt, tính điểm 3–1–0', 2),
+        ('round_of_16', 'Vòng 16', 'Loại trực tiếp', 0),
+        ('quarterfinal', 'Tứ kết', 'Loại trực tiếp', 0),
+        ('semifinal', 'Bán kết', 'Loại trực tiếp', 0),
+        ('third_place', 'Tranh hạng ba', 'Loại trực tiếp', 0),
+        ('final', 'Chung kết', 'Loại trực tiếp', 0),
+    ]
+    TournamentRound.objects.bulk_create([
+        TournamentRound(season=season, stage=stage, order=index, name=label,
+                        format_note=note, advance_count=advance)
+        for index, (stage, label, note, advance) in enumerate(stages, 1)
+    ])
     messages.success(request, f'Đã tạo mùa giải "{name}".')
     return redirect('/season-admin/')
 
@@ -224,6 +286,173 @@ def season_delete(request, pk):
     name = s.name; s.delete()
     messages.success(request, f'Đã xoá "{name}".')
     return redirect('/season-admin/')
+
+
+def _season_email_recipients(season):
+    from django.contrib.auth import get_user_model
+
+    return get_user_model().objects.filter(
+        Q(individual_entries__season=season, individual_entries__status__in=['registered', 'locked'])
+        | Q(team_memberships__team__season=season,
+            team_memberships__team__entry__status__in=['registered', 'locked']),
+        is_active=True,
+    ).distinct().order_by('pk')
+
+
+def _send_season_notification(season, subject, body_for_user):
+    users = list(_season_email_recipients(season))
+    recipients = [user for user in users if user.email.strip()]
+    missing = [user.username for user in users if not user.email.strip()]
+    if not recipients:
+        return 0, len(missing), 'none'
+
+    messages_to_send = [
+        (subject, body_for_user(user), settings.DEFAULT_FROM_EMAIL, [user.email.strip()])
+        for user in recipients
+    ]
+    sent = send_mass_mail(messages_to_send, fail_silently=False)
+    backend = settings.EMAIL_BACKEND
+    if backend.endswith('console.EmailBackend'):
+        delivery = 'console'
+    else:
+        delivery = 'email'
+    return sent, len(missing), delivery
+
+
+def _draw_email_body(season, request):
+    from .models import CompetitionEntry
+
+    group_by_entry = {}
+    for group in TournamentGroup.objects.filter(
+        tournament_round__season=season,
+    ).prefetch_related('entries'):
+        for entry in group.entries.all():
+            group_by_entry[entry.pk] = group.code
+
+    users = list(_season_email_recipients(season))
+    entry_by_user = {}
+    for entry in CompetitionEntry.objects.filter(
+        season=season, status='locked',
+    ).select_related('team', 'user').prefetch_related('team__memberships__user'):
+        if entry.user_id:
+            entry_by_user[entry.user_id] = entry
+        elif entry.team_id:
+            for membership in entry.team.memberships.all():
+                entry_by_user[membership.user_id] = entry
+
+    destination = request.build_absolute_uri('/competition/')
+
+    def body_for_user(user):
+        entry = entry_by_user.get(user.pk)
+        group = group_by_entry.get(entry.pk) if entry else None
+        assignment = f'Bạn được xếp vào Bảng {group}.' if group else 'Hãy xem danh sách bảng trên website.'
+        return (
+            f'Xin chào {user.username},\n\n'
+            f'Ban tổ chức đã bốc thăm mùa giải "{season.name}".\n'
+            f'{assignment}\n'
+            'Hai đơn vị đứng đầu mỗi bảng sẽ vào nhánh loại trực tiếp. '
+            'Kết quả bảng và sơ đồ các vòng được cập nhật trực quan trên website.\n\n'
+            f'Xem thông tin: {destination}\n'
+        )
+
+    return users, body_for_user
+
+
+@login_required(login_url='/login/')
+@require_POST
+def season_draw(request, pk):
+    if not _is_admin(request.user):
+        return redirect('/')
+    season = get_object_or_404(Season, pk=pk)
+    try:
+        result = draw_season(season.pk)
+    except DrawError as exc:
+        messages.error(request, str(exc))
+        return redirect('/season-admin/')
+
+    users, body_for_user = _draw_email_body(season, request)
+    if not users:
+        messages.warning(request, 'Bốc thăm đã lưu; chưa có thành viên để gửi email.')
+        return redirect('/season-admin/')
+    try:
+        sent, missing, delivery = _send_season_notification(
+            season, f'Đã bốc thăm mùa giải {season.name}',
+            body_for_user,
+        )
+    except (BadHeaderError, OSError, smtplib.SMTPException) as exc:
+        logger.exception('Draw email delivery failed for season %s', season.pk)
+        messages.error(request, f'Bốc thăm đã lưu, nhưng gửi email bị lỗi: {exc}')
+        return redirect('/season-admin/')
+
+    summary = (
+        f'Đã bốc thăm {result["entries"]} mục vào {result["group_count"]} bảng; '
+        f'{result["qualifier_count"]} suất vào nhánh {result["bracket_size"]}, '
+        f'{result["bye_count"]} suất miễn vòng đầu.'
+    )
+    if delivery == 'console':
+        messages.warning(request, f'{summary} Email chỉ được ghi ra console local, chưa gửi ra hộp thư.')
+    elif sent:
+        messages.success(request, f'{summary} Đã gửi email cho {sent} thành viên.')
+    else:
+        messages.error(request, f'{summary} Hệ thống không gửi được email nào.')
+    if missing:
+        messages.warning(request, f'{missing} thành viên chưa có email hợp lệ; vui lòng bổ sung trước khi gửi lại thông báo.')
+    return redirect('/season-admin/')
+
+
+@login_required(login_url='/login/')
+@require_POST
+def season_email(request, pk):
+    if not _is_admin(request.user):
+        return redirect('/')
+    season = get_object_or_404(Season, pk=pk)
+    subject = request.POST.get('subject', '').strip()
+    body = request.POST.get('body', '').strip()
+    if not subject or len(subject) > 200 or not body or len(body) > 10000:
+        messages.error(request, 'Nhập tiêu đề (tối đa 200 ký tự) và nội dung (tối đa 10.000 ký tự).')
+        return redirect('/season-admin/')
+
+    def body_for_user(user):
+        return f'Xin chào {user.username},\n\n{body}\n'
+
+    try:
+        sent, missing, delivery = _send_season_notification(season, subject, body_for_user)
+    except (BadHeaderError, OSError, smtplib.SMTPException) as exc:
+        logger.exception('Season email delivery failed for season %s', season.pk)
+        messages.error(request, f'Không gửi được email: {exc}')
+        return redirect('/season-admin/')
+    if delivery == 'none':
+        messages.error(request, 'Chưa có thành viên nào có địa chỉ email; không gửi email nào.')
+    elif delivery == 'console':
+        messages.warning(request, f'Email của {sent} thành viên chỉ được ghi ra console local, chưa gửi ra hộp thư.')
+    else:
+        messages.success(request, f'Đã gửi email cho {sent} thành viên.')
+    if missing:
+        messages.warning(request, f'{missing} thành viên chưa có email hợp lệ.')
+    return redirect('/season-admin/')
+
+
+@login_required(login_url='/login/')
+@require_POST
+def tournament_fixture_result(request, pk):
+    if not _is_admin(request.user):
+        return redirect('/')
+    result = request.POST.get('result', '')
+    try:
+        record_fixture_result(pk, result)
+    except (DrawError, TournamentFixture.DoesNotExist) as exc:
+        messages.error(request, str(exc) or 'Không tìm thấy ván đấu.')
+    else:
+        messages.success(request, 'Đã lưu kết quả. Bảng xếp hạng và nhánh đấu được cập nhật.')
+    return redirect('/season-admin/')
+
+
+def rules_markdown_download(request):
+    path = Path(settings.BASE_DIR) / 'docs' / 'LUAT_XEP_BANG_VA_SO_DO_GIAI.md'
+    if not path.is_file():
+        return JsonResponse({'error': 'Không tìm thấy tài liệu luật giải.'}, status=404)
+    from django.http import FileResponse
+    return FileResponse(path.open('rb'), as_attachment=True, filename='LUAT_XEP_BANG_VA_SO_DO_GIAI.md')
 
 
 # ── admin: xem source code submission ────────────────────────────────
@@ -310,8 +539,19 @@ def ai_submit(request):
     from submissions.models import Submission
     my_subs = Submission.objects.filter(submitter=request.user).order_by('-submitted_at')
     return render(request, 'web/ai_judge.html', {
-        'user': request.user,
+        'user': request.user, 'page': 'play',
         'my_subs': my_subs,
+        'is_guest': request.session.get('is_guest', False),
+        'is_admin': _is_admin(request.user),
+    })
+
+
+@login_required(login_url='/login/')
+@ensure_csrf_cookie
+def competition_hub(request):
+    """Season registration UI; mutations are handled by scoped competition APIs."""
+    return render(request, 'web/competition.html', {
+        'user': request.user, 'page': 'play',
         'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
     })

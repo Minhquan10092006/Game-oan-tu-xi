@@ -6,7 +6,12 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
+from urllib.parse import urlparse
+import re
 from .models import Submission
+
+
+GIT_REFERENCE_HOSTS = {'github.com', 'gitlab.com'}
 
 
 class SubmissionCreateSerializer(serializers.ModelSerializer):
@@ -15,7 +20,7 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Submission
-        fields = ['ai_name', 'source_code']
+        fields = ['ai_name', 'source_code', 'competition_entry', 'submission_method', 'git_url', 'git_commit']
 
     def validate_source_code(self, value: str) -> str:
         max_size = getattr(settings, 'SUBMISSION_MAX_CODE_SIZE', 65536)
@@ -33,6 +38,30 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError('Tên AI không được rỗng.')
         return value.strip()
+
+    def validate(self, attrs):
+        method = attrs.get('submission_method', 'direct')
+        url, commit = attrs.get('git_url', '').strip(), attrs.get('git_commit', '').strip().lower()
+        if method == 'git':
+            parsed = urlparse(url)
+            path_parts = [part for part in parsed.path.split('/') if part]
+            if (parsed.scheme != 'https' or parsed.hostname not in GIT_REFERENCE_HOSTS or parsed.username or
+                    parsed.password or parsed.port or parsed.query or parsed.fragment or len(path_parts) < 2):
+                raise serializers.ValidationError({'git_url': 'Chỉ nhận URL HTTPS GitHub/GitLab không có token, query hoặc fragment.'})
+            if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', commit):
+                raise serializers.ValidationError({'git_commit': 'Cần mã commit đầy đủ 40 hoặc 64 ký tự hexadecimal.'})
+        elif url or commit:
+            raise serializers.ValidationError('Chọn phương thức Git khi khai báo URL hoặc commit Git.')
+        attrs['git_url'], attrs['git_commit'] = url, commit
+        entry = attrs.get('competition_entry')
+        if entry:
+            request = self.context['request']
+            if entry.status != 'registered':
+                raise serializers.ValidationError({'competition_entry': 'Mục dự thi đã bị khóa hoặc rút.'})
+            if entry.user_id != request.user.id:
+                if not entry.team_id or entry.team.captain_id != request.user.id:
+                    raise serializers.ValidationError({'competition_entry': 'Chỉ đội trưởng mới được nộp bài chính thức cho đội.'})
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
@@ -59,7 +88,8 @@ class SubmissionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Submission
-        fields = ['id', 'ai_name', 'version', 'review_status', 'reject_reason', 'submitted_at', 'source_sha256']
+        fields = ['id', 'ai_name', 'version', 'review_status', 'reject_reason', 'submitted_at', 'source_sha256',
+                  'competition_entry', 'submission_method', 'git_url', 'git_commit']
         read_only_fields = fields
 
 
@@ -73,6 +103,7 @@ class SubmissionDetailSerializer(serializers.ModelSerializer):
             'id', 'submitter_username', 'ai_name', 'version',
             'review_status', 'reject_reason',
             'source_code', 'source_sha256', 'submitted_at', 'approved_at', 'used_in_battle',
+            'competition_entry', 'submission_method', 'git_url', 'git_commit',
         ]
         read_only_fields = fields
 

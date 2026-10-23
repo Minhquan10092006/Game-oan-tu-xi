@@ -7,12 +7,24 @@ class PublicFrontendTests(TestCase):
     def test_home_is_public_and_has_real_navigation(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        for text in ('NƯỚC ĐI NHỎ.', 'Ý TƯỞNG', 'id="luat-choi"', 'id="tham-gia"', 'href="/register/"', 'data-motion-toggle'):
+        for text in (
+            'NƯỚC ĐI NHỎ.', 'Ý TƯỞNG', 'id="luat-choi"', 'id="tham-gia"',
+            'href="/register/"', 'data-motion-toggle', 'tối đa 4 mục/bảng',
+            'href="/rules/download/"', 'href="/competition/"',
+        ):
             self.assertContains(response, text)
         self.assertNotContains(response, 'auth-overlay')
         self.assertNotContains(response, 'name="password"')
         self.assertEqual(len(response.context['hero_cells']), 81)
         self.assertEqual(sum(bool(cell['symbol']) for cell in response.context['hero_cells']), 18)
+
+    def test_rules_markdown_download_contains_tournament_format(self):
+        response = self.client.get('/rules/download/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('attachment;', response['Content-Disposition'])
+        content = b''.join(response.streaming_content).decode('utf-8')
+        self.assertIn('Minh họa quy mô World Cup 48 đội', content)
+        self.assertIn('8 đội hạng ba tốt nhất', content)
 
     def test_register_and_login_are_separate_pages(self):
         self.assertContains(self.client.get('/register/'), 'name="reg_username"')
@@ -67,6 +79,20 @@ class PublicFrontendTests(TestCase):
         for content in ('id="screen-solo"', 'id="screen-multi"', 'id="screen-menu"', 'web/js/screen-manager.js', 'CHỌN NƯỚC ĐI TIẾP THEO.'):
             self.assertContains(response, content)
         self.assertNotContains(response, 'auth-overlay')
+
+    def test_arena_destinations_use_shared_retro_shell(self):
+        user = User.objects.create_user(username='archive_player', password='testing')
+        self.client.force_login(user)
+        for path, asset, marker in (
+            ('/ai/', 'retro-submit.css', 'submission_console.exe'),
+            ('/history/', 'retro-history.css', 'match_history.log'),
+            ('/battlecode/', 'retro-arena.css', 'replay_viewer.exe'),
+        ):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, asset)
+            self.assertContains(response, marker)
+            self.assertContains(response, 'site-header')
 
     def test_existing_home_post_remains_supported(self):
         response = self.client.post('/', {'action':'guest'})

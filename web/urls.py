@@ -14,8 +14,13 @@ urlpatterns = [
     path('season-admin/create/', views.season_create, name='season-create'),
     path('season-admin/<int:pk>/toggle/', views.season_toggle, name='season-toggle'),
     path('season-admin/<int:pk>/delete/', views.season_delete, name='season-delete'),
+    path('season-admin/<int:pk>/draw/', views.season_draw, name='season-draw'),
+    path('season-admin/<int:pk>/email/', views.season_email, name='season-email'),
+    path('season-admin/fixtures/<int:pk>/result/', views.tournament_fixture_result, name='fixture-result'),
     path('ranking/', views.ranking_view, name='ranking'),
     path('ai/', views.ai_submit, name='ai-submit'),
+    path('competition/', views.competition_hub, name='competition-hub'),
+    path('rules/download/', views.rules_markdown_download, name='rules-download'),
     path('ai-battle/', views.ai_battle, name='ai-battle'),
     # Admin: xem source code một submission (JSON)
     path('admin/submission/<int:pk>/code/', views.admin_submission_code, name='admin-sub-code'),

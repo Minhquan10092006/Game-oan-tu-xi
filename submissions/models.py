@@ -32,10 +32,19 @@ class Submission(models.Model):
     submitter = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='submissions',
     )
+    competition_entry = models.ForeignKey(
+        'web.CompetitionEntry', null=True, blank=True, on_delete=models.PROTECT,
+        related_name='submissions',
+        help_text='Định danh cá nhân hoặc đội của mùa giải; để trống cho bài luyện tập.',
+    )
     ai_name = models.CharField(max_length=128, help_text='Tên AI do người dùng đặt')
     source_code = models.TextField(help_text='Mã nguồn Python')
     version = models.PositiveIntegerField(default=1)
     submitted_at = models.DateTimeField(auto_now_add=True)
+    SUBMISSION_METHODS = [('direct', 'Nộp trực tiếp'), ('git', 'Git tham chiếu')]
+    submission_method = models.CharField(max_length=10, choices=SUBMISSION_METHODS, default='direct')
+    git_url = models.URLField(blank=True, max_length=400)
+    git_commit = models.CharField(blank=True, max_length=64)
 
     # ── Review workflow (admin) ───────────────────────────────────────
     review_status = models.CharField(

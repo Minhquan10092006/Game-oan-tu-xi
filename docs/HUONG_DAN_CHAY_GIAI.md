@@ -25,6 +25,14 @@ Mỗi nước có container mới chỉ mount **một file bot** read-only, khô
 
 ## 3. Xuất bài từ web và chọn đội
 
+Nếu dùng đăng ký cá nhân/đội trên web, BTC khóa thành viên và mục dự thi trước khi chọn bài:
+
+```text
+python manage.py lock_season_entries <season_id>
+```
+
+Lệnh khóa mã đội và chặn nộp thêm cho mục dự thi. Sau đó BTC đối chiếu đội trưởng, thành viên, phiên bản bài và SHA-256 theo biên bản. Không chạy lệnh này trước khi kết thúc thời gian đổi đội.
+
 BTC xác nhận mã bài của từng đội. Có thể tải source bằng tài khoản admin rồi lưu UTF-8, đối chiếu SHA-256 trả trong API; không copy qua công cụ làm thay đổi newline/encoding. Với dữ liệu Django local, dùng management command:
 
 ```text

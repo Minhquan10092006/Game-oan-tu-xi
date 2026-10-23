@@ -75,4 +75,6 @@ Khi có đội rút trước khóa bài: bỏ khỏi danh sách, lập lịch l�
 
 `python -m matches.tournament` hỗ trợ khóa bài, lịch vòng tròn hai lượt, chạy tuần tự bằng Docker, lưu replay, tiếp tục các ván chưa hoàn tất và xuất JSON xếp hạng với tiêu chí trên. Giải chia bảng dùng một thư mục cho mỗi bảng và một thư mục riêng cho chung kết. BTC lập danh sách bảng/đội đi tiếp theo biên bản; công cụ chưa tự bốc thăm hoặc xử lý vòng phụ.
 
+Trang quản trị mùa giải trên web có bộ xếp bảng/nhánh minh họa riêng: tối đa 4 mục/bảng, hai mục đầu mỗi bảng vào loại trực tiếp, và có thể có BYE. Bộ lập này chưa tích hợp với runner `matches.tournament` và không tự chấm bot. BTC phải thống nhất thể thức trong [luật bốc thăm và sơ đồ web](LUAT_XEP_BANG_VA_SO_DO_GIAI.md) với điều lệ/runner trước khi dùng kết quả website làm kết quả giải chính thức.
+
 Bảng ELO trên website hiện là chức năng luyện tập cũ; không dùng để trao giải K71. Kết quả demo không ghi vào điểm giải. File xuất xếp hạng local chỉ công bố khi BTC chủ động đưa lên kênh thông báo vào thời gian quy định.

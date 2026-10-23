@@ -44,6 +44,8 @@ Cloudflare có thể bổ sung DNS/cache/bảo vệ web khi thật sự cần. K
 
 Web Django → DB nhận bài. BTC xuất các bài đã chọn → thư mục giải khóa → worker local chạy Docker → lưu replay/kết quả → lệnh xuất bảng xếp hạng → BTC công bố.
 
+Kế hoạch phục vụ cao điểm 4.000 người và dùng máy chấm riêng: [Kế hoạch vận hành 4.000 người](KE_HOACH_VAN_HANH_4000_NGUOI.md).
+
 Thư mục giải đóng vai trò hàng đợi bền vững đơn giản: `manifest.json` liệt kê ván phải chạy, `results/` lưu ván hoàn tất, `attempts/` giữ lần lỗi. Một bộ điều phối tại một thời điểm. Không có Celery/SQS hay chạy song song phân tán trong phiên bản này; tránh thuê hạ tầng trước nhu cầu.
 
 Khi cần chấm liên tục quy mô lớn mới bổ sung queue dịch vụ, worker lease/heartbeat, ghi kết quả idempotent trong DB và object storage. Channels hiện dùng bộ nhớ, vì thế chưa được tăng nhiều web process cho phòng realtime; phải chuyển channel layer và trạng thái phòng sang cơ chế chia sẻ bền vững trước khi scale.

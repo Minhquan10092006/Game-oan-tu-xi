@@ -1,429 +1,23 @@
+{% extends 'web/retro/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nộp AI — Oẳn Tù Tì 2.0</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0a0a1a;
-      color: #e0e0f0;
-      min-height: 100vh;
-    }
-
-    /* ── Header ── */
-    header {
-      background: linear-gradient(135deg, #1a1a3e 0%, #0d0d2b 100%);
-      border-bottom: 1px solid #2a2a5a;
-      padding: 16px 32px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    header h1 {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 1.3rem;
-      color: #7c6fff;
-    }
-    .back-btn {
-      background: none;
-      border: 1px solid #3a3a6a;
-      color: #aaa;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      text-decoration: none;
-      transition: all .2s;
-    }
-    .back-btn:hover { border-color: #7c6fff; color: #e0e0f0; }
-    .user-badge {
-      margin-left: auto;
-      font-size: 0.85rem;
-      color: #888;
-    }
-    .user-badge span { color: #7c6fff; font-weight: 600; }
-
-    /* ── Layout ── */
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 32px 24px;
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 24px;
-    }
-    @media (max-width: 800px) {
-      .container { grid-template-columns: 1fr; }
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: #12122a;
-      border: 1px solid #2a2a5a;
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .card h2 {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 1rem;
-      color: #7c6fff;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ── Form ── */
-    label {
-      display: block;
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-bottom: 6px;
-      margin-top: 16px;
-    }
-    label:first-of-type { margin-top: 0; }
-
-    input[type="text"] {
-      width: 100%;
-      background: #0d0d20;
-      border: 1px solid #2a2a5a;
-      border-radius: 8px;
-      color: #e0e0f0;
-      padding: 10px 14px;
-      font-size: 0.9rem;
-      transition: border-color .2s;
-    }
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #7c6fff;
-    }
-
-    textarea#code-editor {
-      width: 100%;
-      height: 420px;
-      background: #090914;
-      border: 1px solid #2a2a5a;
-      border-radius: 8px;
-      color: #c9d1d9;
-      padding: 14px;
-      font-family: Consolas, monospace;
-      font-size: 0.82rem;
-      line-height: 1.6;
-      resize: vertical;
-      transition: border-color .2s;
-    }
-    textarea#code-editor:focus {
-      outline: none;
-      border-color: #7c6fff;
-    }
-
-    .code-hint {
-      font-size: 0.75rem;
-      color: #555;
-      margin-top: 6px;
-      font-family: Consolas, monospace;
-    }
-
-    .submit-btn {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background: linear-gradient(135deg, #5a4fcf, #7c6fff);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .2s, transform .1s;
-    }
-    .submit-btn:hover { opacity: 0.9; }
-    .submit-btn:active { transform: scale(0.98); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ── Success toast ── */
-    .toast {
-      position: fixed;
-      top: 20px; right: 20px;
-      background: #1a3a1a;
-      border: 1px solid #4caf50;
-      border-radius: 8px;
-      color: #4caf50;
-      padding: 12px 18px;
-      font-size: 0.88rem;
-      z-index: 9999;
-      opacity: 0;
-      transform: translateY(-10px);
-      transition: opacity .3s, transform .3s;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-
-    /* ── Status list (bên phải) ── */
-    .status-list { display: flex; flex-direction: column; gap: 10px; }
-
-    .sub-card {
-      background: #0d0d20;
-      border: 1px solid #1e1e40;
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: border-color .2s;
-    }
-    .sub-card:hover { border-color: #2a2a5a; }
-    .sub-card.approved { border-left: 3px solid #4caf50; }
-    .sub-card.rejected { border-left: 3px solid #f44336; }
-    .sub-card.pending  { border-left: 3px solid #888; }
-
-    .sub-icon { font-size: 1.4rem; flex-shrink: 0; }
-
-    .sub-body { flex: 1; min-width: 0; }
-    .sub-name {
-      font-weight: 600;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sub-meta { font-size: 0.75rem; color: #666; margin-top: 3px; }
-
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-    .status-badge.approved { background: #1a3a1a; color: #4caf50; border: 1px solid rgba(76,175,80,.3); }
-    .status-badge.pending  { background: #1e1e2a; color: #888;    border: 1px solid rgba(136,136,136,.3); }
-    .status-badge.rejected { background: #3a1a1a; color: #f44336; border: 1px solid rgba(244,67,54,.3); }
-
-    .reject-reason {
-      font-size: 0.75rem;
-      color: #f44336;
-      margin-top: 4px;
-      font-style: italic;
-    }
-
-    /* ── Protocol box ── */
-    .protocol-box {
-      background: #090914;
-      border: 1px solid #2a2a5a;
-      border-radius: 8px;
-      padding: 16px;
-    }
-    .protocol-box pre {
-      font-family: Consolas, monospace;
-      font-size: 0.78rem;
-      color: #7fdbca;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    /* ── Thông báo lỗi ── */
-    #error-msg {
-      color: #f44336;
-      font-size: 0.82rem;
-      margin-top: 10px;
-      display: none;
-    }
-
-    /* ── Upload zone ── */
-    #upload-zone:hover { border-color: #7c6fff; background: #0d0d22; }
-    #upload-zone.drag-over {
-      border-color: #7c6fff;
-      background: rgba(124,111,255,.08);
-    }
-    #upload-zone.has-file { border-color: #4caf50; background: rgba(76,175,80,.05); }
-
-    /* ── Empty state ── */
-    .empty-msg { color: #444; font-size: 0.85rem; text-align: center; padding: 28px 16px; }
-    .empty-msg .em-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
-    .empty-msg a { color: #7c6fff; }
-
-    /* ── Info banner ── */
-    .info-banner {
-      background: rgba(124,111,255,.08);
-      border: 1px solid rgba(124,111,255,.2);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 0.82rem;
-      color: #aaa;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-    .info-banner strong { color: #7c6fff; }
-  </style>
-</head>
-<body>
-
-<div class="toast" id="toast"></div>
-
-<header>
-  <a href="/" class="back-btn">⬅ Menu</a>
-  <a href="/ranking/" class="back-btn" style="border-color:#7c6fff;color:#7c6fff">🏆 Ranking</a>
-  <h1>🤖 NỘP CODE AI</h1>
-  <div class="user-badge">Đăng nhập: <span>{{ user.username }}</span>
-    &nbsp;|&nbsp;
-    <a href="/logout/" style="color:#666;font-size:0.8rem">Đăng xuất</a>
-  </div>
-</header>
-
-<div class="container">
-
-  <!-- ── Cột trái: Form nộp bài ── -->
-  <div>
-    <div class="card">
-      <h2>📤 Nộp Code AI</h2>
-
-      <!-- Thông báo luồng mới -->
-      <div class="info-banner">
-        📝 Code của bạn sẽ được <strong>admin xem xét và duyệt</strong>. Sau khi được duyệt,
-        code sẽ xuất hiện trong danh sách AI để các người chơi khác có thể chọn battle.
-        Không có chấm điểm tự động.
-      </div>
-
-      <label>Tên AI</label>
-      <input type="text" id="ai-name" placeholder="VD: GreedyAI, MinimaxBot..." maxlength="128">
-
-      <label>Mã nguồn Python</label>
-
-      <!-- Upload file -->
-      <div id="upload-zone" style="
-        border: 2px dashed #2a2a5a; border-radius: 10px; padding: 18px 16px;
-        text-align: center; cursor: pointer; margin-bottom: 10px;
-        transition: border-color .2s, background .2s;
-        background: #090914;
-      "
-        onclick="document.getElementById('file-input').click()"
-        ondragover="handleDragOver(event)"
-        ondragleave="handleDragLeave(event)"
-        ondrop="handleDrop(event)"
-      >
-        <input type="file" id="file-input" accept=".py" style="display:none" onchange="handleFileSelect(event)">
-        <div style="font-size:1.6rem;margin-bottom:6px">🐍</div>
-        <div style="font-size:.86rem;color:#888">
-          Kéo thả file <strong style="color:#7c6fff">.py</strong> vào đây, hoặc
-          <span style="color:#7c6fff;text-decoration:underline">bấm để chọn file</span>
-        </div>
-        <div id="file-name" style="margin-top:8px;font-size:.78rem;color:#4caf50;display:none"></div>
-      </div>
-
-      <!-- Divider -->
-      <div style="display:flex;align-items:center;gap:10px;margin:10px 0">
-        <div style="flex:1;height:1px;background:#1e1e40"></div>
-        <span style="font-size:.75rem;color:#444">hoặc gõ trực tiếp</span>
-        <div style="flex:1;height:1px;background:#1e1e40"></div>
-      </div>
-
-      <textarea id="code-editor" spellcheck="false" placeholder="# Viết code AI Python của bạn ở đây...
-# AI nhận JSON từ stdin, in JSON ra stdout.
-
-import sys, json
-
-def main():
-    data = json.loads(sys.stdin.read())
-    moves = data.get('legal_moves', [])
-    if not moves:
-        print(json.dumps({'move': None}))
-        return
-    m = moves[0]
-    print(json.dumps({'move': {
-        'piece_id': m['piece_id'], 'from': m['from'], 'to': m['to']
-    }}))
-
-main()"></textarea>
-
-      <div class="code-hint">
-        📥 stdin: JSON trạng thái bàn cờ &nbsp;|&nbsp;
-        📤 stdout: {"move": {"piece_id":…, "from":[…,…], "to":[…,…]}} &nbsp;|&nbsp;
-        🐞 Debug → stderr
-      </div>
-
-      <div id="error-msg"></div>
-      <button class="submit-btn" id="submit-btn" onclick="submitCode()">
-        🚀 Nộp bài
-      </button>
-    </div>
-
-    <!-- Giao thức -->
-    <div class="card" style="margin-top:20px">
-      <h2>📖 Giao thức AI</h2>
-      <p style="font-size:0.82rem;color:#888;margin-bottom:12px">
-        AI nhận <strong style="color:#e0e0f0">một JSON</strong> từ stdin, in ra <strong style="color:#e0e0f0">một JSON</strong> lên stdout.
-      </p>
-      <div class="protocol-box">
-        <pre>// INPUT minh họa các trường chính; players chứa danh sách quân hai bên.
-{
-  "protocol_version": "1.0",
-  "current_player": "P1",
-  "ply": 0,
-  "board": {"rows":9,"cols":9,"goals":{"P1":[9,9],"P2":[1,1]}},
-  "legal_moves": [
-    {"piece_id":"P1-R3","from":[3,1],"to":[4,1],
-     "capture":false,"wins_immediately":false}
-  ],
-  "userdata": null
-}
-
-// OUTPUT (stdout)
-{"move":{"piece_id":"P1-R3","from":[3,1],"to":[4,1]},"userdata":null}</pre>
-      </div>
-      <p style="font-size:0.75rem;color:#555;margin-top:10px">
-        Tọa độ bắt đầu từ 1. P1 đến (9,9), P2 đến (1,1). Python 3.12, file tối đa 64 KiB. Bot mẫu trong ai_sample.py dùng đúng giao thức này.
-      </p>
-    </div>
-  </div>
-
-  <!-- ── Cột phải: Trạng thái bài nộp ── -->
-  <div>
-    <div class="card">
-      <h2>📋 Code đã nộp của bạn</h2>
-      <div id="history-content">
-        <div class="empty-msg">
-          <span class="em-icon">📭</span>
-          Bạn chưa nộp code nào.
-        </div>
-      </div>
-      <button onclick="loadHistory()" style="
-        margin-top:14px; width:100%; padding:8px;
-        background:none; border:1px solid #2a2a5a; border-radius:6px;
-        color:#888; font-size:0.8rem; cursor:pointer;
-        transition: border-color .2s;
-      " onmouseover="this.style.borderColor='#7c6fff'" onmouseout="this.style.borderColor='#2a2a5a'">
-        🔄 Tải lại
-      </button>
-    </div>
-
-    <!-- Chú thích trạng thái -->
-    <div class="card" style="margin-top:16px">
-      <h2>ℹ️ Ý nghĩa trạng thái</h2>
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:0.82rem">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="status-badge pending">⏳ Chờ duyệt</span>
-          <span style="color:#888">Admin chưa xem xét code này.</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="status-badge approved">✅ Đã duyệt</span>
-          <span style="color:#888">Đã duyệt ban đầu; BTC chọn và khóa bản thi trên máy chấm riêng.</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="status-badge rejected">❌ Bị từ chối</span>
-          <span style="color:#888">Code không đạt yêu cầu hoặc vi phạm quy định.</span>
-        </div>
-      </div>
-    </div>
-  </div>
+{% block title %}Nộp bot Python · Oẳn Tù Tì 2.0{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-submit.css' %}">{% endblock %}
+{% block content %}
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section class="submit-heading"><div><div class="eyebrow">YOUR_BOT.PY / {{ user.username }}</div><h1>BIẾN Ý TƯỞNG THÀNH NƯỚC ĐI.</h1><p>Nộp mã Python để BTC duyệt trước khi khóa bài trên máy chấm riêng.</p></div><a href="/play/" class="retro-button">← Đấu trường</a></section>
+<div class="submit-layout">
+  <section class="retro-window submit-main"><div class="window-title">▸ submission_console.exe</div><div class="window-body">
+    <h2>Nộp chương trình Python</h2><div class="info-banner"><strong>Quy trình:</strong> web lưu bài và biên nhận; BTC duyệt, chọn phiên bản rồi chạy trên máy chấm riêng. Bài nộp không chạy ngay trên web.</div>
+    <label for="ai-name">Tên bot</label><input type="text" id="ai-name" placeholder="Ví dụ: GreedyAI, MinimaxBot" maxlength="128">
+    <label for="competition-entry">Mục dự thi mùa giải <small>(tùy chọn)</small></label><input type="text" id="competition-entry" inputmode="numeric" value="{{ request.GET.entry|default:'' }}" placeholder="Mã mục dự thi từ trang Đăng ký mùa giải">
+    <label for="submission-method">Cách xác nhận phiên bản</label><select id="submission-method"><option value="direct">Nộp trực tiếp — source này là bản chính thức</option><option value="git">Git tham chiếu — kèm URL và commit cố định</option></select>
+    <div id="git-evidence" hidden><label for="git-url">URL GitHub/GitLab HTTPS</label><input type="url" id="git-url" placeholder="https://github.com/nhom/bot"><label for="git-commit">Commit đầy đủ</label><input type="text" id="git-commit" placeholder="40 hoặc 64 ký tự hexadecimal"></div>
+    <label for="file-input">Mã nguồn Python</label><div id="upload-zone" class="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"><input type="file" id="file-input" accept=".py" hidden onchange="handleFileSelect(event)"><strong>🐍 Kéo file .py vào đây hoặc bấm để chọn</strong><span id="file-name" hidden></span></div>
+    <p class="input-separator">HOẶC DÁN MÃ TRỰC TIẾP</p><textarea id="code-editor" spellcheck="false" placeholder="# Viết code AI Python của bạn ở đây...&#10;# AI nhận JSON từ stdin và in JSON ra stdout."></textarea>
+    <p class="code-hint">stdin: JSON trạng thái bàn cờ · stdout: JSON chứa nước đi · debug: stderr</p><div id="error-msg" class="form-error" role="alert"></div><button class="retro-button primary full-width" id="submit-btn" type="button" onclick="submitCode()">↑ Nộp bài</button>
+  </div></section>
+  <aside class="submit-side"><section class="retro-window"><div class="window-title">▤ my_submissions.log</div><div class="window-body"><h2>Bài đã nộp</h2><div id="history-content"><div class="empty-msg">Bạn chưa nộp bài nào.</div></div><button class="retro-button full-width" type="button" onclick="loadHistory()">↻ Tải lại</button></div></section><section class="retro-window"><div class="window-title">? · Giao thức nhanh</div><div class="window-body protocol-help"><p>Bot đọc danh sách <code>legal_moves</code> và trả một nước hợp lệ.</p><p>Tọa độ tính từ 1. P1 đến (9,9), P2 đến (1,1).</p><p>Python 3.12 · Mã nguồn tối đa 64 KiB.</p><a href="/battlecode/">Xem trận mẫu →</a></div></section></aside>
 </div>
-
 <script>
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -460,6 +54,8 @@ function escHtml(str) {
 async function submitCode() {
   const aiName = document.getElementById('ai-name').value.trim();
   const code   = document.getElementById('code-editor').value;
+  const method = document.getElementById('submission-method').value;
+  const entryText = document.getElementById('competition-entry').value.trim();
 
   if (!aiName) { showError('Vui lòng nhập tên AI.'); return; }
   if (!code.trim()) { showError('Vui lòng nhập mã nguồn.'); return; }
@@ -477,7 +73,10 @@ async function submitCode() {
         'X-CSRFToken': getCookie('csrftoken'),
       },
       credentials: 'same-origin',
-      body: JSON.stringify({ ai_name: aiName, source_code: code }),
+      body: JSON.stringify({ ai_name: aiName, source_code: code, submission_method: method,
+        competition_entry: entryText ? Number(entryText) : null,
+        git_url: method === 'git' ? document.getElementById('git-url').value.trim() : '',
+        git_commit: method === 'git' ? document.getElementById('git-commit').value.trim() : '' }),
     });
 
     const data = await resp.json();
@@ -619,7 +218,9 @@ function loadFile(file) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
+document.getElementById('submission-method').addEventListener('change', event => {
+  document.getElementById('git-evidence').hidden = event.target.value !== 'git';
+});
 loadHistory();
 </script>
-</body>
-</html>
+{% endblock %}

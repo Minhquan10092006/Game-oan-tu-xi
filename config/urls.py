@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/ranking/', include('web.api_urls')),
     path('api/matches/', include('matches.urls')),
     path('api/submissions/', include('submissions.urls')),
+    path('api/competition/', include('web.competition_urls')),
 ]

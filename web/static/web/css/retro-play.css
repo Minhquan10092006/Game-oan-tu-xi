@@ -23,3 +23,11 @@
 @media(max-width:800px){.launcher-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.launcher-window>.window-body{padding:16px}.launcher-window .section-heading{flex-direction:column}.launcher-window h1{font-size:27px}.launcher-grid{grid-template-columns:1fr}.launcher-card .window-body{min-height:0}.retro-play #game-title{font-size:22px}.retro-play #game-area{width:100%}.retro-play #board-wrapper{max-width:100%;overflow-x:auto}}
 @media(prefers-reduced-motion:reduce){.retro-play *{animation:none!important}}
+
+/* Final visual layer for the legacy game renderer. */
+.retro-play #game-header,.retro-play #multi-header{background:var(--retro-paper);border-top:6px solid #000080;padding:20px 16px}
+.retro-play #game-info-bar{background:var(--retro-bg);padding:8px;border:2px solid;border-color:var(--retro-raised);box-shadow:var(--retro-bevel)}
+.retro-play #game-area{gap:16px}.retro-play #side-panel{gap:12px}.retro-play .piece-badge{border-radius:0!important;border:1px solid #000}.retro-play .legend-item,.retro-play .rule{color:#000!important}.retro-play .cell.light{background:#fff!important}.retro-play .cell.dark{background:#e8e8e8!important}
+.retro-play #multi-grid{gap:16px;padding:4px;background:var(--retro-bg);border:2px solid;border-color:var(--retro-raised);box-shadow:var(--retro-bevel)}
+.retro-play .mini-game .mini-header{background:#000080!important;color:#fff!important}.retro-play .mini-game .mini-board{border:2px solid #000!important}
+.retro-play #multi-controls{background:var(--retro-paper);padding:16px!important}

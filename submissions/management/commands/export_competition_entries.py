@@ -43,12 +43,18 @@ class Command(BaseCommand):
                         sub = Submission.objects.select_for_update().get(pk=entry['submission_id'], review_status='approved')
                     except Submission.DoesNotExist as exc:
                         raise CommandError(f"Bài #{entry['submission_id']} chưa được duyệt hoặc không tồn tại.") from exc
+                    if sub.competition_entry_id and sub.competition_entry.status != 'locked':
+                        raise CommandError(f"Bài #{sub.pk} thuộc mục dự thi chưa được BTC khóa.")
                     filename = entry['team_id'] + '.py'
                     (staging / filename).write_bytes(sub.source_code.encode('utf-8'))
                     entries.append({'team_id': entry['team_id'], 'name': entry.get('name', entry['team_id']), 'path': filename})
+                    official_entry = sub.competition_entry
                     receipts.append({'team_id': entry['team_id'], 'submission_id': sub.pk,
                                      'submitter_id': sub.submitter_id, 'version': sub.version,
-                                     'submitted_at': sub.submitted_at.isoformat(), 'source_sha256': sub.source_sha256})
+                                     'submitted_at': sub.submitted_at.isoformat(), 'source_sha256': sub.source_sha256,
+                                     'competition_entry_id': official_entry.pk if official_entry else None,
+                                     'competition_entry_status': official_entry.status if official_entry else None,
+                                     'git_url': sub.git_url, 'git_commit': sub.git_commit})
                     sub.used_in_battle = True
                     sub.save(update_fields=['used_in_battle'])
                 for filename, data in (('entries.json', entries), ('receipts.json', receipts)):
