@@ -1,5 +1,7 @@
 # Kế hoạch vận hành cao điểm 4.000 người
 
+Luồng điều hành mới với hàng đợi dùng chung, 4 máy chấm HTTPS và thanh tiến độ được mô tả trong [Tổ chức giải với 4 máy chấm](TO_CHUC_GIAI_4_MAY_CHAM.md). Các bước xuất gói/chạy offline bên dưới là phương án vận hành cũ; không cần xuất/chuyển file thủ công khi dùng worker mới. Giới hạn đăng ký 4.000 người và khả năng chịu 4.000 kết nối đồng thời cần được kiểm chứng riêng.
+
 Mục tiêu là phục vụ tối đa 4.000 người có thể truy cập cùng lúc trong giờ cao điểm để xem thông tin, đăng nhập và nộp bài. Đây là mục tiêu cần kiểm thử trước giải; tài liệu này không khẳng định bản demo hiện tại đã đạt mức đó.
 
 ## Quyết định kiến trúc

@@ -2,13 +2,13 @@
 
 **Phiên bản đề xuất: k71-v1.0 · Ngày soạn: 19/10/2026.**
 
-Tài liệu để nhà trường xem xét, phê duyệt và công bố trước khi mở đăng ký. Các thông số dưới đây là cấu hình đề xuất thống nhất của bản triển khai; không phải quyết định đã được nhà trường ban hành. BTC điền ngày thi, hạn nộp, hình thức cá nhân/đội, người phụ trách và giải thưởng trước khi công bố.
+Tài liệu để nhà trường xem xét, phê duyệt và công bố trước khi mở đăng ký. Các thông số dưới đây là cấu hình đề xuất thống nhất của bản triển khai; không phải quyết định đã được nhà trường ban hành. BTC điền ngày thi, hạn nộp, người phụ trách và giải thưởng trước khi công bố.
 
 ## 1. Mục tiêu và đối tượng
 
 Sinh viên K71 viết chương trình Python điều khiển quân cờ. Hệ thống tự thực thi chương trình, kiểm tra nước đi và lưu diễn biến. Thành tích phản ánh kết quả thi đấu theo cùng luật và cùng giới hạn tài nguyên.
 
-Mỗi đơn vị dự thi có một mã đội duy nhất, danh sách thành viên/MSSV đã xác minh và một bài thi chính thức cho mỗi giai đoạn được phép khóa bài. Mặc định mỗi sinh viên chỉ thuộc một đội. Số thành viên tối đa do BTC công bố khi mở đăng ký; không thay đổi sau khi đóng đăng ký.
+Mỗi nhóm dùng một tài khoản sinh viên đại diện và có một mã mục dự thi duy nhất trong mùa. Đại diện nộp một bản bot chính thức cho mỗi giai đoạn được phép khóa bài. Việc phân công và làm nhóm diễn ra ngoài web; hệ thống không quản lý thành viên hay mã mời.
 
 ## 2. Bàn cờ và bố trí ban đầu
 
@@ -124,11 +124,11 @@ Link Git chỉ là kênh bổ sung khi BTC cho phép. Phải chỉ định commi
 - Thi trực tuyến: nếu hệ thống của BTC gián đoạn, BTC thông báo gia hạn chung và lưu sự kiện; không tự chấp nhận bài trễ dựa trên khai báo local.
 - Google Form có thể làm kênh đăng ký/nhận dự phòng nếu được công bố trước. Mọi bài dự phòng vẫn phải nhập kho bài chính và đối chiếu biên nhận trước khóa bài.
 
-## 9. Công bố, khiếu nại và hành vi bị cấm
+## 9. Công bố kết quả và hành vi bị cấm
 
 Điểm kỹ thuật trả riêng cho đội; kết quả chính thức chỉ công bố đồng thời vào thời điểm BTC đã thông báo. Không công khai source code, stderr chứa thông tin riêng hoặc replay làm lộ kết quả trước giờ công bố.
 
-Đề xuất thời hạn khiếu nại: 24 giờ sau công bố kết quả tạm thời. Khiếu nại cần mã đội, mã ván, diễn giải và bằng chứng. BTC quyết định dựa trên bản đã khóa, log, replay và quy định; lưu quyết định thành biên bản. Kết quả cuối cùng được công bố sau xử lý khiếu nại.
+BTC đối chiếu bản đã khóa, log và replay, xử lý các sự cố chấm và lưu quyết định trong nhật ký trước khi chốt kết quả. Website không có chức năng hoặc giai đoạn khiếu nại; mùa chuyển trực tiếp từ Thi đấu sang Kết thúc sau khi hoàn tất các trận.
 
 Cấm đọc dữ liệu ngoài giao thức, tấn công sandbox/hạ tầng, giả mạo danh tính, sửa bài sau hạn, thông đồng làm sai kết quả. Nghi ngờ sao chép phải được người phụ trách xem xét có bằng chứng; không tự loại đội chỉ từ điểm tương đồng mã nguồn.
 

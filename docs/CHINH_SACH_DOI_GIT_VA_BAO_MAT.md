@@ -1,3 +1,5 @@
+> Tài liệu lịch sử cho luồng quản lý đội cũ. Luồng hiện tại dùng một tài khoản sinh viên đại diện, không có lập/vào đội, mã mời hoặc email. Xem TO_CHUC_GIAI_4_MAY_CHAM.md và /guide/ để vận hành phiên bản hiện tại.
+
 # Chính sách đội, Git và bảo mật giải K71
 
 ## Cách nộp chính thức được chọn

@@ -1,6 +1,6 @@
 # Luật thi đấu và sơ đồ giải Oẳn Tù Tì K71
 
-**Bản đề xuất cho hệ thống demo.** Ban tổ chức cần phê duyệt thể lệ, lịch, thời hạn và cách xử lý khiếu nại trước khi công bố giải chính thức. Các trận bot chính thức phải được chấm trên máy chấm riêng; website chỉ lưu đăng ký, bốc thăm, bảng xếp hạng và kết quả BTC nhập.
+**Bản đề xuất cho hệ thống demo.** Ban tổ chức cần phê duyệt thể lệ, lịch và thời hạn trước khi công bố giải chính thức. Các trận bot chính thức phải được chấm trên máy chấm riêng; website chỉ lưu đăng ký, bốc thăm, bảng xếp hạng và kết quả từ máy chấm.
 
 ## 1. Luật bàn cờ
 
@@ -15,15 +15,15 @@
 
 ## 2. Đơn vị dự thi và đăng ký
 
-- Một cá nhân hoặc một đội là một **mục dự thi**. Một đội có tối đa 4 thành viên theo cấu hình mặc định; BTC có thể công bố số khác khi mở đăng ký.
-- Mỗi người tham gia cần tài khoản và email hợp lệ để nhận thông báo. Email được lưu trong tài khoản; thành viên có thể bổ sung email khi đăng ký cá nhân, lập đội hoặc tham gia đội.
-- Mỗi cá nhân chỉ thuộc một mục dự thi trong cùng mùa giải. Đội trưởng quản lý đội và nộp bot chính thức cho mục dự thi của đội.
+- Mỗi nhóm dùng một tài khoản sinh viên đại diện, tương ứng một **mục dự thi** trong mỗi mùa. Web không quản lý danh sách thành viên.
+- Đại diện đăng ký và theo dõi thông báo trực tiếp trên web; không yêu cầu email.
+- Tài khoản đại diện đăng ký, nộp và chọn bot chính thức. Các sinh viên làm nhóm ngoài web, không cần mã mời hay gia nhập đội.
 - Khi admin chốt danh sách và bốc thăm, danh sách dự thi được khóa. Bốc thăm không thể chạy lại để tránh thay đổi bảng sau khi đã công bố.
 
 ## 3. Bốc thăm vòng bảng
 
-1. BTC xác nhận đăng ký đã đóng và rà soát danh sách. Tài khoản/đội trùng, rút lui hoặc chưa hoàn tất thông tin cần được xử lý trước khi bốc thăm.
-2. Admin bấm **Chốt danh sách & bốc thăm** trong trang quản trị. Website khóa danh sách đăng ký, trộn ngẫu nhiên các mục bằng seed được lưu cùng mùa giải và chia đều vào các bảng.
+1. BTC xác nhận đăng ký đã đóng và rà soát danh sách. Tài khoản đại diện trùng, rút lui hoặc chưa hoàn tất thông tin cần được xử lý trước khi bốc thăm.
+2. Admin bấm **Bốc thăm chia bảng** trong trang quản trị. Website khóa danh sách đăng ký, trộn ngẫu nhiên các mục bằng seed được lưu cùng mùa giải và chia đều vào các bảng.
 3. Mỗi bảng có tối đa 4 mục. Số bảng là `ceil(số mục dự thi / 4)`; phần dư được chia đều để kích thước các bảng chênh nhau nhiều nhất một mục.
 4. Bảng được đặt tên A, B, C…; sau Z tiếp tục AA, AB… Mỗi cặp trong bảng gặp nhau hai ván, đổi bên P1/P2.
 5. Thắng được 3 điểm, hòa 1 điểm, thua 0 điểm. Sau khi BTC nhập đủ kết quả, thứ hạng lần lượt xét: tổng điểm, số trận thắng, điểm đối đầu trong nhóm đồng điểm và đồng thắng; nếu vẫn bằng nhau, dùng kết quả bốc thăm phụ xác định trước từ seed để phân hạng ổn định.
@@ -37,7 +37,7 @@ Nút **Xem demo World Cup · 48 đội** ở trang giải đấu tạo một sơ
 - 8 đội hạng ba tốt nhất trong dữ liệu minh họa cũng được đánh dấu đi tiếp, tạo vòng 32 đội.
 - Nhánh loại trực tiếp có 16 trận vòng 32, 8 trận vòng 16, 4 tứ kết, 2 bán kết và 1 chung kết (31 trận).
 - Sơ đồ chia thành hai nhánh trái/phải; các vòng thu dần về trận chung kết ở giữa.
-- Tên đội, bảng điểm và nhánh đấu đều là dữ liệu giả; làm mới/trộn demo không tạo tài khoản, không ghi cơ sở dữ liệu và không gửi email.
+- Tên đội, bảng điểm và nhánh đấu đều là dữ liệu giả; làm mới/trộn demo không tạo tài khoản, không ghi cơ sở dữ liệu và không gửi thông báo thật.
 
 **Đây là demo thể thức 48 đội, không thay đổi luật bốc thăm thật đang cấu hình trong website.** Bốc thăm mùa giải thật vẫn dùng danh sách đã đăng ký, tối đa 4 mục mỗi bảng và đưa hai mục đầu từng bảng vào nhánh; việc chọn 8 đội hạng ba tốt nhất chưa được tích hợp vào bộ bốc thăm hoặc công cụ chấm offline. BTC cần duyệt một thể thức thống nhất trước khi công bố giải chính thức.
 
@@ -62,11 +62,11 @@ Số vòng loại trực tiếp tự điều chỉnh theo số suất đi tiếp
 - Sau khi bốc thăm, trang **Đăng ký mùa giải** hiển thị tên bảng, thành viên, thứ hạng tạm thời, lịch các cặp và sơ đồ nhánh tới chung kết.
 - Thứ hạng bắt đầu ở 0 điểm và chỉ đổi sau khi BTC lưu kết quả ván. Website không tự chạy bot sinh viên hoặc tự xác nhận kết quả thi đấu.
 - Khi đã nhập đủ kết quả vòng bảng, hệ thống đưa hai mục đầu mỗi bảng vào nhánh. Kết quả loại trực tiếp đưa người thắng sang trận kế tiếp; kết quả bán kết cũng đưa người thua vào trận tranh hạng ba.
-- Email sau bốc thăm được gửi tự động đến địa chỉ email của các thành viên có trong danh sách. Admin cũng có thể soạn thông báo riêng ở trang quản trị.
-- Local mặc định chỉ in email ra terminal. Để gửi thật, người vận hành phải cấu hình SMTP bằng `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` và `DEFAULT_FROM_EMAIL`. Không đưa mật khẩu SMTP vào Git.
+- Thông báo được đăng trực tiếp trong Tổng quan của mùa giải. Không có luồng gửi email.
+- Admin đăng thông báo trên web và kiểm tra danh sách bài/kết quả trước khi chốt.
 
 ## 6. Trách nhiệm và giới hạn
 
-- BTC phải kiểm tra danh sách, email, seed, kết quả và sơ đồ trước khi thông báo chính thức.
-- Việc nhập kết quả trong web là thao tác của admin, không thay thế biên bản chấm, log, replay hoặc quy trình khiếu nại.
-- Thể lệ về sandbox, giới hạn tài nguyên, nộp bài, sự cố và khiếu nại được nêu đầy đủ trong [luật thi đấu K71](./LUAT_THI_DAU_K71.md). Quy định điểm và xếp hạng xem [chấm điểm và xếp hạng](./CHAM_DIEM_XEP_HANG.md).
+- BTC phải kiểm tra danh sách, seed, kết quả và sơ đồ trước khi thông báo chính thức.
+- Việc nhập kết quả trong web là thao tác của admin, không thay thế biên bản chấm, log, replay và nhật ký xử lý sự cố.
+- Thể lệ về sandbox, giới hạn tài nguyên, nộp bài, sự cố được nêu đầy đủ trong [luật thi đấu K71](./LUAT_THI_DAU_K71.md). Quy định điểm và xếp hạng xem [chấm điểm và xếp hạng](./CHAM_DIEM_XEP_HANG.md).

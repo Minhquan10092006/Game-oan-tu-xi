@@ -12,6 +12,8 @@ ELO_K_FACTOR = 32  # hệ số điều chỉnh mỗi trận
 
 
 class UserProfile(models.Model):
+    student_id = models.CharField(max_length=40, blank=True)
+    class_name = models.CharField(max_length=80, blank=True)
     """Thông tin ELO và thống kê của mỗi user."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     elo = models.IntegerField(default=ELO_DEFAULT)
@@ -82,6 +84,15 @@ def update_elo_after_match(winner_user, loser_user):
 
 
 class Season(models.Model):
+    PHASES = [(key, label) for key, label in [('registration', 'Đăng ký'), ('submission', 'Nộp bài'), ('locked', 'Khóa bài'), ('running', 'Thi đấu'), ('completed', 'Kết thúc')]]
+    phase = models.CharField(max_length=16, choices=PHASES, default='registration')
+    max_participants = models.PositiveIntegerField(default=4000)
+    submission_deadline = models.DateTimeField(null=True, blank=True)
+    appeal_deadline = models.DateTimeField(null=True, blank=True)
+    require_verified_email = models.BooleanField(default=False)
+    judging_paused = models.BooleanField(default=False)
+    judge_image = models.CharField(max_length=80, blank=True)
+    judge_engine = models.CharField(max_length=64, blank=True)
     ENTRY_MODE_CHOICES = [('individual', 'Cá nhân'), ('team', 'Đội'), ('both', 'Cá nhân và đội')]
     name = models.CharField(max_length=120, verbose_name='Tên mùa giải')
     description = models.TextField(blank=True, verbose_name='Mô tả')
@@ -110,6 +121,7 @@ class Team(models.Model):
     """A season-scoped team. The invitation secret is stored only as a hash."""
     season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='teams')
     name = models.CharField(max_length=80)
+    contact_email = models.EmailField(blank=True)
     captain = models.ForeignKey(User, on_delete=models.PROTECT, related_name='captained_teams')
     join_code_hash = models.CharField(max_length=64, unique=True, editable=False)
     is_locked = models.BooleanField(default=False)
@@ -134,7 +146,8 @@ class TeamMembership(models.Model):
 
 class CompetitionEntry(models.Model):
     """The immutable competitor identity used by a season: exactly one user or team."""
-    STATUS_CHOICES = [('registered', 'Đã đăng ký'), ('locked', 'Đã khóa'), ('withdrawn', 'Rút')]
+    STATUS_CHOICES = [('registered', 'Đã đăng ký'), ('locked', 'Đã khóa'), ('withdrawn', 'Rút'), ('disqualified', 'Bị loại')]
+    exclusion_reason = models.TextField(blank=True)
     season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='entries')
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='individual_entries')
     team = models.OneToOneField(Team, null=True, blank=True, on_delete=models.CASCADE, related_name='entry')
@@ -252,3 +265,103 @@ class MatchHistory(models.Model):
             return json.loads(self.replay_data) if self.replay_data else None
         except Exception:
             return None
+
+
+class OfficialBot(models.Model):
+    entry = models.OneToOneField(CompetitionEntry, on_delete=models.PROTECT, related_name='official_bot')
+    submission = models.ForeignKey('submissions.Submission', on_delete=models.PROTECT)
+    source_code = models.TextField()
+    sha256 = models.CharField(max_length=64)
+    frozen_at = models.DateTimeField(null=True, blank=True)
+
+
+class JudgeWorker(models.Model):
+    slot = models.PositiveSmallIntegerField(unique=True)
+    name = models.CharField(max_length=80)
+    token_hash = models.CharField(max_length=64, unique=True)
+    enabled = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(slot__gte=1, slot__lte=4), name='four_judge_slots')]
+
+
+class JudgingJob(models.Model):
+    KINDS = [('validation', 'Kiểm tra bài'), ('fixture', 'Thi đấu')]
+    STATES = [('queued', 'Đang chờ'), ('running', 'Đang chấm'), ('completed', 'Hoàn thành'), ('failed', 'Lỗi hạ tầng'), ('review', 'Cần trọng tài')]
+    season = models.ForeignKey(Season, on_delete=models.PROTECT, related_name='judging_jobs')
+    kind = models.CharField(max_length=12, choices=KINDS)
+    bot = models.OneToOneField(OfficialBot, null=True, blank=True, on_delete=models.PROTECT, related_name='validation_job')
+    fixture = models.OneToOneField(TournamentFixture, null=True, blank=True, on_delete=models.PROTECT, related_name='judging_job')
+    state = models.CharField(max_length=12, choices=STATES, default='queued', db_index=True)
+    worker = models.ForeignKey(JudgeWorker, null=True, blank=True, on_delete=models.PROTECT)
+    lease_token = models.CharField(max_length=64, blank=True)
+    lease_until = models.DateTimeField(null=True, blank=True, db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    result = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['season', 'kind', 'state'])]
+        constraints = [models.CheckConstraint(condition=(Q(kind='validation', bot__isnull=False, fixture__isnull=True) | Q(kind='fixture', bot__isnull=True, fixture__isnull=False)), name='job_has_one_target')]
+        permissions = [('operate_tournament', 'Điều hành giải'), ('referee_tournament', 'Xử lý khiếu nại')]
+
+
+class TournamentAudit(models.Model):
+    season = models.ForeignKey(Season, on_delete=models.PROTECT, related_name='audit_events')
+    actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    action = models.CharField(max_length=80)
+    detail = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TournamentNotice(models.Model):
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='notices')
+    title = models.CharField(max_length=160)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TournamentEmail(models.Model):
+    notice = models.ForeignKey(TournamentNotice, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.CASCADE)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    error = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['notice', 'user'], name='one_notice_email_per_user')]
+
+
+class TournamentAppeal(models.Model):
+    fixture = models.ForeignKey(TournamentFixture, on_delete=models.PROTECT, related_name='appeals')
+    author = models.ForeignKey(User, on_delete=models.PROTECT)
+    message = models.TextField()
+    evidence = models.TextField(blank=True)
+    decision = models.TextField(blank=True)
+    resolved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT, related_name='resolved_appeals')
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class VerifiedContact(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    email = models.EmailField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+
+class ContactEmailClaim(models.Model):
+    """Serializes email ownership across personal and captain-managed team contacts."""
+    email = models.CharField(max_length=254, unique=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contact_email_claims')
+
+
+class TournamentWaitlist(models.Model):
+    season = models.ForeignKey(Season, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['season', 'user'], name='one_waitlist_per_user')]

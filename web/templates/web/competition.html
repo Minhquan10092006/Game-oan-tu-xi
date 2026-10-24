@@ -1,12 +1,10 @@
-{% extends 'web/retro/base.html' %}
-{% load static %}
-{% block title %}Đăng ký mùa giải · Oẳn Tù Tì 2.0{% endblock %}
-{% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-competition.css' %}"><link rel="stylesheet" href="{% static 'web/css/retro-tournament-view.css' %}"><script src="{% static 'web/js/retro-competition.js' %}" defer></script><script src="{% static 'web/js/retro-tournament-preview.js' %}" defer></script>{% endblock %}
+{% extends 'web/retro/base.html' %}{% load static %}
+{% block title %}Đăng ký giải đấu{% endblock %}
+{% block body_class %}retro-tournament{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'web/css/tournament-operations.css' %}"><script src="{% static 'web/js/retro-competition.js' %}" defer></script>{% endblock %}
 {% block content %}
-<section class="competition-heading"><div><div class="eyebrow">SEASON ENTRY / K71</div><h1>LẬP ĐỘI. CHỌN ĐƯỜNG ĐẤU.</h1><p>Đăng ký cá nhân hoặc đội trước hạn. Chỉ đội trưởng mới nộp bài chính thức cho đội.</p><button class="retro-button preview-toggle" id="preview-world-cup-toggle" type="button" aria-expanded="false" aria-controls="tournament-preview">Xem demo World Cup · 48 đội</button></div><a class="retro-button" href="/play/">← Đấu trường</a></section>
-{% if is_guest %}<div class="competition-alert">Tài khoản khách có thể xem thông tin nhưng không thể đăng ký giải hoặc nộp bài chính thức. <a href="/register/?next=/competition/">Tạo tài khoản →</a></div>{% endif %}
-<p id="competition-status" class="competition-status" role="status" aria-live="polite">Đang tải mùa giải…</p>
-<section id="tournament-preview" class="tournament-view preview-panel" hidden aria-label="Minh họa giải đấu 48 đội kiểu World Cup"></section>
-<div id="season-list" class="season-list"></div>
-<template id="season-template"><section class="retro-window season-card"><div class="window-title"><span class="season-title"></span><span class="season-mode"></span></div><div class="window-body"><div class="season-body"><div><h2 class="season-name"></h2><p class="season-state"></p><div class="round-track" aria-label="Lộ trình vòng đấu"></div></div><div class="entry-actions"><div class="contact-email-wrap"><label>Email nhận thông báo <input class="contact-email" type="email" autocomplete="email" placeholder="ban@example.com" required></label><button class="retro-button save-contact-email" type="button">Lưu email</button><small>BTC sẽ gửi thông báo bốc thăm và lịch đấu vào email này.</small></div><button class="retro-button individual-action" type="button">Đăng ký cá nhân</button><form class="create-team-form"><label>Tên đội <input name="name" required minlength="3" maxlength="80"></label><button class="retro-button primary" type="submit">+ Lập đội</button></form><form class="join-team-form"><label>Mã đội <input name="join_code" required autocomplete="off" placeholder="K71-..."></label><button class="retro-button" type="submit">Vào đội</button></form></div></div><div class="my-entry" hidden></div><section class="tournament-view" hidden aria-label="Bảng đấu và nhánh loại trực tiếp"></section></div></section></template>
+<header class="ops-heading"><div><p class="eyebrow">TÀI KHOẢN ĐẠI DIỆN</p><h1>Đăng ký giải đấu</h1><p>Mỗi nhóm cử một sinh viên dùng tài khoản này để đăng ký, nộp và quản lý bot.</p></div><a class="retro-button" href="/tournament/">Giải của bạn</a></header>
+{% if is_guest %}<p class="guide-tip">Bạn đang dùng tài khoản khách. <a href="/register/?next=/competition/">Tạo tài khoản chính thức</a> để đăng ký.</p>{% endif %}
+<p id="competition-status" role="status" aria-live="polite">Đang tải mùa giải…</p>
+<div id="season-list" class="ops-panel"></div>
 {% endblock %}

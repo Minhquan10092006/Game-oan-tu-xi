@@ -3,13 +3,67 @@
 {% block title %}Nộp bot Python · Oẳn Tù Tì 2.0{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-submit.css' %}">{% endblock %}
 {% block content %}
+<p><a class="retro-button" href="/tournament/">Chọn bản chính thức · kiểm tra Python · xem tiến độ chấm →</a></p>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <section class="submit-heading"><div><div class="eyebrow">YOUR_BOT.PY / {{ user.username }}</div><h1>BIẾN Ý TƯỞNG THÀNH NƯỚC ĐI.</h1><p>Nộp mã Python để BTC duyệt trước khi khóa bài trên máy chấm riêng.</p></div><a href="/play/" class="retro-button">← Đấu trường</a></section>
 <div class="submit-layout">
   <section class="retro-window submit-main"><div class="window-title">▸ submission_console.exe</div><div class="window-body">
     <h2>Nộp chương trình Python</h2><div class="info-banner"><strong>Quy trình:</strong> web lưu bài và biên nhận; BTC duyệt, chọn phiên bản rồi chạy trên máy chấm riêng. Bài nộp không chạy ngay trên web.</div>
+    <section class="bot-protocol" aria-labelledby="bot-protocol-title">
+      <h3 id="bot-protocol-title">Bot nhận gì và cần trả về gì?</h3>
+      <p>Mỗi lượt, máy chấm chạy lại chương trình của bạn. Đọc <strong>một JSON từ stdin đến EOF</strong>, chọn một nước đi, in <strong>đúng một JSON ra stdout</strong> rồi kết thúc. Không nhập tay và không viết vòng lặp chờ lượt tiếp theo.</p>
+      <h4>Đầu vào — trạng thái trận đấu</h4>
+      <ul>
+        <li><code>protocol_version</code>, <code>match_id</code>: phiên bản giao thức và mã trận.</li>
+        <li><code>current_player</code>: bên bạn đang điều khiển, <code>P1</code> hoặc <code>P2</code>. <code>turn</code> là số vòng; <code>ply</code> là số lượt đã đi.</li>
+        <li><code>board</code>: cấu hình bàn cờ. <code>players</code>: quân và đích của hai bên; đích của bạn là <code>players[current_player]["goal"]</code>.</li>
+        <li><code>legal_moves</code>: danh sách nước hợp lệ. Mỗi nước có <code>piece_id</code>, <code>from</code>, <code>to</code> và thông tin như <code>capture</code>, <code>wins_immediately</code>.</li>
+        <li><code>userdata</code>: dữ liệu bạn đã trả ở lượt trước của chính mình; ban đầu là <code>null</code>.</li>
+      </ul>
+      <h4>Đầu ra — một nước đi hợp lệ</h4>
+      <p>Trả <code>move</code> gồm <code>piece_id</code> (mã quân), <code>from</code> (ô xuất phát), <code>to</code> (ô đến). Tọa độ là <code>[x, y]</code>, tính từ 1; phải khớp một nước trong <code>legal_moves</code>. Có thể kèm <code>userdata</code> dạng JSON, tối đa 4 KiB, để nhớ dữ liệu giữa các lượt.</p>
+      <details>
+        <summary>Ví dụ đầu vào / đầu ra</summary>
+        <p>Trích một phần đầu vào để minh họa cách chọn nước; input thật có đầy đủ các trường ở trên và có thể có nhiều nước hơn:</p>
+        <pre><code>{
+  "current_player": "P1",
+  "legal_moves": [
+    {"piece_id": "P1-R1", "from": [1, 2], "to": [2, 3],
+     "capture": false, "wins_immediately": false}
+  ],
+  "userdata": null
+}</code></pre>
+        <p>Đầu ra tương ứng, chọn nước đầu tiên:</p>
+        <pre><code>{"move": {"piece_id": "P1-R1", "from": [1, 2], "to": [2, 3]}, "userdata": null}</code></pre>
+      </details>
+      <details>
+        <summary>Ví dụ Python hoàn chỉnh — có thể lưu thành bot.py để nộp</summary>
+        <p>Bot đơn giản này chọn nước hợp lệ đầu tiên, dùng được cho cả P1 và P2. Đây là ví dụ giao thức, chưa có chiến thuật tối ưu.</p>
+        <pre><code>import json
+import sys
+
+state = json.load(sys.stdin)
+chosen = state["legal_moves"][0]
+
+output = {
+    "move": {
+        "piece_id": chosen["piece_id"],
+        "from": chosen["from"],
+        "to": chosen["to"],
+    },
+    "userdata": None,
+}
+print(json.dumps(output))</code></pre>
+      </details>
+      <p class="code-hint">Không in lời chào, bàn cờ hoặc log ra stdout. Nếu cần debug, dùng <code>print("debug", file=sys.stderr)</code>. Bộ nhớ biến thông thường không giữ qua lượt; hãy dùng userdata nếu cần. Máy chấm chỉ gọi bot khi trận còn tiếp diễn và có nước hợp lệ.</p>
+    </section>
     <label for="ai-name">Tên bot</label><input type="text" id="ai-name" placeholder="Ví dụ: GreedyAI, MinimaxBot" maxlength="128">
-    <label for="competition-entry">Mục dự thi mùa giải <small>(tùy chọn)</small></label><input type="text" id="competition-entry" inputmode="numeric" value="{{ request.GET.entry|default:'' }}" placeholder="Mã mục dự thi từ trang Đăng ký mùa giải">
+    <label for="competition-entry">Nộp bài cho mùa giải</label><select id="competition-entry" required>
+      {% if submission_entries %}<option value="">— Chọn mùa giải —</option>{% endif %}
+      {% for entry in submission_entries %}<option value="{{ entry.pk }}" {% if entry.pk == selected_submission_entry %}selected{% endif %}>{{ entry.season.name }} · {{ entry.display_name }}</option>{% endfor %}
+      <option value="practice" {% if not submission_entries %}selected{% endif %}>Bài luyện tập — không đưa vào chấm giải</option>
+    </select>
+    <p class="code-hint">Chọn đúng mùa để bài được tính vào giải. Nếu chỉ có một mùa đang nhận bài, hệ thống chọn sẵn. <a href="/competition/">Đăng ký mùa giải</a></p>
     <label for="submission-method">Cách xác nhận phiên bản</label><select id="submission-method"><option value="direct">Nộp trực tiếp — source này là bản chính thức</option><option value="git">Git tham chiếu — kèm URL và commit cố định</option></select>
     <div id="git-evidence" hidden><label for="git-url">URL GitHub/GitLab HTTPS</label><input type="url" id="git-url" placeholder="https://github.com/nhom/bot"><label for="git-commit">Commit đầy đủ</label><input type="text" id="git-commit" placeholder="40 hoặc 64 ký tự hexadecimal"></div>
     <label for="file-input">Mã nguồn Python</label><div id="upload-zone" class="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"><input type="file" id="file-input" accept=".py" hidden onchange="handleFileSelect(event)"><strong>🐍 Kéo file .py vào đây hoặc bấm để chọn</strong><span id="file-name" hidden></span></div>
@@ -56,7 +110,9 @@ async function submitCode() {
   const code   = document.getElementById('code-editor').value;
   const method = document.getElementById('submission-method').value;
   const entryText = document.getElementById('competition-entry').value.trim();
+  const practice = entryText === 'practice';
 
+  if (!entryText) { showError('Vui lòng chọn mùa giải hoặc chọn rõ Bài luyện tập.'); return; }
   if (!aiName) { showError('Vui lòng nhập tên AI.'); return; }
   if (!code.trim()) { showError('Vui lòng nhập mã nguồn.'); return; }
   showError('');
@@ -74,7 +130,7 @@ async function submitCode() {
       },
       credentials: 'same-origin',
       body: JSON.stringify({ ai_name: aiName, source_code: code, submission_method: method,
-        competition_entry: entryText ? Number(entryText) : null,
+        competition_entry: practice ? null : Number(entryText), practice,
         git_url: method === 'git' ? document.getElementById('git-url').value.trim() : '',
         git_commit: method === 'git' ? document.getElementById('git-commit').value.trim() : '' }),
     });
@@ -96,7 +152,7 @@ async function submitCode() {
     }
 
     // Thành công
-    showToast(`✅ Đã nộp "${data.ai_name}" thành công! Chờ admin duyệt.`);
+    showToast(data.competition_entry ? `Đã nộp "${data.ai_name}" vào mùa giải. Xem bản chính thức và tiến độ ở Giải của bạn.` : `Đã lưu "${data.ai_name}" làm bài luyện tập, không đưa vào chấm giải.`);
     // Reset form
     document.getElementById('ai-name').value = '';
     document.getElementById('code-editor').value = '';

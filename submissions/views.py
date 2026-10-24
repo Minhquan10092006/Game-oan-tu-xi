@@ -29,9 +29,10 @@ logger = logging.getLogger(__name__)
 class IsAdminUser(permissions.BasePermission):
     """Chỉ cho phép staff / superuser."""
     def has_permission(self, request, view):
+        from web.tournament_ops import can_operate
         return bool(
             request.user and request.user.is_authenticated
-            and (request.user.is_staff or request.user.is_superuser)
+            and can_operate(request.user)
         )
 
 
@@ -51,6 +52,9 @@ class SubmissionListCreateView(generics.ListCreateAPIView):
         return Submission.objects.filter(submitter=self.request.user).order_by('-submitted_at')
 
     def create(self, request, *args, **kwargs):
+        from web.tournament_ops import can_operate
+        if can_operate(request.user):
+            return Response({'error': 'Tài khoản admin dùng để quản lý và chấm bài, không nộp bot dự thi.'}, status=403)
         if request.session.get('is_guest'):
             return Response({'error': 'Hãy tạo tài khoản chính thức để nộp bài.'}, status=403)
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -173,6 +177,9 @@ def admin_delete_submission(request, pk):
         return Response({'error': 'Không tìm thấy bài nộp.'}, status=status.HTTP_404_NOT_FOUND)
 
     sub_info = f'#{sub.pk} {sub.ai_name} by {sub.submitter}'
+    from web.models import OfficialBot
+    if OfficialBot.objects.filter(submission=sub).exists():
+        return Response({'error': 'Bài đang là phiên bản chính thức của giải; phải giữ để đối chiếu.'}, status=409)
     if sub.used_in_battle:
         return Response({'error': 'Bài đã thi đấu phải được giữ để đối chiếu; không thể xóa.'}, status=409)
     sub.delete()

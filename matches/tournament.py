@@ -45,7 +45,7 @@ def write_json(path, value):
 def engine_hash():
     root = Path(__file__).parent
     return digest(b''.join((root / name).read_bytes() for name in
-                          ('game_engine.py', 'bot_runner.py', 'match_manager.py', 'tournament.py')))
+                          ('game_engine.py', 'bot_runner.py', 'match_manager.py', 'tournament.py', 'judge_worker.py')))
 
 
 def schedule(team_ids):

@@ -4,6 +4,18 @@ from django.test import Client, TestCase
 
 
 class PublicFrontendTests(TestCase):
+    def test_home_logout_button_ends_session_and_preserves_account(self):
+        user = User.objects.create_user(username='logout_player', password='testing')
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(user)
+        page = client.get('/')
+        self.assertContains(page, 'class="header-logout"')
+        response = client.post('/logout/', HTTP_X_CSRFTOKEN=client.cookies['csrftoken'].value)
+        self.assertRedirects(response, '/')
+        self.assertNotIn('_auth_user_id', client.session)
+        self.assertTrue(User.objects.filter(pk=user.pk).exists())
+        self.assertNotContains(client.get('/'), 'class="header-logout"')
+
     def test_home_is_public_and_has_real_navigation(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)

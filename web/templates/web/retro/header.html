@@ -1,26 +1,32 @@
 <header class="site-shell site-header">
-  <div class="desktop-bar"><span><span class="system-dot" aria-hidden="true"></span> K71 / ĐẤU TRƯỜNG THUẬT TOÁN</span><span class="desktop-meta">BẢN TRẢI NGHIỆM · v1.0</span></div>
+  <div class="desktop-bar"><span>K71 / ĐẤU TRƯỜNG THUẬT TOÁN</span><span>{% if is_management_user %}BAN TỔ CHỨC{% else %}SINH VIÊN ĐẠI DIỆN{% endif %}</span></div>
   <div class="masthead">
-    <a class="brand" href="/" aria-label="Oẳn Tù Tì 2.0 — Trang chủ">
+    <a class="brand" href="{% if is_management_user %}/tournament/{% else %}/{% endif %}" aria-label="Oẳn Tù Tì 2.0">
       <span class="brand-mark" aria-hidden="true"><span>K</span><span>B</span><span>Ba</span><span>↗</span></span>
-      <span class="brand-copy"><strong>OẲN TÙ TÌ <span>2.0</span></strong><small>TRÒ CHƠI QUEN. TƯ DUY MỚI.</small></span>
+      <span class="brand-copy"><strong>OẲN TÙ TÌ <span>2.0</span></strong><small>{% if is_management_user %}QUẢN LÝ VÀ VẬN HÀNH GIẢI ĐẤU{% else %}MỘT TÀI KHOẢN ĐẠI DIỆN · MỘT BÀI DỰ THI{% endif %}</small></span>
     </a>
     <div class="account-links">
-      {% if user.is_authenticated and not is_guest %}
-        <span class="username">Xin chào, <strong>{{ user.username }}</strong></span>
-        <a class="retro-button primary" href="/play/">Vào đấu trường ↗</a>
-      {% else %}
-        <a class="login-link" href="/login/">Đăng nhập</a>
-        <a class="retro-button primary" href="/register/">Đăng ký tài khoản ↗</a>
-      {% endif %}
+      {% if user.is_authenticated %}
+      <span class="username">Xin chào, <strong>{{ user.username }}</strong></span>
+      <form method="post" action="{% url 'logout' %}" class="header-logout">{% csrf_token %}<button class="retro-button" type="submit">Đăng xuất</button></form>
+      {% else %}<a class="login-link" href="/login/">Đăng nhập</a><a class="retro-button primary" href="/register/">Đăng ký tài khoản</a>{% endif %}
     </div>
   </div>
   <nav class="tab-nav" aria-label="Điều hướng chính">
-    <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}><span aria-hidden="true">⌂</span> Trang chủ</a>
+    {% if is_management_user %}
+    <a href="/tournament/" {% if page == 'competition' %}aria-current="page"{% endif %}>Mùa giải</a>
+    <a href="/admin/code-review/" {% if page == 'submissions-admin' %}aria-current="page"{% endif %}>Bài nộp</a>
+    <a href="/tournament/?panel=judging">Chấm bài</a>
+    <a href="/tournament/?panel=results">Lịch sử đấu</a>
+    <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn</a>
+    {% else %}
+    <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>Trang chủ</a>
+    <a href="/competition/" {% if page == 'registration' %}aria-current="page"{% endif %}>Đăng ký giải</a>
+    <a href="/ai/">Nộp bot</a>
+    <a href="/tournament/" {% if page == 'competition' %}aria-current="page"{% endif %}>Giải của bạn</a>
     <a href="/#luat-choi">Luật chơi</a>
-    <a href="/#tham-gia">Cách tham gia</a>
-    <a href="/play/" {% if page == 'play' %}aria-current="page"{% endif %}>Đấu trường</a>
-    <a href="/ranking/" {% if page == 'ranking' %}aria-current="page"{% endif %}>ELO luyện tập</a>
+    <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn sử dụng</a>
     <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Dừng hiệu ứng</button>
+    {% endif %}
   </nav>
 </header>

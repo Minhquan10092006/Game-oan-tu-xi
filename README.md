@@ -4,9 +4,9 @@ Sinh viên viết Python điều khiển quân trên bàn 9 × 9. Thắng khi đ
 
 ## Tài liệu trình thầy và nhà trường
 
-- [Luật thi đấu chi tiết](docs/LUAT_THI_DAU_K71.md): bàn cờ, bố trí, di chuyển, thắng/hòa/thua, giao thức, giới hạn, nộp bài và khiếu nại.
+- [Luật thi đấu chi tiết](docs/LUAT_THI_DAU_K71.md): bàn cờ, bố trí, di chuyển, thắng/hòa/thua, giao thức, giới hạn, nộp bài.
 - [Chấm điểm và xếp hạng](docs/CHAM_DIEM_XEP_HANG.md): 3–1–0, đổi bên, vòng bảng/chung kết, đối đầu, SB và đồng hạng.
-- [Luật, bốc thăm và sơ đồ giải](docs/LUAT_XEP_BANG_VA_SO_DO_GIAI.md): chia bảng, demo World Cup 48 đội, email và nhánh tới chung kết.
+- [Luật, bốc thăm và sơ đồ giải](docs/LUAT_XEP_BANG_VA_SO_DO_GIAI.md): chia bảng, demo World Cup 48 đội và nhánh tới chung kết.
 - [Host demo và phương án tiết kiệm](docs/HOST_DEMO_VA_VAN_HANH.md): giữ Render demo, lựa chọn sau khi cấp kinh phí, chi phí tham chiếu và vận hành.
 - [Hướng dẫn chạy giải local](docs/HUONG_DAN_CHAY_GIAI.md): xuất bài, khóa hash, chạy Docker, tiếp tục sau sự cố và xuất kết quả.
 
@@ -16,7 +16,7 @@ Các điều lệ là bản đề xuất k71-v1.0 để trường phê duyệt t
 
 | Thành phần | Hành vi |
 |---|---|
-| Django web | Đăng nhập, đăng ký mùa giải, bốc thăm/bảng đấu, email khi cấu hình SMTP, nộp code, duyệt và biên nhận |
+| Django web | Đăng nhập, một tài khoản đại diện đăng ký mùa giải, bốc thăm/bảng đấu, nộp code, duyệt và biên nhận |
 | `/battlecode/` | Hai chiến thuật mẫu tin cậy, replay lưu DB, không cộng điểm giải |
 | File Python tải lên | Chỉ lưu bài; không chạy trực tiếp trong HTTP request |
 | Công cụ local | Khóa bài, vòng tròn hai lượt, Docker runner, lưu từng ván, resume, xếp hạng |
@@ -24,7 +24,13 @@ Các điều lệ là bản đề xuất k71-v1.0 để trường phê duyệt t
 
 Engine chính thức: `matches/game_engine.py`. Giao thức dùng `piece_id`, `from`, `to`, tọa độ từ **1**. Các luồng người chơi cũ có mô hình nội bộ khác; không dùng giao thức Judge0 cũ làm mẫu bài thi.
 
+## Mô hình tham gia hiện tại
+
+Mỗi nhóm cử một sinh viên dùng một tài khoản đại diện để đăng ký, nộp và chọn bot. Web không quản lý thành viên, mã mời, email hoặc khiếu nại. Admin chỉ dùng các mục Mùa giải, Bài nộp, Chấm bài, Lịch sử đấu và Hướng dẫn. Luồng mùa: Đăng ký → Nộp bài → Khóa bài → Thi đấu → Kết thúc.
+
 ## Chạy web local
+
+Tổ chức giải tối đa 4.000 người, 4 máy chấm Docker và thanh tiến độ: xem [hướng dẫn vận hành](docs/TO_CHUC_GIAI_4_MAY_CHAM.md). Trang mới `/tournament/` quản lý giai đoạn, phiên bản bot, hàng đợi, tiến độ, replay, thông báo.
 
 Python có thể cài được các phiên bản trong `requirements.txt`. Bản kiểm tra local dùng Python 3.14; bot được quy định Python 3.12 trong container riêng.
 
@@ -40,6 +46,15 @@ Copy-Item .env.example .env
 Đặt `DJANGO_SECRET_KEY` riêng trong `.env`. Local dùng SQLite; Render dùng `DATABASE_URL`. Production yêu cầu secret riêng và `DJANGO_DEBUG=False`; cấu hình DB sai sẽ báo lỗi, không âm thầm chuyển sang SQLite.
 
 Trang chính `/`, nộp bài `/ai/`, xem bot mẫu `/battlecode/`, lịch sử `/history/`, quản trị bài `/admin/code-review/`. Các API replay chỉ cho chủ trận hoặc admin xem. Demo không cần Docker hoặc Judge0.
+
+Sau mỗi lần `git pull`, cập nhật cấu trúc database trước khi chạy lại server:
+
+```powershell
+venv/Scripts/python manage.py migrate
+venv/Scripts/python manage.py runserver
+```
+
+Nếu dùng môi trường `.venv` thì thay `venv/` bằng `.venv/`. Truy cập http://localhost:8000/ (cần có cổng `8000`). Lỗi `no such column` hoặc `no such table` thường do chưa chạy migration mới. Database và cache Python được giữ riêng trên từng máy, không đưa vào Git.
 
 ## Bot mẫu
 

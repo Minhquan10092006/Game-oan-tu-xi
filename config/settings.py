@@ -78,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'web.context_processors.navigation',
             ],
         },
     },
@@ -87,6 +88,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 REDIS_URL = os.environ.get('REDIS_URL', '')
+CACHES = {'default': {
+    'BACKEND': 'django.core.cache.backends.redis.RedisCache', 'LOCATION': REDIS_URL,
+    'KEY_PREFIX': 'ott-web',
+}} if REDIS_URL else {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+# Replays are accepted only from authenticated workers; keep request memory bounded.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024
 if REDIS_URL:
     # Required before adding web processes: all WebSocket workers must share state.
     CHANNEL_LAYERS = {

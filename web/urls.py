@@ -1,7 +1,11 @@
 from django.urls import path
 from . import views
+from .operations_views import dashboard, usage_guide
+from .competition_views import retired_feature
 
 urlpatterns = [
+    path('guide/', usage_guide, name='usage-guide'),
+    path('tournament/', dashboard, name='tournament-operations'),
     path('', views.index, name='index'),
     path('play/', views.play, name='play'),
     path('login/', views.account, name='login'),
@@ -10,12 +14,12 @@ urlpatterns = [
     path('battlecode/', views.battlecode_demo, name='battlecode'),
     path('history/', views.match_history, name='history'),
     path('history/<str:match_id>/', views.match_detail, name='match-detail'),
-    path('season-admin/', views.season_admin, name='season-admin'),
-    path('season-admin/create/', views.season_create, name='season-create'),
+    path('season-admin/', dashboard, name='season-admin'),
+    path('season-admin/create/', retired_feature, name='season-create'),
     path('season-admin/<int:pk>/toggle/', views.season_toggle, name='season-toggle'),
     path('season-admin/<int:pk>/delete/', views.season_delete, name='season-delete'),
-    path('season-admin/<int:pk>/draw/', views.season_draw, name='season-draw'),
-    path('season-admin/<int:pk>/email/', views.season_email, name='season-email'),
+    path('season-admin/<int:pk>/draw/', retired_feature, name='season-draw'),
+    path('season-admin/<int:pk>/email/', retired_feature, name='season-email'),
     path('season-admin/fixtures/<int:pk>/result/', views.tournament_fixture_result, name='fixture-result'),
     path('ranking/', views.ranking_view, name='ranking'),
     path('ai/', views.ai_submit, name='ai-submit'),

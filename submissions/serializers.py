@@ -4,6 +4,7 @@ submissions/serializers.py — không còn judge logic.
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 from urllib.parse import urlparse
@@ -17,10 +18,11 @@ GIT_REFERENCE_HOSTS = {'github.com', 'gitlab.com'}
 class SubmissionCreateSerializer(serializers.ModelSerializer):
     """Tạo bài nộp mới: chỉ cần ai_name + source_code."""
     source_code = serializers.CharField(trim_whitespace=False)
+    practice = serializers.BooleanField(write_only=True, default=False)
 
     class Meta:
         model = Submission
-        fields = ['ai_name', 'source_code', 'competition_entry', 'submission_method', 'git_url', 'git_commit']
+        fields = ['ai_name', 'source_code', 'competition_entry', 'submission_method', 'git_url', 'git_commit', 'practice']
 
     def validate_source_code(self, value: str) -> str:
         max_size = getattr(settings, 'SUBMISSION_MAX_CODE_SIZE', 65536)
@@ -54,18 +56,40 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Chọn phương thức Git khi khai báo URL hoặc commit Git.')
         attrs['git_url'], attrs['git_commit'] = url, commit
         entry = attrs.get('competition_entry')
+        if entry and attrs.get('practice'):
+            raise serializers.ValidationError('Bài luyện tập không được gắn với mục dự thi mùa giải.')
+        if not entry and not attrs.get('practice'):
+            from web.models import CompetitionEntry
+            candidates = list(CompetitionEntry.objects.filter(
+                user=self.context['request'].user, status='registered', season__is_active=True,
+                season__phase__in=['registration', 'submission'],
+            ).filter(Q(season__submission_deadline__isnull=True) | Q(season__submission_deadline__gte=timezone.now()))[:2])
+            if len(candidates) > 1:
+                raise serializers.ValidationError({'competition_entry': 'Bạn có nhiều mùa đang nhận bài. Hãy chọn đúng mùa giải khi nộp.'})
+            if candidates:
+                entry = attrs['competition_entry'] = candidates[0]
         if entry:
             request = self.context['request']
             if entry.status != 'registered':
                 raise serializers.ValidationError({'competition_entry': 'Mục dự thi đã bị khóa hoặc rút.'})
             if entry.user_id != request.user.id:
                 if not entry.team_id or entry.team.captain_id != request.user.id:
-                    raise serializers.ValidationError({'competition_entry': 'Chỉ đội trưởng mới được nộp bài chính thức cho đội.'})
+                    raise serializers.ValidationError({'competition_entry': 'Chỉ tài khoản đại diện được nộp bài cho mục dự thi này.'})
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
+        validated_data.pop('practice', None)
         user = self.context['request'].user
+        entry = validated_data.get('competition_entry')
+        if entry:
+            from web.models import Season, CompetitionEntry
+            season = Season.objects.select_for_update().get(pk=entry.season_id)
+            current = CompetitionEntry.objects.select_for_update().get(pk=entry.pk)
+            if (current.status != 'registered' or season.phase not in ('registration', 'submission')
+                    or not season.is_active
+                    or (season.submission_deadline and timezone.now() > season.submission_deadline)):
+                raise serializers.ValidationError('Mùa giải đã khóa hoặc hết hạn nộp bài.')
         # Serialize version allocation and quota checks for each account on PostgreSQL.
         get_user_model().objects.select_for_update().get(pk=user.pk)
         today = timezone.localdate()
@@ -78,9 +102,16 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             .order_by('-version').first()
         )
         version = (last.version + 1) if last else 1
-        return Submission.objects.create(
+        submission = Submission.objects.create(
             submitter=user, version=version, **validated_data,
         )
+        if entry:
+            from web.models import OfficialBot
+            # First submission is selected automatically; subsequent versions are opt-in.
+            OfficialBot.objects.get_or_create(entry=entry, defaults={
+                'submission': submission, 'source_code': submission.source_code, 'sha256': submission.source_sha256,
+            })
+        return submission
 
 
 class SubmissionListSerializer(serializers.ModelSerializer):

@@ -143,7 +143,7 @@ def draw_season(season_id: int) -> dict:
         raise DrawError('Mùa giải này đã được bốc thăm; không thể bốc thăm lại.')
 
     entries = list(
-        CompetitionEntry.objects.select_for_update().filter(
+        CompetitionEntry.objects.select_for_update(of=('self',)).filter(
             season=season, status__in=['registered', 'locked'],
         ).select_related('team', 'user').order_by('pk')
     )
@@ -256,12 +256,13 @@ def draw_season(season_id: int) -> dict:
 
 
 def group_standings(group: TournamentGroup) -> list[dict]:
-    members = list(group.entries.order_by('display_name', 'pk'))
+    prefetched = getattr(group, '_prefetched_objects_cache', {})
+    members = sorted(prefetched['entries'], key=lambda entry: (entry.display_name, entry.pk)) if 'entries' in prefetched else list(group.entries.order_by('display_name', 'pk'))
     stats = {
         entry.pk: {'entry': entry, 'played': 0, 'wins': 0, 'draws': 0, 'losses': 0, 'points': 0}
         for entry in members
     }
-    fixtures = list(group.fixtures.select_related('entry1', 'entry2'))
+    fixtures = list(prefetched['fixtures']) if 'fixtures' in prefetched else list(group.fixtures.all())
     head_to_head = defaultdict(int)
     for fixture in fixtures:
         if fixture.result == 'scheduled' or fixture.entry1_id not in stats or fixture.entry2_id not in stats:
@@ -328,7 +329,9 @@ def _propagate_result(fixture: TournamentFixture):
 
 @transaction.atomic
 def record_fixture_result(fixture_id: int, result: str):
-    fixture = TournamentFixture.objects.select_for_update().select_related(
+    season_id = TournamentFixture.objects.values_list('tournament_round__season_id', flat=True).get(pk=fixture_id)
+    Season.objects.select_for_update().get(pk=season_id)
+    fixture = TournamentFixture.objects.select_for_update(of=('self',)).select_related(
         'entry1', 'entry2', 'tournament_round', 'group',
     ).get(pk=fixture_id)
     if fixture.result != 'scheduled':
