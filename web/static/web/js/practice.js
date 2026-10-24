@@ -57,7 +57,7 @@
     event.preventDefault();if(creating || active)return;
     const payload={submission_id:Number($('practice-own').value),opponent:$('practice-opponent').value,side:$('practice-side').value};
     const encoded=JSON.stringify(payload);
-    if(encoded!==pendingPayload || !pendingKey){pendingKey=crypto.randomUUID();pendingPayload=encoded;}
+    if(encoded!==pendingPayload || !pendingKey){pendingKey=window.submissionId();pendingPayload=encoded;}
     creating=true;controls();
     try{const match=await api('matches/',{...payload,request_id:pendingKey});pendingKey=null;message(`Đã xếp trận #${match.id}. Theo dõi kết quả bên dưới; trận chính thức được ưu tiên.`);await refresh();}
     catch(error){message(error.message);await loadHistory().catch(()=>{});}

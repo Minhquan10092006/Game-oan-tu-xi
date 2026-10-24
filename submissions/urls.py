@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('session/', views.submission_session, name='submission-session'),
     # ── User endpoints ─────────────────────────────────────────────
     path('', views.SubmissionListCreateView.as_view(), name='submission-list-create'),
     path('approved/', views.approved_bots_list, name='submission-approved'),

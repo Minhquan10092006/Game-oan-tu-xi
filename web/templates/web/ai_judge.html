@@ -6,6 +6,19 @@
 <p><a class="retro-button" href="/tournament/">Chọn bản chính thức · kiểm tra Python · xem tiến độ chấm →</a></p>
 <p><a class="retro-button" href="/practice/">Luyện tập: chọn bot đã nộp và đối thủ →</a></p>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section id="offline-submissions" class="bot-protocol" data-user-id="{{ user.pk|default:'' }}" data-username="{{ user.username|default:'' }}" aria-label="Lưu bài trên máy">
+  <h2>Lưu bài và nộp khi có mạng</h2>
+  <p>Mất Internet nhưng còn Wi-Fi/LAN của lớp: vẫn nộp và chấm trên máy giáo viên. Mất cả LAN: lưu bài chờ trên máy này; mở trang để tự gửi khi kết nối lại đúng địa chỉ.</p>
+  <p id="offline-capability">Mở lại trang khi mất kết nối cần HTTPS hoặc localhost và đã tải trang trước đó. Trên HTTP qua LAN, hãy giữ trang đang mở và tải file .py dự phòng.</p>
+  <p id="offline-status" role="status" aria-live="polite">Đang mở bộ nhớ trên máy…</p>
+  <p>Bản nháp tự lưu trên trình duyệt này. Bấm Nộp bài để đưa một bản cố định vào hàng đợi; khi có mạng và đúng tài khoản, trang sẽ tự gửi. Chỉ biên nhận của server mới xác nhận đã nộp. Hạn nộp tính theo thời điểm server nhận.</p>
+  <button type="button" class="retro-button" id="save-local-draft">Lưu bản nháp</button>
+  <button type="button" class="retro-button" id="export-local-code">Tải file .py dự phòng</button>
+  <button type="button" class="retro-button" id="sync-local-queue">Gửi lại bài chờ</button>
+  <button type="button" class="retro-button" id="clear-local-data">Xóa dữ liệu trên máy</button>
+  <p>Dùng máy chung: tải bài dự phòng và xóa dữ liệu local trước khi rời máy. Đừng xóa dữ liệu trình duyệt khi còn bài chờ.</p>
+  <ul id="local-queue-list"></ul>
+</section>
 <section class="submit-heading"><div><div class="eyebrow">YOUR_BOT.PY / {{ user.username }}</div><h1>BIẾN Ý TƯỞNG THÀNH NƯỚC ĐI.</h1><p>Nộp mã Python để BTC duyệt trước khi khóa bài trên máy chấm riêng.</p></div><a href="/play/" class="retro-button">← Đấu trường</a></section>
 <div class="submit-layout">
   <section class="retro-window submit-main"><div class="window-title">▸ submission_console.exe</div><div class="window-body">
@@ -106,70 +119,8 @@ function escHtml(str) {
 
 // ── Submit ────────────────────────────────────────────────────────────
 
-async function submitCode() {
-  const aiName = document.getElementById('ai-name').value.trim();
-  const code   = document.getElementById('code-editor').value;
-  const method = document.getElementById('submission-method').value;
-  const entryText = document.getElementById('competition-entry').value.trim();
-  const practice = entryText === 'practice';
-
-  if (!entryText) { showError('Vui lòng chọn mùa giải hoặc chọn rõ Bài luyện tập.'); return; }
-  if (!aiName) { showError('Vui lòng nhập tên AI.'); return; }
-  if (!code.trim()) { showError('Vui lòng nhập mã nguồn.'); return; }
-  showError('');
-
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Đang nộp...';
-
-  try {
-    const resp = await fetch('/api/submissions/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify({ ai_name: aiName, source_code: code, submission_method: method,
-        competition_entry: practice ? null : Number(entryText), practice,
-        git_url: method === 'git' ? document.getElementById('git-url').value.trim() : '',
-        git_commit: method === 'git' ? document.getElementById('git-commit').value.trim() : '' }),
-    });
-
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      // Xử lý lỗi validation từ DRF (dict với key là tên field)
-      let errMsg = '';
-      if (typeof data === 'object') {
-        errMsg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-          .join(' | ');
-      } else {
-        errMsg = data.detail || JSON.stringify(data);
-      }
-      showError(errMsg);
-      return;
-    }
-
-    // Thành công
-    showToast(data.competition_entry ? `Đã nộp "${data.ai_name}" vào mùa giải. Xem bản chính thức và tiến độ ở Giải của bạn.` : `Đã lưu "${data.ai_name}" làm bài luyện tập, không đưa vào chấm giải.`);
-    // Reset form
-    document.getElementById('ai-name').value = '';
-    document.getElementById('code-editor').value = '';
-    const zone = document.getElementById('upload-zone');
-    zone.classList.remove('has-file');
-    document.getElementById('file-name').style.display = 'none';
-    document.getElementById('file-input').value = '';
-    // Cập nhật danh sách
-    loadHistory();
-
-  } catch (e) {
-    showError('Lỗi kết nối: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🚀 Nộp bài';
-  }
+function submitCode() {
+  showError('Chưa mở được bộ nhớ local. Hãy tải file .py dự phòng và tải lại trang.');
 }
 
 // ── Lịch sử bài nộp ──────────────────────────────────────────────────
@@ -249,8 +200,8 @@ function loadFile(file) {
     showError('Chỉ chấp nhận file .py');
     return;
   }
-  if (file.size > 256 * 1024) {
-    showError('File quá lớn (tối đa 256 KB)');
+  if (file.size > 64 * 1024) {
+    showError('File quá lớn (tối đa 64 KiB)');
     return;
   }
   showError('');
@@ -270,6 +221,7 @@ function loadFile(file) {
     const fnEl = document.getElementById('file-name');
     fnEl.textContent = `✓ Đã tải: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
     fnEl.style.display = 'block';
+    document.getElementById('code-editor').dispatchEvent(new Event('input', {bubbles: true}));
   };
   reader.readAsText(file, 'utf-8');
 }
@@ -280,4 +232,5 @@ document.getElementById('submission-method').addEventListener('change', event =>
 });
 loadHistory();
 </script>
+<script src="{% static 'web/js/submission-offline.js' %}"></script>
 {% endblock %}

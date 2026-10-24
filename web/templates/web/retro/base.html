@@ -10,6 +10,7 @@
   {% block legacy_styles %}{% endblock %}
   <link rel="stylesheet" href="{% static 'web/css/retro.css' %}">
   <script src="{% static 'web/js/retro.js' %}" defer></script>
+  <script src="{% static 'web/js/submission-id.js' %}"></script>
   {% block head %}{% endblock %}
 </head>
 <body class="retro-site {% block body_class %}{% endblock %}" data-username="{{ user.username|default:'' }}">

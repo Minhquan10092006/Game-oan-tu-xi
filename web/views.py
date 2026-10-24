@@ -24,6 +24,26 @@ from .tournament import DrawError, draw_season, group_standings, record_fixture_
 logger = logging.getLogger(__name__)
 
 
+def submission_offline_shell(request):
+    from django.contrib.auth.models import AnonymousUser
+    from django.http import HttpResponse
+    from django.template.loader import render_to_string
+    response = HttpResponse(render_to_string('web/ai_judge.html', {
+        'user': AnonymousUser(), 'offline_mode': True, 'page': 'play',
+    }))
+    response['Cache-Control'] = 'no-cache'
+    return response
+
+
+def submission_service_worker(request):
+    from django.http import HttpResponse
+    path = Path(settings.BASE_DIR) / 'web/static/web/js/submission-sw.js'
+    response = HttpResponse(path.read_text(encoding='utf-8'), content_type='application/javascript')
+    response['Cache-Control'] = 'no-cache'
+    response['Service-Worker-Allowed'] = '/'
+    return response
+
+
 # ── helpers ──────────────────────────────────────────────────────────
 
 def _is_admin(user):

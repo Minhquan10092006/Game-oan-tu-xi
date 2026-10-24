@@ -8,12 +8,18 @@ Giữ lại: nộp code, xem danh sách, xem chi tiết.
 Thêm mới (admin): approve, reject, delete, list-all.
 """
 import logging
+import hashlib
+import json
+import uuid
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.middleware.csrf import get_token
 from django.utils import timezone
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from .models import Submission
+from .models import Submission, SubmissionReceipt
 from .serializers import (
     SubmissionCreateSerializer,
     SubmissionDetailSerializer,
@@ -38,6 +44,17 @@ class IsAdminUser(permissions.BasePermission):
 
 # ── User API ──────────────────────────────────────────────────────────
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def submission_session(request):
+    from django.conf import settings
+    response = Response({'user_id': request.user.pk, 'username': request.user.username,
+                         'csrf_token': get_token(request),
+                         'max_code_size': settings.SUBMISSION_MAX_CODE_SIZE})
+    response['Cache-Control'] = 'no-store'
+    return response
+
+
 class SubmissionListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/submissions/  → danh sách bài nộp của user hiện tại
@@ -57,9 +74,33 @@ class SubmissionListCreateView(generics.ListCreateAPIView):
             return Response({'error': 'Tài khoản admin dùng để quản lý và chấm bài, không nộp bot dự thi.'}, status=403)
         if request.session.get('is_guest'):
             return Response({'error': 'Hãy tạo tài khoản chính thức để nộp bài.'}, status=403)
-        serializer = self.get_serializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        submission = serializer.save()
+        payload = request.data.copy()
+        client_account_id = payload.pop('client_account_id', None)
+        if client_account_id is not None and str(client_account_id) != str(request.user.pk):
+            return Response({'error': 'Tài khoản đã thay đổi. Hãy đăng nhập đúng tài khoản của bài chờ.'}, status=409)
+        client_id = payload.pop('client_submission_id', None)
+        if client_id is not None:
+            try:
+                client_id = uuid.UUID(str(client_id))
+            except (ValueError, TypeError, AttributeError):
+                return Response({'error': 'Mã lần nộp không hợp lệ.'}, status=400)
+        payload_hash = hashlib.sha256(json.dumps(dict(payload), sort_keys=True, ensure_ascii=False,
+                                                 separators=(',', ':')).encode()).hexdigest()
+        with transaction.atomic():
+            get_user_model().objects.select_for_update().get(pk=request.user.pk)
+            if client_id:
+                receipt = SubmissionReceipt.objects.select_related('submission').filter(
+                    submitter=request.user, client_id=client_id).first()
+                if receipt:
+                    if receipt.payload_hash != payload_hash:
+                        return Response({'error': 'Mã lần nộp đã được dùng cho nội dung khác.'}, status=409)
+                    return Response(SubmissionDetailSerializer(receipt.submission).data, status=200)
+            serializer = self.get_serializer(data=payload, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            submission = serializer.save()
+            if client_id:
+                SubmissionReceipt.objects.create(submitter=request.user, client_id=client_id,
+                    payload_hash=payload_hash, submission=submission)
         detail = SubmissionDetailSerializer(submission, context={'request': request})
         logger.info('New submission: user=%s ai=%s v%s', request.user, submission.ai_name, submission.version)
         return Response(detail.data, status=status.HTTP_201_CREATED)
@@ -182,6 +223,8 @@ def admin_delete_submission(request, pk):
         return Response({'error': 'Bài đang là phiên bản chính thức của giải; phải giữ để đối chiếu.'}, status=409)
     if sub.used_in_battle:
         return Response({'error': 'Bài đã thi đấu phải được giữ để đối chiếu; không thể xóa.'}, status=409)
+    if SubmissionReceipt.objects.filter(submission=sub).exists():
+        return Response({'error': 'Bài có biên nhận chống nộp trùng; cần giữ để đối chiếu.'}, status=409)
     sub.delete()
     logger.info('Admin %s deleted submission %s', request.user, sub_info)
     return Response({'ok': True, 'deleted': sub_info})

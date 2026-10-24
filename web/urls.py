@@ -10,6 +10,8 @@ urlpatterns = [
     path('api/practice/matches/', practice_views.matches),
     path('api/practice/matches/<int:match_id>/cancel/', practice_views.cancel),
     path('api/practice/matches/<int:match_id>/replay/', practice_views.replay),
+    path('submission-sw.js', views.submission_service_worker, name='submission-service-worker'),
+    path('ai/offline/', views.submission_offline_shell, name='submission-offline'),
     path('guide/', usage_guide, name='usage-guide'),
     path('tournament/', dashboard, name='tournament-operations'),
     path('', views.index, name='index'),

@@ -19,6 +19,17 @@ from django.conf import settings
 User = get_user_model()
 
 
+class SubmissionReceipt(models.Model):
+    """Durable idempotency receipt, scoped to the authenticated account."""
+    submitter = models.ForeignKey(User, on_delete=models.CASCADE)
+    client_id = models.UUIDField()
+    payload_hash = models.CharField(max_length=64)
+    submission = models.OneToOneField('Submission', on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['submitter', 'client_id'], name='unique_submission_receipt')]
+
+
 class Submission(models.Model):
     """Một bài nộp code AI của user."""
 

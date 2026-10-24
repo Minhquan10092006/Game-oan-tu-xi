@@ -87,6 +87,19 @@ python -m matches.tournament --help
 
 Làm theo [hướng dẫn đầy đủ](docs/HUONG_DAN_CHAY_GIAI.md). Không mount Docker socket vào web. Runner chỉ hoạt động khi có Docker; không có fallback chạy bot trực tiếp trên host. Mã nguồn, manifest và replay thật nằm trong `private-exports/` và `tournament-data/`, đã loại khỏi Git.
 
+## Nộp bài khi mất mạng
+
+**Tổ chức ngay trong lớp không cần Internet:** xem [hướng dẫn chạy LAN](docs/CHAY_GIAI_TRONG_LAN.md).
+Chạy `python run_classroom.py --address <IPv4 máy giáo viên>` để mở web và bộ chấm
+trên một máy. Sinh viên nộp qua LAN; mất cả LAN thì lưu bài chờ trên trình duyệt.
+HTTP LAN phải giữ tab nộp bài mở khi mất LAN; mở lại trang offline cần HTTPS.
+
+Mở trang `/ai/` online và đăng nhập trước một lần. Khi hiện “Đã sẵn sàng mở trang Nộp AI offline”, có thể mở lại trang này khi mất mạng. Cần HTTPS khi triển khai, localhost dùng được khi phát triển.
+
+Trang tự lưu bản nháp bằng IndexedDB. Bấm **Nộp bài** để lưu một bản cố định vào hàng đợi trên trình duyệt; giữ/mở lại trang khi có mạng để tự gửi. Chỉ thông báo **Server đã nhận** kèm biên nhận mới xác nhận nộp thành công. Hết phiên phải đăng nhập đúng tài khoản; bài quá hạn vẫn bị server từ chối. Có nút tải `.py` dự phòng, gửi lại và xóa dữ liệu máy chung. Không bảo đảm gửi nền khi đã đóng trình duyệt.
+
+Server dùng `client_submission_id` UUID và biên nhận theo tài khoản để gửi lại không tạo phiên bản hoặc trừ quota hai lần. Cần chạy `python manage.py migrate` sau cập nhật. Không cache trang cá nhân/API; Service Worker chỉ cache shell ẩn danh và static. Queue này khác queue chấm trên máy chủ.
+
 ## Kiểm tra
 
 ```text
