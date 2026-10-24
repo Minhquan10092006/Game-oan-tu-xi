@@ -87,7 +87,8 @@ def enqueue_validation(season_id, actor):
         has_successful_validation = season.judging_jobs.filter(
             kind='validation', state='completed', result__valid=True,
         ).exists()
-        if season.drawn_at or has_fixture_work or has_running_work or has_successful_validation:
+        has_validation_queued = season.judging_jobs.filter(kind='validation', state='queued').exists()
+        if season.drawn_at or has_fixture_work or has_running_work or has_successful_validation or has_validation_queued:
             raise ValueError('Engine đã đổi sau khi giải bắt đầu; không thể tiếp tục với phiên bản code khác.')
         season.judge_engine = engine_hash()
         season.save(update_fields=['judge_engine'])

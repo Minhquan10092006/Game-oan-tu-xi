@@ -19,7 +19,7 @@
       const failed=(data.jobs || []).filter(job=>job.state==='failed');
       const active=(data.jobs || []).filter(job=>job.state==='queued' || job.state==='running');
       status.replaceChildren();
-      if(failed.length){const error=document.createElement('p');error.className='form-error';error.textContent=`${failed.length} tác vụ lỗi. ${failed[0].message || 'Máy chấm không chạy được.'}`;status.append(error);}
+      if(failed.length){const error=document.createElement('p');error.className='form-error';error.textContent=`${failed.length} tác vụ lỗi. ${failed[0].result__message || failed[0].message || 'Máy chấm không chạy được.'}`;status.append(error);}
       else if(active.length){const progress=document.createElement('p');progress.textContent=`Đang xử lý ${active.length} tác vụ. Trang tự cập nhật.`;status.append(progress);}
       else if(data.phase==='completed'){status.textContent='Giải đã hoàn tất.';}
       else if(v.total){status.textContent=`Đã kiểm tra ${v.completed} trên ${v.total} bot.`;}
