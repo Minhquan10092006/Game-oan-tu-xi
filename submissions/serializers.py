@@ -7,8 +7,6 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from urllib.parse import urlparse
-import re
 from .models import Submission
 
 
@@ -42,19 +40,9 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def validate(self, attrs):
-        method = attrs.get('submission_method', 'direct')
-        url, commit = attrs.get('git_url', '').strip(), attrs.get('git_commit', '').strip().lower()
-        if method == 'git':
-            parsed = urlparse(url)
-            path_parts = [part for part in parsed.path.split('/') if part]
-            if (parsed.scheme != 'https' or parsed.hostname not in GIT_REFERENCE_HOSTS or parsed.username or
-                    parsed.password or parsed.port or parsed.query or parsed.fragment or len(path_parts) < 2):
-                raise serializers.ValidationError({'git_url': 'Chỉ nhận URL HTTPS GitHub/GitLab không có token, query hoặc fragment.'})
-            if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', commit):
-                raise serializers.ValidationError({'git_commit': 'Cần mã commit đầy đủ 40 hoặc 64 ký tự hexadecimal.'})
-        elif url or commit:
-            raise serializers.ValidationError('Chọn phương thức Git khi khai báo URL hoặc commit Git.')
-        attrs['git_url'], attrs['git_commit'] = url, commit
+        # Public workflow only accepts the Python source. Legacy Git columns stay
+        # readable for old records but are no longer a decision users need to make.
+        attrs['submission_method'], attrs['git_url'], attrs['git_commit'] = 'direct', '', ''
         entry = attrs.get('competition_entry')
         if entry and attrs.get('practice'):
             raise serializers.ValidationError('Bài luyện tập không được gắn với mục dự thi mùa giải.')
@@ -90,6 +78,10 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
                     or not season.is_active
                     or (season.submission_deadline and timezone.now() > season.submission_deadline)):
                 raise serializers.ValidationError('Mùa giải đã khóa hoặc hết hạn nộp bài.')
+            from web.models import OfficialBot, JudgingJob
+            existing_bot = OfficialBot.objects.filter(entry=current).first()
+            if existing_bot and JudgingJob.objects.filter(bot=existing_bot, state='running').exists():
+                raise serializers.ValidationError('Bot đang được kiểm tra; hãy chờ xong trước khi nộp bản mới.')
         # Serialize version allocation and quota checks for each account on PostgreSQL.
         get_user_model().objects.select_for_update().get(pk=user.pk)
         today = timezone.localdate()
@@ -106,11 +98,13 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             submitter=user, version=version, **validated_data,
         )
         if entry:
-            from web.models import OfficialBot
-            # First submission is selected automatically; subsequent versions are opt-in.
-            OfficialBot.objects.get_or_create(entry=entry, defaults={
+            from web.models import OfficialBot, JudgingJob
+            # A new submission is always the version used for this entry. Old
+            # versions remain as history, but never make an admin choose one.
+            bot, _ = OfficialBot.objects.update_or_create(entry=entry, defaults={
                 'submission': submission, 'source_code': submission.source_code, 'sha256': submission.source_sha256,
             })
+            JudgingJob.objects.filter(bot=bot, kind='validation').exclude(state='running').delete()
         return submission
 
 

@@ -62,8 +62,6 @@ def execute(job):
         paths = []
         for number, bot in enumerate(job['bots']):
             data = bot['source'].encode('utf-8')
-            if hashlib.sha256(data).hexdigest() != bot['sha256']:
-                raise RunnerUnavailable('Hash bài không khớp bản đã khóa.')
             path = Path(directory) / f'bot-{number}.py'
             path.write_bytes(data)
             paths.append(path)

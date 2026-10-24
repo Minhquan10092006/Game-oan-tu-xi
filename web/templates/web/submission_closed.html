@@ -1,0 +1,10 @@
+{% extends 'web/retro/base.html' %}
+{% block title %}Nộp bài hiện không mở{% endblock %}
+{% block content %}
+<section class="retro-window" style="max-width:760px;margin:3rem auto"><div class="window-title">NỘP BOT PYTHON</div><div class="window-body">
+  <h1>Hiện không nhận bài nộp</h1>
+  {% if season %}<p><strong>{{ season.name }}</strong> đã đóng nhận bài hoặc bạn chưa đăng ký dự thi.</p>{% else %}<p>Ban tổ chức chưa mở giải đấu nào.</p>{% endif %}
+  <p>Hãy xem đề bài, thời hạn và kết quả tại trang Giải đấu.</p>
+  <a class="retro-button primary" href="/tournament/">Xem giải đấu</a>
+</div></section>
+{% endblock %}

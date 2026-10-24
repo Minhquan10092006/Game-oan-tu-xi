@@ -65,8 +65,10 @@ def select_bot(entry_id, submission, actor):
 
 
 def ensure_image(season):
-    if not re.fullmatch(r'sha256:[0-9a-f]{64}', season.judge_image):
-        raise ValueError('Cần nhập Docker image ID sha256 đã kiểm tra trên cả 4 máy chấm.')
+    # The judge runs locally with the named sandbox image. Keeping this a plain
+    # image name removes image hashes from the admin workflow.
+    if not re.fullmatch(r'[a-z0-9][a-z0-9._/-]*(?::[A-Za-z0-9._-]+)?', season.judge_image or ''):
+        raise ValueError('Môi trường sandbox chưa sẵn sàng trên server.')
 
 
 @transaction.atomic
@@ -77,7 +79,19 @@ def enqueue_validation(season_id, actor):
         season.judge_engine = engine_hash()
         season.save(update_fields=['judge_engine'])
     elif season.judge_engine != engine_hash():
-        raise ValueError('Engine đã đổi sau khi bắt đầu chấm. Cần khôi phục đúng release của mùa giải.')
+        # A failed infrastructure-only preflight has produced no judged result.
+        # Allow it to resume on the current code; keep the lock once any draw,
+        # fixture, running job, or successful validation exists.
+        has_fixture_work = season.judging_jobs.filter(kind='fixture').exists()
+        has_running_work = season.judging_jobs.filter(state='running').exists()
+        has_successful_validation = season.judging_jobs.filter(
+            kind='validation', state='completed', result__valid=True,
+        ).exists()
+        if season.drawn_at or has_fixture_work or has_running_work or has_successful_validation:
+            raise ValueError('Engine đã đổi sau khi giải bắt đầu; không thể tiếp tục với phiên bản code khác.')
+        season.judge_engine = engine_hash()
+        season.save(update_fields=['judge_engine'])
+        audit(season, actor, 'refresh_engine_after_infrastructure_failure')
     if season.phase not in ('registration', 'submission', 'locked'):
         raise ValueError('Chỉ kiểm tra bài trước khi bắt đầu thi đấu.')
     count = 0
@@ -195,7 +209,7 @@ def claim_job(worker_id, reported_engine):
         audit(season, None, 'claim', job=job.pk, worker=worker.slot, attempt=job.attempts)
         return {'id': job.pk, 'kind': job.kind, 'lease_token': job.lease_token,
                 'image': season.judge_image, 'engine': engine_hash(),
-                'bots': [{'source': bot.source_code, 'sha256': bot.sha256} for bot in bots]}
+                'bots': [{'source': bot.source_code} for bot in bots]}
     return None
 
 

@@ -1,115 +1,15 @@
 {% extends 'web/retro/base.html' %}
 {% load static %}
-{% block title %}Giải đấu của bạn{% endblock %}
+{% block title %}Giải đấu{% endblock %}
 {% block body_class %}retro-tournament{% endblock %}
-{% block head %}
-<link rel="stylesheet" href="{% static 'web/css/tournament-operations.css' %}">
-<script src="{% static 'web/js/tournament-operations.js' %}" defer></script>
-{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'web/css/tournament-operations.css' %}"><script src="{% static 'web/js/simple-tournament.js' %}" defer></script><style>
+#match-replay{width:min(1000px,94vw);max-height:90vh;border:1px solid #888;background:#eee;color:#111;padding:1rem}#match-replay::backdrop{background:#000b}.replay-layout{display:grid;grid-template-columns:minmax(280px,1fr) minmax(180px,.7fr);gap:1rem}.replay-board{display:grid;gap:2px;max-width:620px;aspect-ratio:1;background:#777;border:2px solid #555}.replay-cell{display:grid;place-items:center;min-width:0;min-height:0;background:#e7d9b5;font-size:clamp(10px,2vw,22px)}.replay-cell:nth-child(even){background:#d3c19a}.replay-cell.blocked{background:#777}.replay-cell.p1{color:#b21f31}.replay-cell.p2{color:#145da0}.replay-controls{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.75rem 0}.replay-moves{max-height:50vh;overflow:auto}.replay-moves button{display:block;width:100%;text-align:left;margin:.15rem 0}.replay-log{max-height:25vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#111;color:#eee;padding:.7rem}@media(max-width:700px){.replay-layout{grid-template-columns:1fr}}
+</style>{% endblock %}
 {% block content %}
-<header class="ops-heading">
-  <div><p class="eyebrow">{% if operator %}DÀNH CHO BAN TỔ CHỨC{% else %}DÀNH CHO NGƯỜI THAM GIA{% endif %}</p><h1>{% if operator %}Quản lý giải đấu{% else %}Giải đấu của bạn{% endif %}</h1><p>Theo dõi từng bước, từ đăng ký đến kết quả.</p></div>
-  <div class="ops-heading-links"><a class="retro-button" href="{% url 'usage-guide' %}">Hướng dẫn sử dụng</a>{% if operator %}<button class="retro-button" type="button" data-open-create>Tạo mùa giải</button>{% else %}<a class="retro-button" href="/competition/" id="ops-registration-link">Đăng ký tham gia</a>{% endif %}</div>
-</header>
-<div class="ops-toolbar">
-  <label>Mùa giải <select id="ops-season"><option value="">Chọn mùa giải</option>{% for season in seasons %}<option value="{{ season.pk }}">{{ season.name }}</option>{% endfor %}</select></label>
-  <button class="retro-button" id="ops-refresh">Làm mới</button><span id="ops-updated"></span>
-</div>
+<header class="ops-heading"><div><p class="eyebrow">{% if operator %}BAN TỔ CHỨC{% else %}GIẢI ĐẤU{% endif %}</p><h1>{% if operator %}Điều hành giải đấu{% else %}Giải đấu đang mở{% endif %}</h1><p>{% if operator %}Ba bước: mở giải, nhận bài, chạy giải.{% else %}Xem đề bài, nộp bot và theo dõi kết quả tại một nơi.{% endif %}</p></div></header>
 {% if operator %}
-<details id="ops-create-panel" class="ops-disclosure"{% if not seasons %} open{% endif %}>
-  <summary>Tạo một mùa giải mới</summary>
-  <form id="ops-create" class="ops-form"><label>Tên mùa giải <input name="name" required maxlength="120" placeholder="Ví dụ: Giải lập trình K71"></label><button class="retro-button primary">Tạo mùa giải</button></form>
-</details>
+<section class="retro-window" id="ops-config"><div class="window-title">1. MỞ GIẢI</div><div class="window-body"><form id="create-season" class="ops-form"><label>Tên giải<input name="name" required maxlength="120" placeholder="Ví dụ: Giải Oẳn Tù Tì K71"></label><label>Thời hạn nộp bài<input name="submission_deadline" type="datetime-local" required></label><label class="ops-wide">Mô tả ngắn<textarea name="description" maxlength="500"></textarea></label><label class="ops-wide">Đặc tả đề bài<textarea name="problem_statement" required rows="8" placeholder="Luật chơi, giao thức bot, cách tính điểm…"></textarea></label><button class="retro-button primary">Mở giải và nhận bài</button></form></div></section>
 {% endif %}
-<p id="ops-message" role="status" aria-live="polite">{% if seasons %}Đang tải mùa giải…{% elif operator %}Chưa có mùa giải. Tạo mùa giải đầu tiên ở trên để bắt đầu.{% else %}Chưa có mùa giải nào. Hãy quay lại khi ban tổ chức mở đăng ký.{% endif %}</p>
-<div id="ops-content" hidden>
-  <section class="ops-next" aria-labelledby="ops-next-title">
-    <div><span class="ops-kicker">BƯỚC TIẾP THEO</span><h2 id="ops-next-title"></h2><p id="ops-next-description"></p></div>
-    <div id="ops-next-action"></div>
-  </section>
-  <nav class="ops-tabs" aria-label="Các mục trong giải đấu">
-    <button type="button" data-ops-tab="overview" aria-current="page">Tổng quan</button>
-    <button type="button" data-ops-tab="results">Lịch đấu &amp; kết quả</button>
-    {% if operator %}<button type="button" data-ops-tab="manage">Điều hành</button>{% endif %}
-    {% if not operator %}<button type="button" data-ops-tab="profile">Hồ sơ đại diện</button>{% endif %}
-  </nav>
-  <div data-ops-panel="overview" class="ops-panel">
-    <section class="retro-window"><div class="window-title">Mùa giải hiện tại</div><div class="window-body">
-      <h2 id="ops-name"></h2><p id="ops-summary"></p>
-      <ol id="ops-phases" class="ops-phases" aria-label="Các giai đoạn của mùa giải"></ol>
-      <p id="ops-deadlines" class="ops-muted"></p>
-    </div></section>
-    <section class="retro-window" id="ops-entry-section"><div class="window-title">Bài dự thi của bạn</div><div class="window-body" id="ops-entries"></div></section>
-    <section class="retro-window"><div class="window-title">Thông báo từ ban tổ chức</div><div class="window-body" id="ops-notices"></div></section>
-    {% if operator %}<details class="ops-disclosure"><summary>Tình trạng 4 máy chấm</summary>{% else %}<details class="ops-disclosure"><summary>Xem tình trạng hệ thống chấm</summary>{% endif %}
-      <div id="ops-workers" class="ops-workers"></div><p class="ops-muted">Máy đang kết nối sẽ tự nhận việc từ hàng đợi.</p>
-    </details>
-  </div>
-  <div data-ops-panel="results" class="ops-panel" hidden>
-    <section class="retro-window"><div class="window-title">Lịch đấu và kết quả</div><div class="window-body">
-      <p id="ops-fixture-state"></p><div id="ops-fixtures" class="ops-scroll"></div>
-      <div class="ops-actions"><button class="retro-button" id="ops-prev">Trang trước</button><span id="ops-page"></span><button class="retro-button" id="ops-next">Trang sau</button></div>
-    </div></section>
-    <section class="retro-window"><div class="window-title">Xếp hạng vòng bảng</div><div class="window-body">
-      <p class="ops-muted">Thắng 3 điểm · Hòa 1 điểm · Thua 0 điểm</p><div id="ops-standings" class="ops-standings"></div>
-      <div class="ops-actions"><button class="retro-button" id="ops-group-prev">Trang trước</button><span id="ops-group-page"></span><button class="retro-button" id="ops-group-next">Trang sau</button></div>
-    </div></section>
-    {% if not operator %}<details class="ops-disclosure" id="ops-jobs-panel"><summary>Báo cáo chấm bài và replay của tôi</summary><div class="ops-scroll"><table><thead><tr><th>Mã</th><th>Bài / trận</th><th>Trạng thái</th><th>Máy</th><th>Báo cáo</th><th>Thao tác</th></tr></thead><tbody id="ops-jobs"></tbody></table></div></details>{% endif %}
-  </div>
-  {% if operator %}
-  <div data-ops-panel="manage" class="ops-panel" hidden>
-    <section class="retro-window"><div class="window-title">Tiến hành giải đấu</div><div class="window-body">
-      <p>Khung “Bước tiếp theo” sẽ chỉ ra thao tác phù hợp. Các thao tác khác chỉ hiện khi cần.</p>
-      <div class="ops-actions" id="ops-run-actions">
-        <button class="retro-button" data-op="validate">Kiểm tra bài Python</button>
-        <button class="retro-button" data-op="draw">Bốc thăm chia bảng</button>
-        <button class="retro-button" data-op="queue">Bắt đầu chấm trận</button>
-        <button class="retro-button" data-op="pause" id="ops-pause">Tạm dừng chấm</button>
-      </div>
-      <form id="ops-phase"><label>Chuyển sang giai đoạn tiếp theo <select name="phase"><option value="submission">Mở nộp bài</option><option value="locked">Khóa bài</option><option value="running">Bắt đầu thi đấu</option><option value="completed">Kết thúc</option></select></label><button class="retro-button">Xác nhận chuyển</button></form>
-    </div></section>
-    <details class="ops-disclosure" id="ops-settings-panel"><summary>Thiết lập mùa giải</summary>
-      <p class="ops-muted">Đặt thời hạn và cấu hình máy chấm trước khi kiểm tra bài.</p>
-      <form id="ops-config" class="ops-form">
-        <label>Số tài khoản đại diện tối đa <input name="capacity" type="number" min="2" max="4000" required></label>
-        <label>Hạn đăng ký <input name="registration_deadline" type="datetime-local"></label>
-        <label>Hạn nộp bài <input name="submission_deadline" type="datetime-local"></label>
-        <label class="ops-wide">Mã môi trường chấm (Docker image ID)<input name="image" placeholder="sha256:…" required pattern="sha256:[0-9a-f]{64}"><small>Mã dùng chung trên cả 4 máy; chỉ cần thiết lập một lần trước khi chấm.</small></label>
-        <button class="retro-button primary">Lưu thiết lập</button>
-      </form>
-    </details>
-    <details class="ops-disclosure"><summary>Thông báo cho người tham gia</summary>
-      <form id="ops-notice" class="ops-form"><label>Tiêu đề <input name="title" maxlength="160" required></label><label class="ops-wide">Nội dung <textarea name="body" required maxlength="10000"></textarea></label><button class="retro-button primary">Đăng thông báo</button></form>
-    </details>
-    <details class="ops-disclosure"><summary>Danh sách người tham gia</summary>
-      <a class="retro-button" id="ops-export" href="#">Tải danh sách CSV</a>
-      <details class="ops-inner-details"><summary>Nhập danh sách từ CSV</summary><form id="ops-import"><label>CSV có cột username (tài khoản đã tồn tại)<textarea name="csv" required placeholder="username&#10;nguoichoi1"></textarea></label><button class="retro-button">Nhập danh sách</button></form></details>
-      <h3>Danh sách chờ</h3><div id="ops-waiting"></div>
-    </details>
-    <details class="ops-disclosure" id="ops-jobs-panel"><summary>Theo dõi tác vụ chấm và xử lý lỗi</summary>
-      <p class="ops-muted">Tối đa 100 tác vụ gần đây.</p><div class="ops-scroll"><table><thead><tr><th>Mã</th><th>Bài / trận</th><th>Trạng thái</th><th>Máy</th><th>Báo cáo</th><th>Thao tác</th></tr></thead><tbody id="ops-jobs"></tbody></table></div>
-    </details>
-    <details class="ops-disclosure"><summary>Thao tác đặc biệt</summary>
-      <p class="ops-muted">Chỉ dùng khi cần điều chỉnh giải trước khi bắt đầu thi đấu.</p>
-      <button class="retro-button" data-op="reopen">Mở lại nộp bài cho toàn giải</button>
-      <form id="ops-disqualify"><label>Mã mục dự thi cần loại trước bốc thăm <input name="entry_id" type="number" min="1" required></label><label>Lý do <textarea name="reason" required></textarea></label><button class="retro-button">Loại mục dự thi</button></form>
-    </details>
-    <details class="ops-disclosure"><summary>Nhật ký điều hành</summary><div class="ops-scroll" id="ops-audit"></div></details>
-  </div>
-  {% endif %}
-  {% if not operator %}
-  <div data-ops-panel="profile" class="ops-panel" hidden>
-    <section class="retro-window"><div class="window-title">Thông tin sinh viên đại diện</div><div class="window-body">
-      <form id="ops-profile" class="ops-form"><label>Mã sinh viên <input name="student_id" maxlength="40"></label><label>Lớp <input name="class_name" maxlength="80"></label><button class="retro-button primary">Lưu hồ sơ</button></form>
-      <p class="ops-muted">Một tài khoản đại diện đăng ký và nộp bot cho nhóm. Không cần thêm thành viên hoặc email.</p>
-    </div></section>
-    <details class="ops-disclosure" id="ops-waitlist-panel"><summary>Tham gia danh sách chờ khi giải đủ chỗ</summary><button class="retro-button" id="ops-waitlist">Vào danh sách chờ</button></details>
-  </div>
-  {% endif %}
-</div>
-<aside id="ops-progress" class="ops-progress" hidden aria-label="Tiến độ chấm giải đấu">
-  <div><label for="validation-progress">Kiểm tra bài Python <strong id="validation-label">0 / 0 · 0%</strong></label><progress id="validation-progress" value="0" max="100"></progress><small id="validation-detail"></small></div>
-  <div><label for="fixture-progress">Thi đấu <strong id="fixture-label">0 / 0 · 0%</strong></label><progress id="fixture-progress" value="0" max="100"></progress><small id="fixture-detail"></small></div>
-</aside>
-<dialog id="ops-replay" aria-labelledby="ops-replay-title"><h2 id="ops-replay-title">Replay trận đấu</h2><p id="ops-replay-info"></p><div id="ops-replay-board" role="img" aria-label="Bàn cờ replay"></div><label for="ops-replay-timeline">Nước đi</label><input id="ops-replay-timeline" type="range" min="0" value="0"><div class="ops-actions"><button class="retro-button" id="ops-replay-play">Phát / dừng</button><button class="retro-button" id="ops-replay-close">Đóng</button></div></dialog>
+<section class="retro-window"><div class="window-title">GIẢI ĐANG CHỌN</div><div class="window-body"><label>Chọn giải <select id="season"><option value="">— Chọn giải —</option>{% for item in seasons %}<option value="{{ item.pk }}">{{ item.name }}</option>{% endfor %}</select></label><div id="message" role="status"></div><div id="season-content" hidden><h2 id="season-name"></h2><p id="season-description"></p><p><strong>Hạn nộp:</strong> <span id="deadline"></span></p><section><h3>Đề bài</h3><div id="statement" style="white-space:pre-wrap"></div></section>{% if not operator %}<p><a id="submit-link" class="retro-button primary" href="/ai/">Nộp code Python</a></p>{% endif %}{% if operator %}<div class="ops-actions"><button class="retro-button" id="close">Đóng nhận bài sớm</button><button class="retro-button primary" id="run">Chạy giải</button></div><p class="ops-muted">“Chạy giải” tự kiểm tra bot trong sandbox, tạo vòng bảng và giao trận cho máy chấm.</p><section><h3>Trạng thái chạy</h3><div id="job-status" aria-live="polite"></div></section>{% endif %}<section><h3>Tiến độ</h3><p id="progress"></p><progress id="validation-progress" value="0" max="100"></progress><progress id="fixture-progress" value="0" max="100"></progress></section><section><h3>Máy chấm</h3><div id="ops-workers"></div></section><section><h3>Lịch đấu và kết quả</h3><div id="fixtures"></div></section></div></div></section>
+<dialog id="match-replay"><h2 id="replay-title">Diễn biến trận đấu</h2><p id="replay-summary"></p><div class="replay-layout"><div><div id="replay-board" class="replay-board"></div><div class="replay-controls"><button type="button" class="retro-button" id="replay-back">← Trước</button><button type="button" class="retro-button primary" id="replay-play">▶ Phát</button><button type="button" class="retro-button" id="replay-next">Sau →</button><label>Nước <input id="replay-slider" type="range" min="0" max="0" value="0"></label></div><p id="replay-position"></p></div><div><h3>Các nước đi</h3><div id="replay-moves" class="replay-moves"></div></div></div><details><summary>Log bot</summary><pre id="replay-logs" class="replay-log"></pre></details><form method="dialog" style="text-align:right;margin-top:.8rem"><button class="retro-button">Đóng</button></form></dialog>
 {% endblock %}

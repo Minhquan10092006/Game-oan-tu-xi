@@ -12,6 +12,8 @@ import uuid
 from dataclasses import dataclass
 
 MAX_OUTPUT = 64 * 1024
+_IMAGE_LOCK = threading.Lock()
+_READY_IMAGES = set()
 
 
 @dataclass
@@ -52,6 +54,34 @@ class BotRunner:
         if not self.docker:
             raise RunnerUnavailable('Chưa cài Docker; không chạy code trực tiếp trên host')
         self.image = os.environ.get('BOT_DOCKER_IMAGE', 'ott-bot:1')
+        self._ensure_image()
+
+    def _ensure_image(self):
+        """Build the bundled sandbox once when an admin starts the first run."""
+        with _IMAGE_LOCK:
+            if self.image in _READY_IMAGES:
+                return
+            try:
+                inspect = subprocess.run([self.docker, 'image', 'inspect', self.image],
+                                         capture_output=True, timeout=20)
+                present = inspect.returncode == 0
+                inspect_error = (inspect.stderr or inspect.stdout).decode('utf-8', errors='replace').strip()
+                if not present and ('permission denied' in inspect_error.lower() or 'cannot connect' in inspect_error.lower()):
+                    raise RunnerUnavailable('Server không có quyền truy cập Docker. Hãy chạy web bằng tài khoản được phép dùng Docker rồi bấm Chạy giải lại.')
+                if not present:
+                    if self.image != 'ott-bot:1':
+                        raise RunnerUnavailable('Không tìm thấy image sandbox đã cấu hình.')
+                    sandbox = Path(__file__).resolve().parent.parent / 'sandbox'
+                    build = subprocess.run([self.docker, 'build', '-t', self.image, str(sandbox)],
+                                           capture_output=True, timeout=300)
+                    if build.returncode:
+                        detail = (build.stderr or build.stdout).decode('utf-8', errors='replace').strip()
+                        if 'permission denied' in detail.lower() or 'cannot connect' in detail.lower():
+                            raise RunnerUnavailable('Server không có quyền truy cập Docker. Hãy chạy web bằng tài khoản được phép dùng Docker rồi bấm Chạy giải lại.')
+                        raise RunnerUnavailable('Không thể tạo sandbox Docker: ' + detail[-500:])
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RunnerUnavailable('Docker không phản hồi khi chuẩn bị sandbox') from exc
+            _READY_IMAGES.add(self.image)
 
     def _control(self, *args):
         try:

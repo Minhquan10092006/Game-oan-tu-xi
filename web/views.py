@@ -350,6 +350,12 @@ def ai_submit(request):
     selected_entry = next((e.pk for e in entries if str(e.pk) == requested_entry), None)
     if selected_entry is None and len(entries) == 1:
         selected_entry = entries[0].pk
+    if not entries:
+        active = Season.objects.filter(is_active=True).order_by('-created_at').first()
+        return render(request, 'web/submission_closed.html', {
+            'page': 'play', 'user': request.user, 'season': active,
+            'is_guest': request.session.get('is_guest', False), 'is_admin': _is_admin(request.user),
+        })
     return render(request, 'web/ai_judge.html', {
         'user': request.user, 'page': 'play',
         'my_subs': my_subs,

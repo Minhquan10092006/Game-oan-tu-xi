@@ -1,9 +1,11 @@
 import csv
 import hashlib
 import io
+import threading
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -44,7 +46,20 @@ def create_season(request):
     name = str(request.data.get('name', '')).strip()
     if not name or len(name) > 120:
         return Response({'error': 'Tên mùa giải cần từ 1 đến 120 ký tự.'}, status=400)
-    season = Season.objects.create(name=name, entry_mode='individual', start_date=timezone.localdate(), created_by=request.user)
+    statement = str(request.data.get('problem_statement', '')).strip()
+    raw_deadline = request.data.get('submission_deadline', '')
+    deadline = parse_datetime(raw_deadline) if raw_deadline else None
+    if raw_deadline and deadline is None:
+        return Response({'error': 'Thời hạn nộp phải là ngày giờ hợp lệ.'}, status=400)
+    if deadline and timezone.is_naive(deadline):
+        deadline = timezone.make_aware(deadline)
+    from django.conf import settings
+    season = Season.objects.create(
+        name=name, description=str(request.data.get('description', '')).strip(),
+        problem_statement=statement, submission_deadline=deadline,
+        judge_image=settings.TOURNAMENT_DOCKER_IMAGE, entry_mode='individual',
+        phase='submission', start_date=timezone.localdate(), created_by=request.user,
+    )
     ops.audit(season, request.user, 'create_season')
     return Response({'id': season.pk, 'name': season.name}, status=201)
 
@@ -99,7 +114,9 @@ def overview(request, season_id):
                         'frozen': bool(bot and bot.frozen_at),
                         'submissions': list(entry.submissions.order_by('-submitted_at').values('id', 'ai_name', 'version')[:50])})
     public = ops.public_status(season)
-    data = {'id': season.pk, 'name': season.name, 'phase': season.phase, 'phase_label': season.get_phase_display(),
+    data = {'id': season.pk, 'name': season.name, 'description': season.description,
+            'problem_statement': season.problem_statement, 'submissions_open': season.submissions_open,
+            'phase': season.phase, 'phase_label': season.get_phase_display(),
             'drawn': bool(season.drawn_at),
             **public, 'capacity': min(season.max_participants, 4000),
             'paused': season.judging_paused,
@@ -133,6 +150,7 @@ def operate(request, season_id):
     if not ops.can_operate(request.user):
         return Response({'error': 'Bạn không có quyền điều hành giải.'}, status=403)
     action = request.data.get('action')
+    completion_message = ''
     try:
         with transaction.atomic():
             season = get_object_or_404(Season.objects.select_for_update(), pk=season_id)
@@ -142,11 +160,14 @@ def operate(request, season_id):
                 capacity = int(request.data.get('capacity', season.max_participants))
                 if not ops.participant_count(season) <= capacity <= 4000 or capacity < 2:
                     raise ValueError('Giới hạn từ số người hiện tại đến 4000, tối thiểu 2.')
-                image = str(request.data.get('image', season.judge_image))
-                if season.judging_jobs.exists() and image != season.judge_image:
-                    raise ValueError('Không đổi image sau khi đã tạo tác vụ chấm.')
-                season.max_participants, season.judge_image = capacity, image
-                for field in ['registration_deadline', 'submission_deadline']:
+                season.max_participants = capacity
+                for field in ['name', 'description', 'problem_statement']:
+                    if field in request.data:
+                        value = str(request.data[field]).strip()
+                        if field == 'name' and (not value or len(value) > 120):
+                            raise ValueError('Tên giải cần từ 1 đến 120 ký tự.')
+                        setattr(season, field, value)
+                for field in ['submission_deadline']:
                     if field in request.data:
                         raw = request.data[field]
                         value = parse_datetime(raw) if raw else None
@@ -156,7 +177,16 @@ def operate(request, season_id):
                             value = timezone.make_aware(value)
                         setattr(season, field, value)
                 season.save()
-                ops.audit(season, request.user, 'configure', capacity=capacity, image=image)
+                ops.audit(season, request.user, 'configure', capacity=capacity)
+            elif action == 'close_submissions':
+                if season.phase not in ('registration', 'submission'):
+                    raise ValueError('Giải không còn ở giai đoạn nhận bài.')
+                season.phase = 'locked'
+                season.submission_deadline = timezone.now()
+                season.entries.filter(status='registered').update(status='locked')
+                OfficialBot.objects.filter(entry__season=season).update(frozen_at=timezone.now())
+                season.save(update_fields=['phase', 'submission_deadline'])
+                ops.audit(season, request.user, 'close_submissions')
             elif action == 'phase':
                 ops.transition(season.pk, request.data.get('phase'), request.user)
             elif action == 'validate':
@@ -165,6 +195,44 @@ def operate(request, season_id):
                 ops.reopen_submissions(season.pk, request.user, str(request.data.get('reason', '')))
             elif action == 'queue':
                 ops.queue_matches(season.pk, request.user)
+            elif action == 'start_tournament':
+                # The only operational button: close, validate, draw and queue.
+                if season.phase in ('registration', 'submission'):
+                    season.phase = 'locked'
+                    season.submission_deadline = timezone.now()
+                    season.entries.filter(status='registered').update(status='locked')
+                    OfficialBot.objects.filter(entry__season=season).update(frozen_at=timezone.now())
+                    season.save(update_fields=['phase', 'submission_deadline'])
+                if season.phase == 'locked':
+                    ops.enqueue_validation(season.pk, request.user)
+                    # A previous click may have started the job while Docker was
+                    # unavailable. Let the same button retry it after the host is fixed.
+                    season.judging_jobs.filter(kind='validation', state='failed').update(
+                        state='queued', worker=None, lease_token='', lease_until=None,
+                        attempts=0, result={}, finished_at=None,
+                    )
+                    pending = season.judging_jobs.filter(kind='validation').exclude(state='completed', result__valid=True)
+                    if pending.exists():
+                        completion_message = 'Đang kiểm tra bot trong sandbox. Bấm “Chạy giải” lại khi tất cả bài đã đạt.'
+                        if settings.LOCAL_JUDGE_AUTOSTART:
+                            transaction.on_commit(lambda: threading.Thread(
+                                target=__import__('web.local_judge', fromlist=['run_until_empty']).run_until_empty,
+                                daemon=True,
+                            ).start())
+                    else:
+                        if not season.drawn_at:
+                            from .tournament import draw_season
+                            draw_season(season.pk)
+                        ops.transition(season.pk, 'running', request.user)
+                if season.phase == 'running':
+                    ops.queue_matches(season.pk, request.user)
+                    if settings.LOCAL_JUDGE_AUTOSTART:
+                        # Start only after this transaction commits, so the runner
+                        # can see the newly queued matches.
+                        transaction.on_commit(lambda: threading.Thread(
+                            target=__import__('web.local_judge', fromlist=['run_until_empty']).run_until_empty,
+                            daemon=True,
+                        ).start())
             elif action == 'pause':
                 season.judging_paused = not season.judging_paused
                 season.save(update_fields=['judging_paused'])
@@ -211,7 +279,7 @@ def operate(request, season_id):
                 raise ValueError('Thao tác không hợp lệ.')
     except (ValueError, TypeError) as exc:
         return _error(exc)
-    return Response({'ok': True})
+    return Response({'ok': True, 'message': completion_message})
 
 
 @api_view(['POST'])
@@ -266,7 +334,7 @@ def preflight(request, entry_id):
 @permission_classes([IsAuthenticated])
 def replay(request, job_id):
     job = get_object_or_404(JudgingJob.objects.select_related('fixture__entry1__team', 'fixture__entry2__team'), pk=job_id, kind='fixture')
-    if not ops.can_operate(request.user) and not (ops.owns_entry(request.user, job.fixture.entry1) or ops.owns_entry(request.user, job.fixture.entry2)):
+    if not ops.can_operate(request.user) and job.season.phase != 'completed' and not (ops.owns_entry(request.user, job.fixture.entry1) or ops.owns_entry(request.user, job.fixture.entry2)):
         return Response(status=403)
     return Response(job.result)
 
@@ -288,7 +356,7 @@ def fixtures(request, season_id):
     rows = list(page)
     for row in rows:
         row['can_view_replay'] = bool(row['judging_job__id'] and row['judging_job__state'] in ('completed', 'review') and
-            (ops.can_operate(request.user) or request.user.pk in (row['entry1__user_id'], row['entry2__user_id'])))
+            (season.phase == 'completed' or ops.can_operate(request.user) or request.user.pk in (row['entry1__user_id'], row['entry2__user_id'])))
         del row['entry1__user_id'], row['entry2__user_id']
     return Response({'fixtures': rows, 'pages': paginator.num_pages, 'total': paginator.count, 'provisional': season.phase != 'completed'})
 

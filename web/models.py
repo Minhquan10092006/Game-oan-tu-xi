@@ -96,6 +96,7 @@ class Season(models.Model):
     ENTRY_MODE_CHOICES = [('individual', 'Cá nhân'), ('team', 'Đội'), ('both', 'Cá nhân và đội')]
     name = models.CharField(max_length=120, verbose_name='Tên mùa giải')
     description = models.TextField(blank=True, verbose_name='Mô tả')
+    problem_statement = models.TextField(blank=True, verbose_name='Đặc tả đề bài')
     start_date = models.DateField(verbose_name='Ngày bắt đầu')
     end_date = models.DateField(null=True, blank=True, verbose_name='Ngày kết thúc')
     is_active = models.BooleanField(default=True, verbose_name='Đang hoạt động')
@@ -115,6 +116,13 @@ class Season(models.Model):
 
     def __str__(self):
         return f'{"🟢" if self.is_active else "🔴"} {self.name}'
+
+    @property
+    def submissions_open(self):
+        """Deadline closes submissions without requiring a scheduled task."""
+        from django.utils import timezone
+        return (self.is_active and self.phase in ('registration', 'submission')
+                and (not self.submission_deadline or timezone.now() <= self.submission_deadline))
 
 
 class Team(models.Model):
