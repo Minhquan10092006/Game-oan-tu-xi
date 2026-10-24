@@ -220,6 +220,8 @@ JUDGE0_POLL_INTERVAL = float(os.environ.get('JUDGE0_POLL_INTERVAL', '2'))
 
 SUBMISSION_MAX_CODE_SIZE = int(os.environ.get('SUBMISSION_MAX_CODE_SIZE', '65536'))
 SUBMISSION_RATE_LIMIT_PER_DAY = int(os.environ.get('SUBMISSION_RATE_LIMIT_PER_DAY', '50'))
+PRACTICE_MATCHES_PER_DAY = int(os.environ.get('PRACTICE_MATCHES_PER_DAY', '10'))
+PRACTICE_DOCKER_IMAGE = os.environ.get('PRACTICE_DOCKER_IMAGE', '')
 
 # Tên image cố định, local-friendly. Docker tự build image này khi cài dự án.
 TOURNAMENT_DOCKER_IMAGE = os.environ.get('TOURNAMENT_DOCKER_IMAGE', 'ott-bot:1')

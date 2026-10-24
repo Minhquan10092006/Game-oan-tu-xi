@@ -1,9 +1,15 @@
 from django.urls import path
 from . import views
+from . import practice_views
 from .operations_views import dashboard, usage_guide
 from .competition_views import retired_feature
 
 urlpatterns = [
+    path('practice/', practice_views.page, name='practice'),
+    path('api/practice/options/', practice_views.options),
+    path('api/practice/matches/', practice_views.matches),
+    path('api/practice/matches/<int:match_id>/cancel/', practice_views.cancel),
+    path('api/practice/matches/<int:match_id>/replay/', practice_views.replay),
     path('guide/', usage_guide, name='usage-guide'),
     path('tournament/', dashboard, name='tournament-operations'),
     path('', views.index, name='index'),

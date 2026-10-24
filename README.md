@@ -69,6 +69,14 @@ print(json.dumps({'move': {k: move[k] for k in ('piece_id', 'from', 'to')}}))
 
 Nếu không còn nước hợp lệ, engine xử lý trước khi gọi bot. `userdata` tùy chọn giúp giữ trạng thái giữa các lần gọi; không dựa vào file từ lượt trước.
 
+## Luyện tập với bot đã nộp
+
+Sinh viên mở `/practice/`, chọn phiên bản của mình, bot mẫu hoặc bot đã được duyệt làm đối thủ và bên P1/P2. Trận dùng source snapshot, được bộ chấm local trên server chạy qua sandbox hiện có của nhánh: ưu tiên Isolate khi khả dụng, Docker dự phòng. Không chạy trực tiếp code học sinh trên host và không cộng điểm mùa/Elo. Lịch sử/replay chỉ dành cho chủ trận; stderr của đối thủ được ẩn.
+
+Mặc định 10 trận/ngày, một trận queued/running mỗi tài khoản, có thể hủy queued. Bộ chấm ưu tiên job chính thức sẵn sàng trước job luyện tập; trận đang chạy được hoàn tất. Khi `LOCAL_JUDGE_AUTOSTART=True`, tạo trận sẽ tự khởi động bộ chấm sau khi lưu thành công, không cần token worker riêng. Có thể dùng `python manage.py run_judge --watch` nếu muốn chạy bộ chấm bằng lệnh. Cần chạy `python manage.py migrate` khi cập nhật web; migration merge giữ cả đặc tả đề bài và lịch sử luyện tập.
+
+`PRACTICE_MATCHES_PER_DAY` chỉnh hạn mức; `PRACTICE_DOCKER_IMAGE` để trống sẽ dùng `TOURNAMENT_DOCKER_IMAGE` (mặc định `ott-bot:1`). Không cần nhập mã image SHA-256 trên admin. Sandbox vẫn cần khả dụng trên máy server; cơ chế tự nhận Isolate/tạo image Docker của nhánh được giữ nguyên.
+
 ## Chạy giải
 
 ```text

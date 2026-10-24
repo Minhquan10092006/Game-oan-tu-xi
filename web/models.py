@@ -316,6 +316,36 @@ class JudgingJob(models.Model):
         permissions = [('operate_tournament', 'Điều hành giải'), ('referee_tournament', 'Xử lý khiếu nại')]
 
 
+class PracticeMatch(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='practice_matches')
+    request_id = models.UUIDField()
+    request_hash = models.CharField(max_length=64)
+    submission = models.ForeignKey('submissions.Submission', null=True, on_delete=models.SET_NULL, related_name='practice_as_owner')
+    opponent = models.ForeignKey('submissions.Submission', null=True, blank=True, on_delete=models.SET_NULL, related_name='practice_as_opponent')
+    own_label = models.CharField(max_length=220)
+    opponent_label = models.CharField(max_length=220)
+    opponent_key = models.CharField(max_length=80)
+    own_source = models.TextField()
+    opponent_source = models.TextField()
+    player_side = models.CharField(max_length=2, choices=[('P1', 'P1'), ('P2', 'P2')], default='P1')
+    image = models.CharField(max_length=150)
+    engine = models.CharField(max_length=64)
+    state = models.CharField(max_length=12, choices=[('queued','Chờ máy chấm'),('running','Đang đấu'),('completed','Hoàn thành'),('failed','Lỗi máy chấm'),('cancelled','Đã hủy')], default='queued')
+    worker = models.ForeignKey(JudgeWorker, null=True, blank=True, on_delete=models.SET_NULL)
+    lease_token = models.CharField(max_length=64, blank=True)
+    lease_until = models.DateTimeField(null=True, blank=True, db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    result = models.JSONField(default=dict)
+    message = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user','request_id'], name='practice_request_once')]
+        indexes = [models.Index(fields=['user','-created_at'], name='practice_owner_recent'),
+                   models.Index(fields=['state','created_at'], name='practice_queue_order')]
+
+
 class TournamentAudit(models.Model):
     season = models.ForeignKey(Season, on_delete=models.PROTECT, related_name='audit_events')
     actor = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)

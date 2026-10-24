@@ -495,16 +495,24 @@ def worker_api(request, action):
     worker = JudgeWorker.objects.filter(token_hash=hashlib.sha256(token.encode()).hexdigest(), enabled=True).first() if token else None
     if not worker:
         return Response({'error': 'Máy chấm chưa được xác thực.'}, status=403)
+    from . import practice_ops
+    from .models import PracticeMatch
     try:
         if action == 'claim':
-            job = ops.claim_job(worker.pk, request.data.get('engine'))
+            job = practice_ops.claim(worker.pk, request.data.get('engine'))
             return Response({'job': job})
+        if str(request.data.get('job_id','')).startswith('practice-'):
+            if action not in ('heartbeat','finish'):
+                return Response(status=404)
+            practice_ops.update(worker,request.data.get('job_id'),request.data.get('lease_token'),
+                                request.data.get('result'),heartbeat=action=='heartbeat')
+            return Response({'ok':True})
         if action == 'heartbeat':
             ops.heartbeat(worker, request.data.get('job_id'), request.data.get('lease_token'))
         elif action == 'finish':
             ops.finish_job(worker, request.data.get('job_id'), request.data.get('lease_token'), request.data.get('result'))
         else:
             return Response(status=404)
-    except (ValueError, JudgingJob.DoesNotExist, JudgeWorker.DoesNotExist) as exc:
+    except (ValueError, JudgingJob.DoesNotExist, JudgeWorker.DoesNotExist, PracticeMatch.DoesNotExist) as exc:
         return _error(exc)
     return Response({'ok': True})

@@ -305,9 +305,11 @@ def public_status(season):
         return value
     now = timezone.now()
     current = dict(JudgingJob.objects.filter(state='running', lease_until__gt=now).values_list('worker_id', 'pk'))
+    from .models import PracticeMatch
+    practice_workers = set(PracticeMatch.objects.filter(state='running',lease_until__gt=now).values_list('worker_id',flat=True))
     workers = [{'slot': worker.slot, 'name': worker.name, 'enabled': worker.enabled,
                 'online': bool(worker.enabled and worker.last_seen and worker.last_seen > now - timedelta(seconds=90)),
-                'job': current.get(worker.pk), 'last_seen': worker.last_seen}
+                'job': current.get(worker.pk), 'activity':'official' if worker.pk in current else 'practice' if worker.pk in practice_workers else 'idle', 'last_seen': worker.last_seen}
                for worker in JudgeWorker.objects.order_by('slot')]
     value = {'workers': workers, 'progress': progress(season), 'participants': participant_count(season)}
     cache.set(key, value, timeout=5)

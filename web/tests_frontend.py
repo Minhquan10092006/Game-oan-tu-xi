@@ -95,6 +95,10 @@ class PublicFrontendTests(TestCase):
     def test_arena_destinations_use_shared_retro_shell(self):
         user = User.objects.create_user(username='archive_player', password='testing')
         self.client.force_login(user)
+        from django.utils import timezone
+        from .models import Season, CompetitionEntry
+        season = Season.objects.create(name='Open submissions',start_date=timezone.localdate(),phase='submission')
+        CompetitionEntry.objects.create(user=user,season=season,display_name='Archive player')
         for path, asset, marker in (
             ('/ai/', 'retro-submit.css', 'submission_console.exe'),
             ('/history/', 'retro-history.css', 'match_history.log'),
@@ -105,6 +109,13 @@ class PublicFrontendTests(TestCase):
             self.assertContains(response, asset)
             self.assertContains(response, marker)
             self.assertContains(response, 'site-header')
+
+    def test_submission_page_remains_closed_without_an_open_entry(self):
+        user = User.objects.create_user(username='closed-submission-player')
+        self.client.force_login(user)
+        response = self.client.get('/ai/')
+        self.assertContains(response, 'Hiện không nhận bài nộp')
+        self.assertNotContains(response, 'id="submit-btn"')
 
     def test_existing_home_post_remains_supported(self):
         response = self.client.post('/', {'action':'guest'})
