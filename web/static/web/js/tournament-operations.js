@@ -84,7 +84,7 @@
     if($('ops-profile') && !$('ops-profile').dataset.loaded){$('ops-profile').elements.student_id.value=data.profile.student_id;$('ops-profile').elements.class_name.value=data.profile.class_name;$('ops-profile').dataset.loaded='true';}
     $('ops-workers').replaceChildren(...[1,2,3,4].map(slot=>{
       const worker=data.workers.find(w=>w.slot===slot), el=node('div',undefined,`ops-worker ${worker?.online?'online':''}`);
-      el.append(node('strong',worker?.name || `Máy chấm ${slot}`),node('span',!worker?'Chưa cấu hình':!worker.enabled?'Đã vô hiệu hóa':!worker.online?'Mất kết nối / chưa chạy':worker.job?`Đang chấm #${worker.job}`:'Sẵn sàng'));return el;
+      el.append(node('strong',worker?.name || `Máy chấm ${slot}`),node('span',!worker?'Chưa cấu hình':!worker.enabled?'Đã vô hiệu hóa':!worker.online?'Mất kết nối / chưa chạy':worker.activity==='practice'?'Đang chấm luyện tập':worker.job?`Đang chấm #${worker.job}`:'Sẵn sàng'));return el;
     }));
     for(const kind of ['validation','fixture']) {
       const p=data.progress[kind]; $(`${kind}-label`).textContent=`${p.completed} / ${p.total} · ${p.percent}%`;

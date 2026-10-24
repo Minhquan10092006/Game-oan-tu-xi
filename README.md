@@ -69,6 +69,14 @@ print(json.dumps({'move': {k: move[k] for k in ('piece_id', 'from', 'to')}}))
 
 Nếu không còn nước hợp lệ, engine xử lý trước khi gọi bot. `userdata` tùy chọn giúp giữ trạng thái giữa các lần gọi; không dựa vào file từ lượt trước.
 
+## Luyện tập với bot đã nộp
+
+Sinh viên mở `/practice/`, chọn phiên bản của mình, bot mẫu hoặc bot đã được duyệt làm đối thủ và bên P1/P2. Trận dùng source snapshot, được chạy bởi Docker worker hiện có; không chạy code học sinh trong web process và không cộng điểm mùa/Elo. Lịch sử/replay chỉ dành cho chủ trận; stderr của đối thủ được ẩn.
+
+Mặc định 10 trận/ngày, một trận queued/running mỗi tài khoản, có thể hủy queued. Worker ưu tiên job chính thức sẵn sàng trước job luyện tập; trận đang chạy được hoàn tất. API worker giữ giao thức cũ với ID `practice-<id>`, không sửa các file thuộc engine hash và không đổi release mùa giải. Cần chạy `python manage.py migrate` khi cập nhật web; worker cũ cùng engine vẫn nhận được trận luyện tập.
+
+`PRACTICE_MATCHES_PER_DAY` chỉnh hạn mức; `PRACTICE_DOCKER_IMAGE` để trống sẽ dùng image của mùa đang hoạt động, hoặc tag local `ott-bot:1` nếu chưa có mùa. Máy chấm vẫn cần có image và worker hoạt động.
+
 ## Chạy giải
 
 ```text

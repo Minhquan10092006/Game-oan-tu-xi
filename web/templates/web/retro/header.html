@@ -23,6 +23,7 @@
     <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>Trang chủ</a>
     <a href="/competition/" {% if page == 'registration' %}aria-current="page"{% endif %}>Đăng ký giải</a>
     <a href="/ai/">Nộp bot</a>
+    <a href="/practice/" {% if page == 'practice' %}aria-current="page"{% endif %}>Luyện tập</a>
     <a href="/tournament/" {% if page == 'competition' %}aria-current="page"{% endif %}>Giải của bạn</a>
     <a href="/#luat-choi">Luật chơi</a>
     <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn sử dụng</a>
