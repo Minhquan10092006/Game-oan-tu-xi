@@ -4,104 +4,115 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đăng nhập — Oẳn Tù Tì 2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0a0a1a;
-      color: #e0e0f0;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050505;
+      color: #a6a9ad;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
     .card {
-      background: #12122a;
-      border: 1px solid #2a2a5a;
-      border-radius: 16px;
+      background: #0e0e0e;
+      border: 1px solid #222222;
+      border-radius: 6px;
       padding: 40px 36px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 8px 40px rgba(124,111,255,.15);
     }
     .logo {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 1.1rem;
-      color: #7c6fff;
+      font-family: "Geist Mono", monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8a8d91;
       text-align: center;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     h2 {
       text-align: center;
-      font-size: 1.4rem;
-      font-weight: 600;
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
       margin-bottom: 28px;
-      color: #e0e0f0;
+      color: #f2f2f2;
     }
     label {
       display: block;
       font-size: 0.82rem;
-      color: #aaa;
-      margin-bottom: 6px;
-      margin-top: 16px;
+      font-weight: 500;
+      color: #f2f2f2;
+      margin-bottom: 8px;
+      margin-top: 18px;
     }
     label:first-of-type { margin-top: 0; }
     input {
       width: 100%;
-      background: #0d0d20;
-      border: 1px solid #2a2a5a;
-      border-radius: 8px;
-      color: #e0e0f0;
-      padding: 11px 14px;
+      background: #050505;
+      border: 1px solid #303030;
+      border-radius: 6px;
+      color: #f2f2f2;
+      padding: 12px 14px;
       font-size: 0.92rem;
-      transition: border-color .2s;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.12s ease-out;
     }
-    input:focus { outline: none; border-color: #7c6fff; }
+    input:focus { border-color: #f2f2f2; }
     .btn {
       margin-top: 24px;
       width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, #5a4fcf, #7c6fff);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
+      padding: 12px;
+      background: #f2f2f2;
+      border: 1px solid #f2f2f2;
+      border-radius: 999px;
+      color: #0a0a0a;
+      font-size: 0.92rem;
+      font-weight: 500;
+      font-family: inherit;
       cursor: pointer;
-      transition: opacity .2s;
+      transition: background 0.12s ease-out;
     }
-    .btn:hover { opacity: .9; }
+    .btn:hover { background: #e0e0e0; }
     .error {
-      background: rgba(244,67,54,.1);
-      border: 1px solid rgba(244,67,54,.3);
-      border-radius: 8px;
-      color: #f44336;
+      background: #1a0e0e;
+      border: 1px solid #4a1d1d;
+      border-radius: 6px;
+      color: #f87171;
       padding: 10px 14px;
       font-size: 0.85rem;
       margin-bottom: 16px;
     }
     .footer-link {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 24px;
       font-size: 0.85rem;
-      color: #666;
+      color: #8a8d91;
     }
-    .footer-link a { color: #7c6fff; text-decoration: none; }
-    .footer-link a:hover { text-decoration: underline; }
+    .footer-link a { color: #f2f2f2; text-decoration: none; }
+    .footer-link a:hover { color: #3fd6c6; }
     .back-home {
       display: block;
       text-align: center;
-      margin-top: 14px;
+      margin-top: 16px;
       font-size: 0.8rem;
-      color: #444;
+      color: #8a8d91;
       text-decoration: none;
     }
-    .back-home:hover { color: #888; }
+    .back-home:hover { color: #f2f2f2; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">⚔️ OẲN TÙ TÌ 2.0</div>
+    <div class="logo">OẲN TÙ TÌ 2.0 / K71</div>
     <h2>Đăng nhập</h2>
 
     {% if error %}

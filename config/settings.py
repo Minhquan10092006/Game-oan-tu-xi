@@ -36,6 +36,7 @@ ALLOWED_HOSTS = ['*'] if DEBUG else [h.strip() for h in ALLOWED_HOSTS_ENV.split(
 # ===========================================================
 
 INSTALLED_APPS = [
+    'config',  # Phải đứng đầu để AppConfig.ready() chạy sớm (SQLite WAL mode)
     'daphne',                         # phải đứng đầu để override runserver
     'django.contrib.admin',
     'django.contrib.auth',
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # serve static files trên production
+    'matches.middleware.APIRateLimitMiddleware',  # Rate limiting cho API
     'corsheaders.middleware.CorsMiddleware',  # phải trước CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

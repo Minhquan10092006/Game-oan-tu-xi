@@ -1,86 +1,227 @@
 {% extends 'web/retro/base.html' %}
 {% block content %}
-<div class="news-ticker">
-  <span class="ticker-label">BẢN TIN ↗</span>
-  <span class="sr-only">Chào mừng đến đấu trường K71. Thử chiến thuật, viết bot Python, xem lại từng nước đi.</span>
-  <div class="ticker-track" aria-hidden="true"><div class="ticker-content"><b>HELLO, K71!</b><em>★</em>THỬ CHIẾN THUẬT. VIẾT BOT. THÁCH ĐẤU.<em>★</em><b>09 × 09 Ô CỜ — VÔ VÀN Ý TƯỞNG</b><em>★</em>YOUR NEXT MOVE STARTS HERE.<em>★</em><b>HELLO, K71!</b></div></div>
-</div>
-
-<section class="retro-window hero" aria-labelledby="hero-title">
-  <div class="window-title"><span>✦ welcome_to_the_arena.exe</span><span class="window-controls" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></div>
-  <div class="window-body hero-body">
+<section class="hero-clean" aria-labelledby="hero-title">
+  <div class="hero-body">
     <div class="hero-copy">
-      <div class="eyebrow"><span class="new-badge">NEW!</span> OẲN TÙ TÌ 2.0 / K71</div>
-      <h1 id="hero-title"><span>NƯỚC ĐI NHỎ.</span><span class="headline-blue">Ý TƯỞNG<br>LỚN.</span></h1>
-      <p>Kéo, Búa, Bao đã có luật chơi mới. Biến những dòng <strong>code Python</strong> của bạn thành chiến thuật, đưa đội quân lên bàn cờ và để thuật toán lên tiếng.</p>
+      <div class="live-signal">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>K71 · Đấu trường thuật toán</span>
+      </div>
+      <h1 id="hero-title">
+        <span>Nước đi nhỏ.</span>
+        <span class="headline-dim">Ý tưởng lớn.</span>
+      </h1>
+      <p class="hero-desc">
+        Kéo, Búa, Bao phiên bản chiến thuật trên bàn cờ 9×9. Viết bot bằng <strong>Python</strong>, đưa đội quân lên bàn cờ và để thuật toán lên tiếng.
+      </p>
       <div class="hero-actions">
         {% if user.is_authenticated and not is_guest %}
           <a class="retro-button primary" href="/play/">Vào đấu trường ↗</a>
         {% else %}
           <a class="retro-button primary" href="/register/">Đăng ký tài khoản ↗</a>
         {% endif %}
-        <a class="retro-button white" href="/battlecode/">▷ Xem trận mẫu</a>
+        <a class="retro-button white" href="/battlecode/">Xem trận mẫu</a>
+        <a class="retro-button white" href="/ranking/">Bảng xếp hạng</a>
       </div>
-      <p class="hero-note">Chưa biết viết bot? Bắt đầu từ một nước đi.</p>
     </div>
-    <div class="retro-window board-window">
-      <div class="window-title"><span>board_preview.bmp</span><span aria-hidden="true">▣</span></div>
-      <div class="window-body">
-        <div class="board-caption"><span>VỊ TRÍ KHỞI ĐẦU</span><span>9 × 9</span></div>
-        <div class="pixel-board" role="img" aria-label="Bàn cờ 9 nhân 9. Đội đỏ ở góc trên trái, đội xanh ở góc dưới phải; mỗi đội có 3 Kéo, 3 Búa và 3 Bao.">
-          {% for cell in hero_cells %}<div class="pixel-cell {{ cell.owner }}{% if cell.goal %} goal{% endif %}" aria-hidden="true">{% if cell.symbol %}<span>{{ cell.symbol }}</span>{% endif %}</div>{% endfor %}
-        </div>
-        <div class="board-legend"><span class="red-ink">■ P1 / ĐI TRƯỚC</span><span class="blue-ink">■ P2 / PHẢN CÔNG</span></div>
-        <div class="board-sticker">QUEN TAY OẲN TÙ TÌ.<br>THỬ TÀI THUẬT TOÁN!</div>
+
+    <div class="board-preview-card">
+      <div class="board-header">
+        <span>Bàn cờ khởi đầu</span>
+        <span class="board-dim">9 × 9</span>
+      </div>
+      <div class="pixel-board" role="img" aria-label="Bàn cờ 9 nhân 9. Đội đỏ ở góc trên trái, đội xanh ở góc dưới phải; mỗi đội có 3 Kéo, 3 Búa và 3 Bao.">
+        {% for cell in hero_cells %}
+          <div class="pixel-cell {{ cell.owner }}{% if cell.goal %} goal{% endif %}" aria-hidden="true">
+            {% if cell.symbol %}<span>{{ cell.symbol }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="board-legend">
+        <span class="red-ink">■ P1 Đỏ (Đi trước)</span>
+        <span class="blue-ink">■ P2 Xanh (Phản công)</span>
       </div>
     </div>
   </div>
-  <div class="hero-status"><span>● Sẵn sàng cho nước đi đầu tiên</span><span>PYTHON · CHIẾN THUẬT · SÁNG TẠO</span></div>
 </section>
 
+<!-- Ruled facts row -->
 <div class="counter-strip" aria-label="Thông số trò chơi">
-  <div class="counter-item"><strong>09 × 09</strong><span>KÍCH THƯỚC BÀN CỜ</span></div>
-  <div class="counter-item"><strong>03</strong><span>LOẠI QUÂN: KÉO · BÚA · BAO</span></div>
-  <div class="counter-item"><strong>08</strong><span>HƯỚNG DI CHUYỂN</span></div>
-  <div class="counter-item"><strong>3 / 1 / 0</strong><span>ĐIỂM THẮNG · HÒA · THUA</span></div>
+  <div class="counter-item">
+    <strong>9 × 9</strong>
+    <span>KÍCH THƯỚC BÀN CỜ</span>
+  </div>
+  <div class="counter-item">
+    <strong>3</strong>
+    <span>LOẠI QUÂN: KÉO · BÚA · BAO</span>
+  </div>
+  <div class="counter-item">
+    <strong>8</strong>
+    <span>HƯỚNG DI CHUYỂN</span>
+  </div>
+  <div class="counter-item">
+    <strong>3 / 1 / 0</strong>
+    <span>ĐIỂM THẮNG · HÒA · THUA</span>
+  </div>
 </div>
 
 <hr class="groove">
 
+<!-- Section 01: Luật chơi (giữ nguyên đầy đủ nội dung) -->
 <section class="content-section" id="luat-choi" aria-labelledby="rules-title">
-  <div class="section-heading"><div><h2 id="rules-title">LUẬT QUEN. VÁN ĐẤU MỚI.</h2><p>Ba loại quân. Một bàn cờ. Chiến thuật do bạn quyết định.</p></div><span class="section-number">01 / LUẬT CHƠI</span></div>
+  <div class="section-heading">
+    <div>
+      <h2 id="rules-title">Luật quen. Ván đấu mới.</h2>
+      <p>Ba loại quân. Một bàn cờ. Chiến thuật do bạn quyết định.</p>
+    </div>
+    <span class="section-number">01 / LUẬT CHƠI</span>
+  </div>
+
   <div class="rule-layout">
-    <div class="retro-window"><div class="window-title">combat_rules.txt</div><ul class="rule-cycle"><li><span class="rule-letter">B</span> Búa thắng Kéo <span class="rule-arrow" aria-hidden="true">→</span></li><li><span class="rule-letter">K</span> Kéo thắng Bao <span class="rule-arrow" aria-hidden="true">→</span></li><li><span class="rule-letter">Ba</span> Bao thắng Búa <span class="rule-arrow" aria-hidden="true">↺</span></li></ul></div>
-    <table class="rule-table"><caption class="sr-only">Tóm tắt luật thi đấu K71</caption><tbody>
-      <tr><th scope="row">Di chuyển</th><td>Mỗi lượt đi một quân, một ô theo tám hướng. Không bỏ lượt.</td></tr>
-      <tr><th scope="row">Bắt quân</th><td>Chỉ bắt loại quân mình khắc chế. Cùng loại thì chặn nhau.</td></tr>
-      <tr><th scope="row">Chiến thắng</th><td>Đến ô đích, bắt hết một loại quân đối thủ, hoặc khiến đối thủ hết nước đi.</td></tr>
-      <tr><th scope="row">Hòa</th><td>Lặp trạng thái ba lần hoặc đủ 300 nước khi chưa có bên thắng.</td></tr>
-      <tr><th scope="row">Vòng bảng</th><td>Bốc thăm ngẫu nhiên, tối đa 4 mục/bảng; mỗi cặp đấu hai lượt. Thắng 3, hòa 1, thua 0 điểm.</td></tr>
-      <tr><th scope="row">Vào vòng sau</th><td>Hai mục đầu mỗi bảng vào nhánh loại trực tiếp; có BYE nếu số suất không đủ nhánh cân bằng.</td></tr>
-      <tr><th scope="row">Chung kết</th><td>Nhánh đấu tiếp diễn qua vòng 32/16, tứ kết, bán kết và chung kết; có thể có trận tranh hạng ba.</td></tr>
-    </tbody></table>
+    <div class="rule-card">
+      <ul class="rule-cycle">
+        <li>
+          <span class="rule-letter">B</span>
+          <span>Búa thắng Kéo</span>
+          <span class="rule-arrow" aria-hidden="true">→</span>
+        </li>
+        <li>
+          <span class="rule-letter">K</span>
+          <span>Kéo thắng Bao</span>
+          <span class="rule-arrow" aria-hidden="true">→</span>
+        </li>
+        <li>
+          <span class="rule-letter">Ba</span>
+          <span>Bao thắng Búa</span>
+          <span class="rule-arrow" aria-hidden="true">↺</span>
+        </li>
+      </ul>
+    </div>
+
+    <table class="rule-table">
+      <caption class="sr-only">Tóm tắt luật thi đấu K71</caption>
+      <tbody>
+        <tr>
+          <th scope="row">Di chuyển</th>
+          <td>Mỗi lượt đi một quân, một ô theo tám hướng. Không bỏ lượt.</td>
+        </tr>
+        <tr>
+          <th scope="row">Bắt quân</th>
+          <td>Chỉ bắt loại quân mình khắc chế. Cùng loại thì chặn nhau.</td>
+        </tr>
+        <tr>
+          <th scope="row">Chiến thắng</th>
+          <td>Đến ô đích, bắt hết một loại quân đối thủ, hoặc khiến đối thủ hết nước đi.</td>
+        </tr>
+        <tr>
+          <th scope="row">Hòa</th>
+          <td>Lặp trạng thái ba lần hoặc đủ 300 nước khi chưa có bên thắng.</td>
+        </tr>
+        <tr>
+          <th scope="row">Vòng bảng</th>
+          <td>Bốc thăm ngẫu nhiên, tối đa 4 mục/bảng; mỗi cặp đấu hai lượt. Thắng 3, hòa 1, thua 0 điểm.</td>
+        </tr>
+        <tr>
+          <th scope="row">Vào vòng sau</th>
+          <td>Hai mục đầu mỗi bảng vào nhánh loại trực tiếp; có BYE nếu số suất không đủ nhánh cân bằng.</td>
+        </tr>
+        <tr>
+          <th scope="row">Chung kết</th>
+          <td>Nhánh đấu tiếp diễn qua vòng 32/16, tứ kết, bán kết và chung kết; có thể có trận tranh hạng ba.</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-  <p class="rule-footnote">[i] Thể lệ k71-v1.0 đang là bản đề xuất; BTC sẽ công bố quy định chính thức trước giải. <a href="/rules/download/">Tải luật chơi, cách chia bảng và sơ đồ giải (.md)</a> · <a href="/competition/">Xem bảng đấu trên web</a>. ELO luyện tập không dùng để trao giải.</p>
+
+  <p class="rule-footnote">
+    [i] Thể lệ k71-v1.0 đang là bản đề xuất; BTC sẽ công bố quy định chính thức trước giải. 
+    <a href="/rules/download/">Tải luật chơi, cách chia bảng và sơ đồ giải (.md)</a> · 
+    <a href="/competition/">Xem bảng đấu trên web</a>. ELO luyện tập không dùng để trao giải.
+  </p>
 </section>
 
 <hr class="groove">
 
+<!-- Section 02: Hướng dẫn tham gia (giữ nguyên đầy đủ nội dung) -->
 <section id="tham-gia" aria-labelledby="steps-title" class="content-section">
-  <div class="section-heading"><div><h2 id="steps-title">TỪ “HELLO” ĐẾN ĐẤU TRƯỜNG.</h2><p>Không cần một thuật toán hoàn hảo để bắt đầu.</p></div><span class="section-number">02 / THAM GIA</span></div>
+  <div class="section-heading">
+    <div>
+      <h2 id="steps-title">Từ “Hello” đến đấu trường.</h2>
+      <p>Không cần một thuật toán hoàn hảo để bắt đầu.</p>
+    </div>
+    <span class="section-number">02 / THAM GIA</span>
+  </div>
+
   <div class="step-grid">
-    <article class="retro-window step-card"><div class="window-title">01 · start_here.txt</div><div class="window-body"><span class="step-code" aria-hidden="true">01_</span><h3>Tạo tài khoản</h3><p>Đăng ký để lưu bài nộp và theo dõi lịch sử. Hoặc vào với tư cách khách để thử trước.</p></div></article>
-    <article class="retro-window step-card"><div class="window-title">02 · your_bot.py</div><div class="window-body"><span class="step-code" aria-hidden="true">02_</span><h3>Viết nước đi của bạn</h3><p>Đọc trạng thái bàn cờ, chọn nước hợp lệ và trả kết quả bằng Python. Cải tiến từ bot mẫu từng chút một.</p></div></article>
-    <article class="retro-window step-card"><div class="window-title">03 · game_on.exe</div><div class="window-body"><span class="step-code" aria-hidden="true">03_</span><h3>Nộp bot. Xem kết quả.</h3><p>Gửi bài để ban tổ chức kiểm tra. Khi thi đấu, từng nước đi được lưu lại để xem và đối chiếu.</p></div></article>
+    <article class="step-card">
+      <span class="step-code" aria-hidden="true">01</span>
+      <h3>Tạo tài khoản</h3>
+      <p>Đăng ký để lưu bài nộp và theo dõi lịch sử. Hoặc vào với tư cách khách để thử trước.</p>
+    </article>
+
+    <article class="step-card">
+      <span class="step-code" aria-hidden="true">02</span>
+      <h3>Viết nước đi của bạn</h3>
+      <p>Đọc trạng thái bàn cờ, chọn nước hợp lệ và trả kết quả bằng Python. Cải tiến từ bot mẫu từng chút một.</p>
+    </article>
+
+    <article class="step-card">
+      <span class="step-code" aria-hidden="true">03</span>
+      <h3>Nộp bot. Xem kết quả.</h3>
+      <p>Gửi bài để ban tổ chức kiểm tra. Khi thi đấu, từng nước đi được lưu lại để xem và đối chiếu.</p>
+    </article>
   </div>
 </section>
 
 <hr class="groove">
 
+<!-- Section 03: Thông báo & Thắc mắc thường gặp -->
 <div class="info-layout">
-  <section class="retro-window" aria-labelledby="notice-title"><div class="window-title">▤ bulletin_board.txt</div><div class="window-body notice-paper"><div class="eyebrow">THÔNG BÁO / K71</div><h3 id="notice-title">Đấu trường đang khởi động.</h3>{% if active_season %}<p><strong>Mùa hiện tại: {{ active_season.name }}</strong></p>{% endif %}<p>Bạn đang trải nghiệm bản demo. Lịch thi, thời hạn nộp bài và giải thưởng sẽ được thông báo sau khi nhà trường phê duyệt.</p><p>Tạo tài khoản tại đây chưa đồng nghĩa với đăng ký dự thi chính thức.</p><a href="/play/">Khám phá các chế độ chơi →</a></div></section>
-  <section class="retro-window" aria-labelledby="faq-title"><div class="window-title" id="faq-title">? · Có thể bạn đang thắc mắc</div><div class="faq-list"><details><summary>Mới học Python có tham gia được không?</summary><p>Có. Hãy bắt đầu bằng việc chọn một nước trong danh sách nước hợp lệ, rồi dần thêm cách ưu tiên bắt quân hoặc tiến về đích.</p></details><details><summary>Tôi có thể xem thử trước khi đăng ký?</summary><p>Có. Chọn xem trận mẫu, sau đó “Tiếp tục với tư cách khách”. Bạn có thể phát, tạm dừng và xem lại diễn biến.</p></details><details><summary>Điểm giải được tính như thế nào?</summary><p>Đề xuất: thắng 3 điểm, hòa 1 điểm, thua 0 điểm. Hai bot đổi bên trong hai ván. Kết quả giải được BTC công bố riêng.</p></details><details><summary>Code của tôi có được chạy ngay trên web?</summary><p>Web nhận và lưu bài. Ban tổ chức chạy bot trên máy chấm riêng; bản demo trực tuyến chỉ chạy các chiến thuật mẫu.</p></details></div></section>
+  <section class="info-card" aria-labelledby="notice-title">
+    <div class="info-tag">Thông báo K71</div>
+    <h3 id="notice-title">Đấu trường đang khởi động</h3>
+    {% if active_season %}
+      <p><strong>Mùa hiện tại: {{ active_season.name }}</strong></p>
+    {% endif %}
+    <p>Bạn đang trải nghiệm bản thử nghiệm. Lịch thi, thời hạn nộp bài và giải thưởng sẽ được thông báo sau khi nhà trường phê duyệt.</p>
+    <a class="info-link" href="/play/">Khám phá các chế độ chơi →</a>
+  </section>
+
+  <section class="faq-card" aria-labelledby="faq-title">
+    <h3 id="faq-title">Câu hỏi thường gặp</h3>
+    <div class="faq-list">
+      <details>
+        <summary>Mới học Python có tham gia được không?</summary>
+        <p>Có. Hãy bắt đầu bằng việc chọn một nước trong danh sách nước hợp lệ, rồi dần thêm cách ưu tiên bắt quân hoặc tiến về đích.</p>
+      </details>
+      <details>
+        <summary>Tôi có thể xem thử trước khi đăng ký?</summary>
+        <p>Có. Chọn xem trận mẫu, sau đó “Tiếp tục với tư cách khách”. Bạn có thể phát, tạm dừng và xem lại diễn biến.</p>
+      </details>
+      <details>
+        <summary>Điểm giải được tính như thế nào?</summary>
+        <p>Đề xuất: thắng 3 điểm, hòa 1 điểm, thua 0 điểm. Hai bot đổi bên trong hai ván. Kết quả giải được BTC công bố riêng.</p>
+      </details>
+      <details>
+        <summary>Code của tôi có được chạy ngay trên web?</summary>
+        <p>Web nhận và lưu bài. Ban tổ chức chạy bot trên máy chấm riêng; bản demo trực tuyến chỉ chạy các chiến thuật mẫu.</p>
+      </details>
+    </div>
+  </section>
 </div>
 
-<section class="final-cta" aria-labelledby="cta-title"><div class="final-cta-inner"><div><h2 id="cta-title">ĐẾN LƯỢT BẠN. <span class="rainbow" aria-hidden="true">★ GAME ON!</span></h2><p>Một dòng code hôm nay. Một chiến thuật mới ngày mai.</p></div>{% if user.is_authenticated and not is_guest %}<a class="retro-button yellow" href="/ai/">Nộp bot của bạn ↗</a>{% else %}<a class="retro-button yellow" href="/register/">Tạo tài khoản ngay ↗</a>{% endif %}</div></section>
+<!-- Closing statement -->
+<section class="final-cta" aria-labelledby="cta-title">
+  <div class="final-cta-inner">
+    <div>
+      <h2 id="cta-title">Đến lượt bạn.</h2>
+      <p>Một dòng code hôm nay. Một chiến thuật mới ngày mai.</p>
+    </div>
+    {% if user.is_authenticated and not is_guest %}
+      <a class="retro-button yellow" href="/ai/">Nộp bot của bạn ↗</a>
+    {% else %}
+      <a class="retro-button yellow" href="/register/">Tạo tài khoản ngay ↗</a>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}

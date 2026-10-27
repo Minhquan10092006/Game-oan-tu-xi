@@ -1,15 +1,15 @@
 <header class="site-shell site-header">
-  <div class="desktop-bar"><span>K71 / ĐẤU TRƯỜNG THUẬT TOÁN</span><span>{% if is_management_user %}BAN TỔ CHỨC{% else %}SINH VIÊN ĐẠI DIỆN{% endif %}</span></div>
+  <div class="desktop-bar"><span>K71 / Đấu trường thuật toán</span><span>{% if is_management_user %}Ban tổ chức{% else %}Sinh viên đại diện{% endif %}</span></div>
   <div class="masthead">
     <a class="brand" href="{% if is_management_user %}/tournament/{% else %}/{% endif %}" aria-label="Oẳn Tù Tì 2.0">
       <span class="brand-mark" aria-hidden="true"><span>K</span><span>B</span><span>Ba</span><span>↗</span></span>
-      <span class="brand-copy"><strong>OẲN TÙ TÌ <span>2.0</span></strong><small>{% if is_management_user %}QUẢN LÝ VÀ VẬN HÀNH GIẢI ĐẤU{% else %}MỘT TÀI KHOẢN ĐẠI DIỆN · MỘT BÀI DỰ THI{% endif %}</small></span>
+      <span class="brand-copy"><strong>Oẳn Tù Tì <span>2.0</span></strong><small>{% if is_management_user %}Ban tổ chức{% else %}Đấu trường thuật toán{% endif %}</small></span>
     </a>
     <div class="account-links">
       {% if user.is_authenticated %}
-      <span class="username">Xin chào, <strong>{{ user.username }}</strong></span>
+      <span class="username">{{ user.username }}</span>
       <form method="post" action="{% url 'logout' %}" class="header-logout">{% csrf_token %}<button class="retro-button" type="submit">Đăng xuất</button></form>
-      {% else %}<a class="login-link" href="/login/">Đăng nhập</a><a class="retro-button primary" href="/register/">Đăng ký tài khoản</a>{% endif %}
+      {% else %}<a class="login-link" href="/login/">Đăng nhập</a><a class="retro-button primary" href="/register/">Đăng ký</a>{% endif %}
     </div>
   </div>
   <nav class="tab-nav" aria-label="Điều hướng chính">
@@ -18,16 +18,18 @@
     <a href="/admin/code-review/" {% if page == 'submissions-admin' %}aria-current="page"{% endif %}>Bài nộp</a>
     <a href="/tournament/?panel=judging">Chấm bài</a>
     <a href="/tournament/?panel=results">Lịch sử đấu</a>
+    <a href="/ranking/" {% if page == 'ranking' %}aria-current="page"{% endif %}>Xếp hạng</a>
     <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn</a>
     {% else %}
     <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>Trang chủ</a>
+    <a href="/ranking/" {% if page == 'ranking' %}aria-current="page"{% endif %}>Xếp hạng</a>
     <a href="/competition/" {% if page == 'registration' %}aria-current="page"{% endif %}>Đăng ký giải</a>
     <a href="/ai/">Nộp bot</a>
     <a href="/practice/" {% if page == 'practice' %}aria-current="page"{% endif %}>Luyện tập</a>
     <a href="/tournament/" {% if page == 'competition' %}aria-current="page"{% endif %}>Giải của bạn</a>
     <a href="/#luat-choi">Luật chơi</a>
-    <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn sử dụng</a>
-    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Dừng hiệu ứng</button>
+    <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn</a>
+    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Tĩnh</button>
     {% endif %}
   </nav>
 </header>

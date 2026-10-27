@@ -1,25 +1,62 @@
 {% extends 'web/retro/base.html' %}
 {% load static %}
-{% block title %}ELO luyện tập · Oẳn Tù Tì 2.0{% endblock %}
+{% block title %}Bảng xếp hạng ELO · Oẳn Tù Tì 2.0{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-ranking.css' %}"><script src="{% static 'web/js/retro-ranking.js' %}" defer></script>{% endblock %}
 {% block content %}
 <section class="ranking-intro retro-window" aria-labelledby="ranking-title">
-  <div class="window-title"><span>▦ leaderboard.exe</span><span aria-hidden="true">_ □ ×</span></div>
   <div class="window-body ranking-intro-body">
-    <div><div class="eyebrow"><span class="ranking-label">BẢNG ĐIỂM</span> ĐẤU TRƯỜNG LUYỆN TẬP / K71</div><h1 id="ranking-title">MỖI VÁN ĐẤU.<br><span>MỘT BƯỚC TIẾN.</span></h1><p>Theo dõi ELO và hành trình luyện tập của người chơi trong đấu trường.</p></div>
-    <div class="ranking-graphic" aria-hidden="true"><span>B</span><span>K</span><span>Ba</span><strong>TOP<br>50</strong></div>
+    <div>
+      <div class="eyebrow"><span class="ranking-label">ELO RANKING</span> ĐẤU TRƯỜNG K71</div>
+      <h1 id="ranking-title">Bảng xếp hạng ELO</h1>
+      <p>Theo dõi điểm số và xếp hạng của các đấu thủ trong đấu trường luyện tập.</p>
+    </div>
+    <div class="ranking-graphic" aria-hidden="true">
+      <span>B</span><span>K</span><span>Ba</span><strong>TOP 50</strong>
+    </div>
   </div>
 </section>
-<p class="ranking-notice"><strong>Ghi chú:</strong> ELO dùng cho luyện tập. Điểm giải K71 dự kiến tính theo thắng 3, hòa 1, thua 0 và được ban tổ chức công bố riêng.</p>
+
+<p class="ranking-notice">
+  <strong>Ghi chú:</strong> Điểm ELO áp dụng cho chế độ luyện tập. Điểm số giải đấu K71 chính thức được tính riêng (thắng 3, hòa 1, thua 0).
+</p>
+
 <section class="retro-window ranking-window" aria-labelledby="leaderboard-title">
-  <div class="window-title"><span id="leaderboard-title">▤ top_50_players.dat</span><span aria-hidden="true">_ □ ×</span></div>
   <div class="window-body">
-    <div class="ranking-toolbar"><div><h2>BẢNG XẾP HẠNG</h2><p>Điểm ELO · Tối đa 50 người chơi</p></div><button type="button" id="ranking-refresh" class="retro-button">↻ Làm mới</button></div>
-    <div id="my-rank" class="my-rank" hidden><strong>THÀNH TÍCH CỦA BẠN</strong><span>Hạng <b id="my-rank-number"></b></span><span>ELO <b id="my-elo"></b></span><span>Thắng / Thua <b id="my-record"></b></span></div>
-    <p id="ranking-status" class="ranking-status" role="status" aria-live="polite">Đang tải bảng xếp hạng…</p>
-    <div class="ranking-table-wrap" tabindex="0" aria-label="Bảng xếp hạng; cuộn ngang để xem thêm cột">
-      <table class="ranking-table"><caption class="sr-only">Bảng xếp hạng ELO luyện tập</caption><thead><tr><th scope="col">Hạng</th><th scope="col">Người chơi</th><th scope="col">ELO</th><th scope="col">Thắng</th><th scope="col">Thua</th><th scope="col">Tỉ lệ thắng</th><th scope="col">Số trận</th></tr></thead><tbody id="ranking-body"></tbody></table>
+    <div class="ranking-toolbar">
+      <div>
+        <h2 id="leaderboard-title">Danh sách xếp hạng</h2>
+        <p>Cập nhật theo thời gian thực · Tối đa 50 người chơi dẫn đầu</p>
+      </div>
+      <button type="button" id="ranking-refresh" class="retro-button">↻ Làm mới</button>
     </div>
+
+    <div id="my-rank" class="my-rank" hidden>
+      <strong>THÀNH TÍCH CỦA BẠN</strong>
+      <span>Hạng <b id="my-rank-number"></b></span>
+      <span>ELO <b id="my-elo"></b></span>
+      <span>Thắng / Thua <b id="my-record"></b></span>
+    </div>
+
+    <p id="ranking-status" class="ranking-status" role="status" aria-live="polite">Đang tải bảng xếp hạng…</p>
+
+    <div class="ranking-table-wrap" tabindex="0" aria-label="Bảng xếp hạng; cuộn ngang để xem thêm cột">
+      <table class="ranking-table">
+        <caption class="sr-only">Bảng xếp hạng ELO luyện tập</caption>
+        <thead>
+          <tr>
+            <th scope="col">Hạng</th>
+            <th scope="col">Người chơi</th>
+            <th scope="col">ELO</th>
+            <th scope="col">Thắng</th>
+            <th scope="col">Thua</th>
+            <th scope="col">Tỉ lệ thắng</th>
+            <th scope="col">Số trận</th>
+          </tr>
+        </thead>
+        <tbody id="ranking-body"></tbody>
+      </table>
+    </div>
+
     <noscript><p>Cần bật JavaScript để tải bảng xếp hạng.</p></noscript>
   </div>
 </section>

@@ -9,6 +9,11 @@ POST /api/matches/{id}/ai-move/   — yêu cầu AI đề xuất nước đi
 """
 import json
 import logging
+import asyncio
+import tempfile
+import os
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from django.utils import timezone
 from rest_framework import generics, status, permissions
@@ -27,6 +32,9 @@ from judge.client import get_client, Judge0Error, Judge0Unavailable
 from submissions.models import Submission
 
 logger = logging.getLogger(__name__)
+
+# Global thread pool for running matches in background
+_match_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix='match_worker')
 
 
 class MatchListCreateView(generics.ListCreateAPIView):
@@ -266,8 +274,9 @@ def ai_battle_start_view(request):
     POST /api/matches/ai-battle/start/
     Body: {"ai1_id": 1, "ai2_id": 2}
 
-    Tạo và chạy ngay một trận AI vs AI.
-    Trả về match ID và kết quả sau khi ván hoàn thành.
+    Tạo trận AI vs AI và chạy trong background.
+    Trả về match_id ngay lập tức (status=queued).
+    Client dùng GET /api/matches/{id}/battle/ hoặc WebSocket để theo dõi.
     """
     ai1_id = request.data.get('ai1_id')
     ai2_id = request.data.get('ai2_id')
@@ -279,7 +288,6 @@ def ai_battle_start_view(request):
         )
 
     try:
-        # Dùng review_status='approved' thay vì status='completed' (đã bỏ)
         ai1 = Submission.objects.get(pk=ai1_id, review_status='approved')
         ai2 = Submission.objects.get(pk=ai2_id, review_status='approved')
     except Submission.DoesNotExist:
@@ -297,40 +305,107 @@ def ai_battle_start_view(request):
         ai1=ai1,
         ai2=ai2,
         board_state=gs.to_dict(),
-        status='playing',
+        status='queued',
         max_turns=200,
     )
 
-    # Chạy trận đấu (synchronous)
-    from matches.ai_battle import run_ai_battle
-    match = run_ai_battle(match)
+    # Ghi source code ra file tạm để BotRunner dùng
+    p1_source = _write_bot_to_temp(ai1.source_code, f'p1_{ai1.id}')
+    p2_source = _write_bot_to_temp(ai2.source_code, f'p2_{ai2.id}')
 
-    moves = list(MatchMove.objects.filter(match=match).values(
-        'player', 'turn_number', 'from_row', 'from_col',
-        'to_row', 'to_col', 'piece_type', 'is_capture', 'captured_type',
-    ))
+    # Chạy match trong background thread pool
+    loop = asyncio.get_event_loop()
+    future = loop.run_in_executor(
+        _match_executor,
+        _run_match_background,
+        match.id,
+        p1_source,
+        p2_source,
+    )
+    future.add_done_callback(lambda f: f.exception() and logger.error(f"Match {match.id} failed: {f.exception()}"))
 
     return Response({
-        'match_id': match.pk,
-        'status': match.status,
-        'winner': match.winner,
-        'win_reason': match.win_reason,
-        'total_moves': len(moves),
-        'moves': moves,
-        # Thông tin AI kèm contributor (người đóng góp code)
-        'ai1': {
-            'id': ai1.pk,
-            'name': ai1.ai_name,
-            'version': ai1.version,
-            'contributor': ai1.submitter.username,
-        },
-        'ai2': {
-            'id': ai2.pk,
-            'name': ai2.ai_name,
-            'version': ai2.version,
-            'contributor': ai2.submitter.username,
-        },
-    }, status=status.HTTP_201_CREATED)
+        'match_id': match.id,
+        'status': 'queued',
+        'message': 'Trận đấu đang chờ thực thi. Dùng GET /api/matches/{id}/battle/ để theo dõi.',
+    }, status=status.HTTP_202_ACCEPTED)
+
+
+def _write_bot_to_temp(source_code: str, prefix: str) -> str:
+    """Ghi source code ra file tạm, trả về path. File sẽ bị xóa sau khi match xong."""
+    fd, path = tempfile.mkstemp(suffix='.py', prefix=prefix + '_')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(source_code)
+    except Exception:
+        os.close(fd)
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        raise
+    return path
+
+
+def _run_match_background(match_id: int, p1_source: str, p2_source: str):
+    """
+    Chạy trong thread pool. Tự setup Django, chạy match, lưu kết quả, push WebSocket.
+    """
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    django.setup()
+
+    from matches.match_manager import MatchManager
+    from matches.models import Match
+    from channels.layers import get_channel_layer
+
+    try:
+        match = Match.objects.get(id=match_id)
+        match.status = 'playing'
+        match.save(update_fields=['status'])
+
+        manager = MatchManager()
+        result = manager.run(
+            Path(p1_source),
+            Path(p2_source),
+            preset='classic_9x9',
+            max_plies=300,
+            timeout=5.0,
+            match_id=f'match-{match_id}',
+        )
+
+        # Cập nhật kết quả
+        match.status = 'finished'
+        match.winner = result['winner']
+        match.win_reason = result['reason']['message'] if result.get('reason') else ''
+        match.replay_data = result
+        match.finished_at = timezone.now()
+        match.save(update_fields=['status', 'winner', 'win_reason', 'replay_data', 'finished_at'])
+
+        # Push WebSocket event
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            asyncio.run(channel_layer.group_send(
+                f'match_{match_id}',
+                {'type': 'match_finished', 'data': result}
+            ))
+
+    except Exception as e:
+        logger.exception(f"Match {match_id} error: {e}")
+        try:
+            match = Match.objects.get(id=match_id)
+            match.status = 'error'
+            match.win_reason = f'Lỗi hệ thống: {str(e)[:200]}'
+            match.save(update_fields=['status', 'win_reason'])
+        except Exception:
+            pass
+    finally:
+        # Cleanup temp files
+        for path in (p1_source, p2_source):
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
 
 
 @api_view(['GET'])

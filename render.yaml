@@ -1,32 +1,36 @@
-databases:
-  - name: game-oan-tu-xi-db
-    databaseName: game_oan_tu_xi
-    user: game_user
-    plan: free
-
+# render.yaml - Cấu hình deploy cho giải 1 lần (SQLite + Redis)
 services:
   - type: web
-    name: game-oan-tu-xi
+    name: ott-web
     runtime: python
-    plan: free
-    buildCommand: "./build.sh"
-    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
-    healthCheckPath: /
-
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate --noinput
+    startCommand: daphne -b 0.0.0.0 -p $PORT --worker-connections 2000 --http-timeout 60 --access-log - config.asgi:application
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.0
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
-        value: "game-oan-tu-xi.onrender.com"
+        value: ".onrender.com"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ott-redis
+          property: connectionURL
       - key: DATABASE_URL
-        fromDatabase:
-          name: game-oan-tu-xi-db
-          property: connectionString
-      - key: JUDGE0_BASE_URL
-        value: "https://ce.judge0.com"
-      - key: JUDGE0_API_KEY
-        value: ""
+        value: sqlite:///opt/render/project/src/db.sqlite3
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1
+    healthCheckPath: /health/
+    autoDeploy: true
+
+  - type: redis
+    name: ott-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

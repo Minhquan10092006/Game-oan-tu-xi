@@ -62,6 +62,9 @@ class Match(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
+    # Replay đầy đủ từ match_manager (events, state, bot_runs)
+    replay_data = models.JSONField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Trận đấu'

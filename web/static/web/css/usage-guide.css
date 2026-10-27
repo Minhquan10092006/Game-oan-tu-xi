@@ -1,1 +1,219 @@
-.guide-roles{margin-bottom:28px}.guide-roles a{display:inline-block;padding:11px 18px;border-radius:8px;color:#53657f;text-decoration:none;font-size:14px;font-weight:600}.guide-roles a[aria-current=page]{color:#1d4ed8;background:#e5edfc}.guide-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:32px;align-items:start;margin-bottom:48px}.guide-contents{position:sticky;top:24px;display:grid;gap:5px;border-left:2px solid #e0e6ef;padding-left:16px;font-size:13px}.guide-contents strong{margin-bottom:8px;color:#334155}.guide-contents a{display:block;color:#64748b;text-decoration:none;padding:6px 0}.guide-contents a:hover{color:#1d4ed8}.guide-body{display:grid;gap:30px;min-width:0}.guide-card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:26px}.guide-body h2{font-size:21px;margin-bottom:18px}.guide-steps{padding-left:22px;display:grid;gap:18px}.guide-steps li::marker{color:#2563eb;font-weight:700}.guide-steps p{color:#64748b;margin:5px 0 0;font-size:14px}.guide-tip{padding:14px 16px;background:#eff5ff;border-radius:8px;font-size:13px;color:#334d75;margin:20px 0 0}.guide-section{display:grid;gap:10px}.guide-section h2{margin-bottom:6px}.guide-section .ops-disclosure{font-size:14px;line-height:1.8}.guide-section .ops-disclosure p:last-child,.guide-section .ops-disclosure ol:last-child,.guide-section .ops-disclosure ul:last-child{margin-bottom:0}.guide-section li+li{margin-top:8px}.guide-body code{overflow-wrap:anywhere;background:#f1f5f9;padding:2px 5px;border-radius:4px;font-size:12px}.guide-body section{scroll-margin-top:24px}.guide-definitions{margin:0}.guide-definitions>div+div{margin-top:18px;padding-top:18px;border-top:1px solid #edf0f5}.guide-definitions dt{font-weight:600;font-size:14px;margin-bottom:5px}.guide-definitions dd{margin:0;color:#64748b;font-size:14px}.guide-bottom{display:flex;flex-wrap:wrap;gap:18px;align-items:center;font-size:13px}@media(max-width:760px){.guide-layout{grid-template-columns:1fr;gap:24px}.guide-contents{position:static;display:flex;flex-wrap:wrap;gap:6px 16px;border:none;padding:0}.guide-contents strong{width:100%;margin:0}.guide-contents a{padding:3px 0}.guide-card{padding:22px}.guide-body h2{font-size:20px}.guide-roles a{padding:10px 12px;font-size:13px}}
+/* ============================================================
+   Modern Dark — Usage Guide
+   ============================================================ */
+
+.guide-roles {
+  margin-bottom: 28px;
+  display: flex;
+  gap: 8px;
+}
+
+.guide-roles a {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: var(--dp-radius-pill);
+  color: var(--dp-color-meta);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline);
+  transition: all var(--dp-motion-duration) var(--dp-motion-ease);
+}
+
+.guide-roles a:hover {
+  color: var(--dp-color-bright);
+  border-color: var(--dp-color-hairline-2);
+}
+
+.guide-roles a[aria-current=page] {
+  color: var(--dp-color-bright);
+  background: #141414;
+  border-color: var(--dp-color-hairline-2);
+}
+
+.guide-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+
+.guide-contents {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 6px;
+  border-left: 1px solid var(--dp-color-hairline);
+  padding-left: 16px;
+  font-size: 13px;
+}
+
+.guide-contents strong {
+  margin-bottom: 10px;
+  font: 500 12px var(--dp-typography-mono);
+  color: var(--dp-color-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.guide-contents a {
+  display: block;
+  color: var(--dp-color-read);
+  text-decoration: none;
+  padding: 5px 0;
+  transition: color var(--dp-motion-duration) var(--dp-motion-ease);
+}
+
+.guide-contents a:hover {
+  color: var(--dp-color-live);
+}
+
+.guide-body {
+  display: grid;
+  gap: 32px;
+  min-width: 0;
+}
+
+.guide-card {
+  background: var(--dp-color-panel);
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline);
+  border-radius: var(--dp-radius-panel);
+  padding: 28px;
+}
+
+.guide-body h2 {
+  font: 500 22px/1.25 var(--dp-typography-face);
+  color: var(--dp-color-bright);
+  margin-bottom: 18px;
+}
+
+.guide-steps {
+  padding-left: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.guide-steps li::marker {
+  color: var(--dp-color-live);
+  font-weight: 600;
+}
+
+.guide-steps p {
+  color: var(--dp-color-read);
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.guide-tip {
+  padding: 14px 18px;
+  background: #121212;
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
+  border-radius: var(--dp-radius-panel);
+  font-size: 13px;
+  color: var(--dp-color-bright);
+  margin: 20px 0 0;
+}
+
+.guide-section {
+  display: grid;
+  gap: 12px;
+}
+
+.guide-section h2 {
+  margin-bottom: 8px;
+}
+
+.guide-section .ops-disclosure {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--dp-color-read);
+}
+
+.guide-section .ops-disclosure p:last-child,
+.guide-section .ops-disclosure ol:last-child,
+.guide-section .ops-disclosure ul:last-child {
+  margin-bottom: 0;
+}
+
+.guide-section li + li {
+  margin-top: 8px;
+}
+
+.guide-body code {
+  overflow-wrap: anywhere;
+  background: #050505;
+  color: var(--dp-color-bright);
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font: 12px var(--dp-typography-mono);
+}
+
+.guide-body section {
+  scroll-margin-top: 24px;
+}
+
+.guide-definitions {
+  margin: 0;
+}
+
+.guide-definitions > div + div {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: var(--dp-border-hairline) solid var(--dp-color-hairline);
+}
+
+.guide-definitions dt {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--dp-color-bright);
+  margin-bottom: 6px;
+}
+
+.guide-definitions dd {
+  margin: 0;
+  color: var(--dp-color-read);
+  font-size: 14px;
+}
+
+.guide-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--dp-color-meta);
+}
+
+@media (max-width: 760px) {
+  .guide-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .guide-contents {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    border: none;
+    padding: 0;
+  }
+  .guide-contents strong {
+    width: 100%;
+    margin: 0;
+  }
+  .guide-contents a {
+    padding: 3px 0;
+  }
+  .guide-card {
+    padding: 20px;
+  }
+  .guide-body h2 {
+    font-size: 20px;
+  }
+  .guide-roles a {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}

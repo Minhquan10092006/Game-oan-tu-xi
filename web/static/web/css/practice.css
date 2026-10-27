@@ -1,1 +1,88 @@
-.practice-form{display:grid;gap:12px;max-width:760px}.practice-form label{display:grid;gap:6px;font-weight:700}.practice-form select,.practice-form input{width:100%;min-width:0;font:inherit;padding:10px;background:#fff;color:#172033;border:1px solid #858b98}.practice-form p{margin:0;font-size:14px;line-height:1.6}.practice-search{display:flex;align-items:end;gap:12px}.practice-search label{flex:1;min-width:0}.practice-history{margin-top:22px}.practice-history td{overflow-wrap:anywhere}.practice-history td:last-child{display:flex;flex-wrap:wrap;gap:8px}#practice-message{padding:12px;background:#fff7d6;overflow-wrap:anywhere}#ops-replay{max-width:min(95vw,720px)}#ops-replay-timeline{width:100%}@media(max-width:600px){.practice-search{display:grid}.practice-form select{max-width:100%}}
+/* ============================================================
+   Modern Dark — Practice Mode
+   ============================================================ */
+
+.practice-form {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.practice-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--dp-color-bright);
+}
+
+.practice-form select,
+.practice-form input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  padding: 10px 14px;
+  background: #080808;
+  color: var(--dp-color-bright);
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
+  border-radius: var(--dp-radius-panel);
+  outline: none;
+}
+
+.practice-form select:focus,
+.practice-form input:focus {
+  border-color: var(--dp-color-bright);
+}
+
+.practice-form p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--dp-color-read);
+}
+
+.practice-search {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.practice-search label {
+  flex: 1;
+  min-width: 0;
+}
+
+.practice-history {
+  margin-top: 24px;
+}
+
+.practice-history td {
+  overflow-wrap: anywhere;
+}
+
+.practice-history td:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#practice-message {
+  padding: 14px 18px;
+  background: #141414;
+  border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
+  border-radius: var(--dp-radius-panel);
+  color: var(--dp-color-bright);
+  overflow-wrap: anywhere;
+}
+
+#ops-replay {
+  max-width: min(95vw, 720px);
+}
+
+#ops-replay-timeline {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .practice-search { display: grid; }
+  .practice-form select { max-width: 100%; }
+}
