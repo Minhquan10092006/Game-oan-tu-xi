@@ -71,16 +71,53 @@ def update_elo_after_match(winner_user, loser_user):
     l_profile, _ = UserProfile.objects.get_or_create(user=loser_user)
 
     new_w, new_l = calculate_elo(w_profile.elo, l_profile.elo)
+    delta = new_w - w_profile.elo
 
     w_profile.elo = new_w
     w_profile.wins += 1
     w_profile.save(update_fields=['elo', 'wins', 'updated_at'])
 
-    l_profile.elo = new_l
+    l_profile.elo = max(100, new_l)
     l_profile.losses += 1
     l_profile.save(update_fields=['elo', 'losses', 'updated_at'])
 
+    w_profile.delta = delta
+    l_profile.delta = -delta
+
     return w_profile, l_profile
+
+
+def update_user_elo_solo(user, won: bool | None, opponent_elo: int = ELO_DEFAULT):
+    """
+    Cập nhật ELO cho user khi chơi đơn (vs Bot / máy / P2 local).
+    won=True: thắng (+delta ELO, wins+1)
+    won=False: thua (-delta ELO, losses+1)
+    won=None: hòa (draws+1)
+    Trả về (profile, delta, old_elo, new_elo)
+    """
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    old_elo = profile.elo
+
+    if won is True:
+        new_elo, _ = calculate_elo(profile.elo, opponent_elo)
+        delta = new_elo - profile.elo
+        profile.elo = new_elo
+        profile.wins += 1
+        profile.save(update_fields=['elo', 'wins', 'updated_at'])
+    elif won is False:
+        _, new_elo = calculate_elo(opponent_elo, profile.elo)
+        new_elo = max(100, new_elo)
+        delta = new_elo - profile.elo
+        profile.elo = new_elo
+        profile.losses += 1
+        profile.save(update_fields=['elo', 'losses', 'updated_at'])
+    else:
+        delta = 0
+        new_elo = profile.elo
+        profile.draws += 1
+        profile.save(update_fields=['draws', 'updated_at'])
+
+    return profile, delta, old_elo, new_elo
 
 
 class Season(models.Model):

@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import practice_views
+from . import api_views
 from .operations_views import dashboard, usage_guide
 from .competition_views import retired_feature
 
@@ -38,4 +39,7 @@ urlpatterns = [
     path('admin/submission/<int:pk>/code/', views.admin_submission_code, name='admin-sub-code'),
     # Admin: trang duyệt code cộng đồng (HTML)
     path('admin/code-review/', views.admin_code_review, name='admin-code-review'),
+    # ELO & Solo match finish API
+    path('api/solo/match-finish/', api_views.solo_match_finish_api, name='solo-match-finish'),
+    path('api/user-profile/', api_views.user_profile_api, name='user-profile-api'),
 ]

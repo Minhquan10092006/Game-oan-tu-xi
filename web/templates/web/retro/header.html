@@ -8,6 +8,7 @@
     <div class="account-links">
       {% if user.is_authenticated %}
       <span class="username">{{ user.username }}</span>
+      <span class="user-elo-badge" id="header-user-elo" title="Điểm ELO xếp hạng của bạn">★ {{ user.profile.elo|default:1200 }} ELO</span>
       <form method="post" action="{% url 'logout' %}" class="header-logout">{% csrf_token %}<button class="retro-button" type="submit">Đăng xuất</button></form>
       {% else %}<a class="login-link" href="/login/">Đăng nhập</a><a class="retro-button primary" href="/register/">Đăng ký</a>{% endif %}
     </div>

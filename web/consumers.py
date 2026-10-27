@@ -57,6 +57,52 @@ def _do_update_draw(user_id1: int, user_id2: int):
         logger.warning('Draw update failed: %s', e)
 
 
+@database_sync_to_async
+def _do_handle_room_elo(uid1: int | None, uid2: int | None, winner: int | None):
+    """
+    Cập nhật ELO cho cả hai người chơi hoặc solo vs guest/bot trong phòng đấu.
+    Trả về dict elo_info: { 'p1': { 'delta': int, 'elo': int }, 'p2': { ... } }
+    """
+    from django.contrib.auth import get_user_model
+    from web.models import update_elo_after_match, update_user_elo_solo, UserProfile
+    User = get_user_model()
+    elo_info = {'p1': None, 'p2': None}
+    try:
+        u1 = User.objects.get(pk=uid1) if uid1 else None
+        u2 = User.objects.get(pk=uid2) if uid2 else None
+
+        if u1 and u2:
+            if winner == 1:
+                wp, lp = update_elo_after_match(u1, u2)
+                elo_info['p1'] = {'delta': getattr(wp, 'delta', 16), 'elo': wp.elo}
+                elo_info['p2'] = {'delta': getattr(lp, 'delta', -16), 'elo': lp.elo}
+            elif winner == 2:
+                wp, lp = update_elo_after_match(u2, u1)
+                elo_info['p2'] = {'delta': getattr(wp, 'delta', 16), 'elo': wp.elo}
+                elo_info['p1'] = {'delta': getattr(lp, 'delta', -16), 'elo': lp.elo}
+            else:
+                p1, _ = UserProfile.objects.get_or_create(user=u1)
+                p2, _ = UserProfile.objects.get_or_create(user=u2)
+                p1.draws += 1
+                p1.save(update_fields=['draws', 'updated_at'])
+                p2.draws += 1
+                p2.save(update_fields=['draws', 'updated_at'])
+                elo_info['p1'] = {'delta': 0, 'elo': p1.elo}
+                elo_info['p2'] = {'delta': 0, 'elo': p2.elo}
+        elif u1 and not u2:
+            won = True if winner == 1 else (False if winner == 2 else None)
+            prof, delta, old_elo, new_elo = update_user_elo_solo(u1, won)
+            elo_info['p1'] = {'delta': delta, 'elo': new_elo}
+        elif u2 and not u1:
+            won = True if winner == 2 else (False if winner == 1 else None)
+            prof, delta, old_elo, new_elo = update_user_elo_solo(u2, won)
+            elo_info['p2'] = {'delta': delta, 'elo': new_elo}
+    except Exception as e:
+        logger.warning('Room ELO update error: %s', e)
+
+    return elo_info
+
+
 class MultiplayerConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -368,31 +414,34 @@ class MultiplayerConsumer(AsyncJsonWebsocketConsumer):
 
     async def _handle_game_over_elo(self, room):
         """
-        Gọi sau khi ván kết thúc: cập nhật ELO cho cả hai người chơi.
-        Chỉ cập nhật nếu cả hai slot đều có Django user thật (không phải guest).
+        Gọi sau khi ván kết thúc: cập nhật ELO cho người chơi và gửi thông báo tới phòng.
         """
         uid1, uid2 = room.user_ids[0], room.user_ids[1]
-
-        # Chỉ tính ELO nếu cả hai đều là user đăng nhập (không phải guest)
-        if uid1 is None or uid2 is None:
-            logger.info('ELO skipped for room %s: guest player (uid1=%s, uid2=%s)',
-                        room.code, uid1, uid2)
-            return
-
         winner = room.state.winner   # 1, 2, hoặc None (hòa)
 
-        if winner == 1:
-            # P1 thắng P2
-            await _do_update_elo(winner_user_id=uid1, loser_user_id=uid2)
-        elif winner == 2:
-            # P2 thắng P1
-            await _do_update_elo(winner_user_id=uid2, loser_user_id=uid1)
-        else:
-            # Hòa — cộng draws cho cả hai
-            await _do_update_draw(uid1, uid2)
+        if uid1 is None and uid2 is None:
+            logger.info('ELO skipped for room %s: guest only', room.code)
+            return
 
-        logger.info('ELO processed: room=%s winner=%s uid1=%s uid2=%s',
-                    room.code, winner, uid1, uid2)
+        elo_info = await _do_handle_room_elo(uid1, uid2, winner)
+        logger.info('ELO processed: room=%s winner=%s uid1=%s uid2=%s elo_info=%s',
+                    room.code, winner, uid1, uid2, elo_info)
+
+        group_name = get_group_name(room.code)
+        await self.channel_layer.group_send(
+            group_name,
+            {
+                "type": "room_event",
+                "data": {
+                    "event": "elo_update",
+                    "payload": {
+                        "code": room.code,
+                        "winner": winner,
+                        "elo_info": elo_info,
+                    }
+                }
+            }
+        )
 
     async def handle_reset_room(self, content, req_id):
         code = self.room_code

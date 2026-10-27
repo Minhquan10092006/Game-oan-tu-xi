@@ -354,6 +354,10 @@ function initMultiMode() {
     updateSpectatorBadge(slot, count, max);
   });
 
+  socket.on('elo_update', (data) => {
+    handleEloUpdate(data);
+  });
+
   // Gắn sự kiện các nút
   const joinBtn = document.getElementById('btn-join');
   if (joinBtn) joinBtn.onclick = () => joinRoom();
@@ -818,6 +822,36 @@ function handleBoardClick(slot, row, col) {
 function setMultiStatus(msg) {
   const el = document.getElementById('mp-status');
   if (el) el.textContent = msg;
+}
+
+function handleEloUpdate(data) {
+  const info = data?.elo_info;
+  if (!info) return;
+
+  const parts = [];
+  if (info.p1) {
+    const s1 = info.p1.delta > 0 ? `+${info.p1.delta}` : `${info.p1.delta}`;
+    parts.push(`P1: ${s1} (Điểm: ${info.p1.elo})`);
+  }
+  if (info.p2) {
+    const s2 = info.p2.delta > 0 ? `+${info.p2.delta}` : `${info.p2.delta}`;
+    parts.push(`P2: ${s2} (Điểm: ${info.p2.elo})`);
+  }
+
+  if (parts.length > 0) {
+    setMultiStatus(`⭐ KẾT QUẢ ELO PHÒNG ${data.code}: ${parts.join(' | ')}`);
+  }
+
+  fetch('/api/user-profile/').then(r => r.json()).then(d => {
+    if (d.authenticated && d.elo) {
+      const headerElo = document.getElementById('header-user-elo');
+      if (headerElo) {
+        headerElo.textContent = `★ ${d.elo} ELO`;
+        headerElo.classList.add('pulse');
+        setTimeout(() => headerElo.classList.remove('pulse'), 2000);
+      }
+    }
+  }).catch(() => {});
 }
 
 function escapeHtml(str) {

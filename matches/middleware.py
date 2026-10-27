@@ -42,9 +42,13 @@ class APIRateLimitMiddleware:
             }, status=429)
 
         # Atomic increment
-        if current == 0:
-            cache.add(key, 0, window)
-        cache.incr(key)
+        try:
+            if cache.get(key) is None:
+                cache.set(key, 1, window)
+            else:
+                cache.incr(key)
+        except (ValueError, Exception):
+            cache.set(key, 1, window)
 
         response = self.get_response(request)
         # Thêm headers cho client

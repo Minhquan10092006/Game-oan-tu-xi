@@ -204,6 +204,30 @@ body.retro-site {
 .login-link { color: var(--dp-color-read); margin-right: 4px; }
 .login-link:hover { color: var(--dp-color-bright); }
 
+.user-elo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--dp-color-hairline);
+  color: var(--dp-color-bright);
+  font-family: var(--dp-typography-face);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: var(--dp-radius-button);
+  white-space: nowrap;
+  transition: all var(--dp-motion-duration) ease;
+}
+.user-elo-badge.pulse {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  transform: scale(1.05);
+}
+
 /* --- Tab Nav ---------------------------------------------- */
 .tab-nav {
   display: flex;

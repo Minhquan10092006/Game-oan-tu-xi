@@ -123,6 +123,45 @@ def update(worker, job_id, token, result=None, *, heartbeat=False):
                     or (result['result']!='draw' and result.get('winner') not in ('P1','P2'))):
                 raise ValueError('Kết quả trận không hợp lệ.')
             match.state = 'completed'
+            try:
+                from .models import update_user_elo_solo, update_elo_after_match, UserProfile
+                winner_side = result.get('winner')
+                outcome = result.get('result')
+                if outcome == 'draw' or winner_side is None:
+                    won = None
+                elif winner_side == match.player_side:
+                    won = True
+                else:
+                    won = False
+
+                opponent_user = None
+                if match.opponent_label and match.opponent_label.startswith('submission:'):
+                    try:
+                        sub_id = int(match.opponent_label.split(':')[1])
+                        from submissions.models import Submission
+                        opp_sub = Submission.objects.select_related('submitter').get(pk=sub_id)
+                        if opp_sub.submitter != match.user:
+                            opponent_user = opp_sub.submitter
+                    except Exception:
+                        pass
+
+                if opponent_user:
+                    if won is True:
+                        update_elo_after_match(match.user, opponent_user)
+                    elif won is False:
+                        update_elo_after_match(opponent_user, match.user)
+                    else:
+                        p1, _ = UserProfile.objects.get_or_create(user=match.user)
+                        p2, _ = UserProfile.objects.get_or_create(user=opponent_user)
+                        p1.draws += 1
+                        p1.save(update_fields=['draws', 'updated_at'])
+                        p2.draws += 1
+                        p2.save(update_fields=['draws', 'updated_at'])
+                else:
+                    update_user_elo_solo(match.user, won)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning('Practice match ELO update failed: %s', e)
         match.result = result; match.finished_at = timezone.now(); match.lease_until = None
         match.save()
     JudgeWorker.objects.filter(pk=worker.pk).update(last_seen=timezone.now())

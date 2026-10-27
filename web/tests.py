@@ -290,3 +290,53 @@ class EloModelTests(TestCase):
         room = rm.get_room('TEST2')
         if room:  # phòng không mặc định có thể bị xóa khi trống
             self.assertIsNone(room.user_ids[0])
+
+    def test_update_user_elo_solo(self):
+        """update_user_elo_solo tăng ELO khi thắng, giảm ELO khi thua, giữ nguyên khi hòa."""
+        from web.models import update_user_elo_solo, UserProfile
+        profile, delta, old_elo, new_elo = update_user_elo_solo(self.user1, won=True)
+        self.assertGreater(delta, 0)
+        self.assertEqual(new_elo, 1200 + delta)
+        self.assertEqual(profile.wins, 1)
+
+        profile, delta_loss, old_elo2, new_elo2 = update_user_elo_solo(self.user1, won=False)
+        self.assertLess(delta_loss, 0)
+        self.assertEqual(profile.losses, 1)
+
+        profile, delta_draw, _, _ = update_user_elo_solo(self.user1, won=None)
+        self.assertEqual(delta_draw, 0)
+        self.assertEqual(profile.draws, 1)
+
+    def test_solo_match_finish_api(self):
+        """API /api/solo/match-finish/ xử lý cả khách và user đăng nhập."""
+        from django.test import Client
+        c = Client()
+        # Khách
+        res = c.post('/api/solo/match-finish/', {'winner': 1}, content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.json()['is_guest'])
+
+        # Đăng nhập
+        c.force_login(self.user1)
+        res = c.post('/api/solo/match-finish/', {'winner': 1, 'turns': 10}, content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertFalse(data['is_guest'])
+        self.assertGreater(data['delta'], 0)
+        self.assertEqual(data['wins'], 1)
+
+    def test_user_profile_api(self):
+        """API /api/user-profile/ trả thông tin profile và ELO."""
+        from django.test import Client
+        c = Client()
+        res = c.get('/api/user-profile/')
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(res.json()['authenticated'])
+
+        c.force_login(self.user1)
+        res = c.get('/api/user-profile/')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['username'], self.user1.username)
+        self.assertIn('elo', data)

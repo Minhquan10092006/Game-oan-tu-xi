@@ -250,18 +250,41 @@ def _resolve_submission(match: Match, player: int,
     return ai
 
 
-def _try_update_elo(match: Match, winner_player: int):
-    """Cập nhật ELO nếu cả hai slot đều có người thật (không phải AI-only)."""
+def _try_update_elo(match: Match, winner_player: int | str):
+    """Cập nhật ELO cho người chơi sau trận đấu."""
     try:
-        from web.models import update_elo_after_match
+        from web.models import update_elo_after_match, update_user_elo_solo, UserProfile
         p1 = match.player1
         p2 = match.player2
-        if not p1 or not p2:
+        if not p1 and not p2:
             return
-        if winner_player == 1:
-            update_elo_after_match(p1, p2)
-        elif winner_player == 2:
-            update_elo_after_match(p2, p1)
+
+        # Chuẩn hóa winner: 1, 2, 'P1', 'P2', hoặc None/0
+        if winner_player in (1, 'P1', '1'):
+            winner_int = 1
+        elif winner_player in (2, 'P2', '2'):
+            winner_int = 2
+        else:
+            winner_int = None
+
+        if p1 and p2 and p1 != p2:
+            if winner_int == 1:
+                update_elo_after_match(p1, p2)
+            elif winner_int == 2:
+                update_elo_after_match(p2, p1)
+            else:
+                p1_prof, _ = UserProfile.objects.get_or_create(user=p1)
+                p2_prof, _ = UserProfile.objects.get_or_create(user=p2)
+                p1_prof.draws += 1
+                p1_prof.save(update_fields=['draws', 'updated_at'])
+                p2_prof.draws += 1
+                p2_prof.save(update_fields=['draws', 'updated_at'])
+        elif p1 and (not p2 or p1 == p2):
+            won = True if winner_int == 1 else (False if winner_int == 2 else None)
+            update_user_elo_solo(p1, won)
+        elif p2 and not p1:
+            won = True if winner_int == 2 else (False if winner_int == 1 else None)
+            update_user_elo_solo(p2, won)
     except Exception as e:
         logger.warning('ELO update failed for match %s: %s', match.pk, e)
 
@@ -299,7 +322,8 @@ def ai_battle_start_view(request):
     from matches.engine import GameState
     gs = GameState()
     match = Match.objects.create(
-        player1=request.user,
+        player1=ai1.submitter,
+        player2=ai2.submitter,
         player1_name=ai1.ai_name,
         player2_name=ai2.ai_name,
         ai1=ai1,
@@ -380,6 +404,7 @@ def _run_match_background(match_id: int, p1_source: str, p2_source: str):
         match.win_reason = result['reason']['message'] if result.get('reason') else ''
         match.replay_data = result
         match.finished_at = timezone.now()
+        _try_update_elo(match, match.winner)
         match.save(update_fields=['status', 'winner', 'win_reason', 'replay_data', 'finished_at'])
 
         # Push WebSocket event

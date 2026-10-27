@@ -301,17 +301,99 @@ function addMoveLog(moveRecord) {
   moveLogEl.scrollTop = moveLogEl.scrollHeight;
 }
 
-// ---- Victory ----
-function showVictory() {
+// ---- Victory & ELO Update ----
+async function showVictory() {
   if (!victoryOverlay) return;
   victoryOverlay.classList.remove('hidden');
   victoryTitle.textContent = `🎉 Player ${game.winner} Chiến Thắng!`;
   victoryMessage.textContent = game.winReason;
   createVictoryParticles();
+
+  const eloBox = document.getElementById('victory-elo');
+  if (eloBox) {
+    eloBox.innerHTML = '<div class="elo-loading">⏳ Đang cập nhật điểm xếp hạng ELO…</div>';
+    try {
+      const getCookie = (name) => {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      };
+
+      const res = await fetch('/api/solo/match-finish/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken') || '',
+        },
+        body: JSON.stringify({
+          winner: game.winner,
+          win_reason: game.winReason || '',
+          turns: game.turnNumber || 0,
+        }),
+      });
+
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+
+      if (data.is_guest) {
+        eloBox.innerHTML = `
+          <div class="elo-guest-notice">
+            <span>💡 <strong>Chế độ Khách:</strong> Bạn chưa đăng nhập.</span>
+            <a href="/login/" class="retro-button small-btn">Đăng nhập để lưu điểm ELO →</a>
+          </div>
+        `;
+      } else {
+        const isPositive = data.delta > 0;
+        const isNegative = data.delta < 0;
+        const sign = isPositive ? '+' : '';
+        const badgeClass = isPositive ? 'positive' : (isNegative ? 'negative' : 'neutral');
+
+        eloBox.innerHTML = `
+          <div class="elo-change-card ${badgeClass}">
+            <div class="elo-card-header">
+              <span class="elo-badge-pill">★ XẾP HẠNG ELO</span>
+              <span class="elo-player-tag">${data.username}</span>
+            </div>
+            <div class="elo-delta-row">
+              <span class="elo-delta-val ${badgeClass}">${sign}${data.delta} ELO</span>
+              <span class="elo-new-score">Điểm mới: <strong>${data.new_elo}</strong></span>
+            </div>
+            <div class="elo-record-sub">
+              Tổng: <strong>${data.wins}</strong> Thắng · <strong>${data.losses}</strong> Thua · <strong>${data.draws}</strong> Hòa (${data.win_rate}% Thắng)
+            </div>
+            <div class="elo-card-footer">
+              <a href="/ranking/" class="retro-button small-btn">Xem Bảng Xếp Hạng →</a>
+            </div>
+          </div>
+        `;
+
+        const headerElo = document.getElementById('header-user-elo');
+        if (headerElo) {
+          headerElo.textContent = `★ ${data.new_elo} ELO`;
+          headerElo.classList.add('pulse');
+          setTimeout(() => headerElo.classList.remove('pulse'), 2000);
+        }
+      }
+    } catch (err) {
+      console.warn('Lỗi cập nhật ELO solo:', err);
+      eloBox.innerHTML = '<div class="elo-error-notice">Không thể cập nhật ELO (lỗi mạng hoặc hệ thống).</div>';
+    }
+  }
 }
 
 function hideVictory() {
   if (victoryOverlay) victoryOverlay.classList.add('hidden');
+  const eloBox = document.getElementById('victory-elo');
+  if (eloBox) eloBox.innerHTML = '';
 }
 
 function createVictoryParticles() {
