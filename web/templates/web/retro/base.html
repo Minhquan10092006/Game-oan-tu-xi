@@ -7,14 +7,14 @@
   <meta name="theme-color" content="#050505">
   <meta name="description" content="Oẳn Tù Tì 2.0 — sân chơi lập trình chiến thuật dành cho sinh viên K71. Viết bot Python, thử chiến thuật và theo dõi từng nước đi.">
   <title>{% block title %}Oẳn Tù Tì 2.0 · Đấu trường thuật toán K71{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="{% static 'web/js/theme.js' %}"></script>
+  <script src="{% static 'web/js/replay-pieces.js' %}"></script>
   {% block legacy_styles %}{% endblock %}
   <link rel="stylesheet" href="{% static 'web/css/modern-dark.css' %}">
   <script src="{% static 'web/js/retro.js' %}" defer></script>
   <script src="{% static 'web/js/submission-id.js' %}"></script>
   {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'web/css/ui-refresh.css' %}">
 </head>
 <body class="retro-site {% block body_class %}{% endblock %}" data-username="{{ user.username|default:'' }}">
   <a class="skip-link" href="#main-content">Bỏ qua điều hướng, đến nội dung</a>

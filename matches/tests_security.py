@@ -21,16 +21,15 @@ class DemoSecurityTests(TestCase):
         self.client.logout()
         self.assertEqual(self.client.post('/api/matches/sample/').status_code, 401)
 
-    def test_sample_persists_and_is_not_official(self):
+    def test_sample_returns_replay_without_saving_history(self):
         response = self.client.post('/api/matches/sample/')
         self.assertEqual(response.status_code, 201)
-        record = MatchHistory.objects.get(match_id=response.json()['match_id'])
-        self.assertIsNone(record.season)
-        self.assertEqual(record.player, self.owner)
-        self.assertEqual(self.client.get(f'/api/matches/demo/{record.match_id}/').status_code, 200)
+        match_id = response.json()['match_id']
+        self.assertFalse(MatchHistory.objects.filter(match_id=match_id).exists())
+        self.assertTrue(response.json()['replay']['events'])
         self.client.force_login(self.other)
-        self.assertEqual(self.client.get(f'/api/matches/demo/{record.match_id}/').status_code, 404)
-        self.assertEqual(self.client.get(f'/api/matches/demo/{record.match_id}/state/').status_code, 404)
+        self.assertEqual(self.client.get(f'/api/matches/demo/{match_id}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/api/matches/demo/{match_id}/state/').status_code, 404)
 
     def test_csrf_enforced_on_sample_and_upload(self):
         client = Client(enforce_csrf_checks=True)
@@ -38,10 +37,9 @@ class DemoSecurityTests(TestCase):
         for path in ('/api/matches/sample/', '/api/matches/demo/', '/api/matches/demo-approved/'):
             self.assertEqual(client.post(path).status_code, 403)
 
-    def test_database_failure_does_not_report_success(self):
+    def test_sample_does_not_depend_on_history_storage(self):
         with patch('web.models.MatchHistory.objects.create', side_effect=DatabaseError('unavailable')):
-            with self.assertLogs('matches.demo_views', level='ERROR'):
-                self.assertEqual(self.client.post('/api/matches/sample/').status_code, 503)
+            self.assertEqual(self.client.post('/api/matches/sample/').status_code, 201)
 
     def test_demo_page_has_sample_action_and_csrf(self):
         response = self.client.get('/battlecode/')

@@ -31,7 +31,7 @@
 .competition-status {
   padding: 14px 18px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
-  background: #141414;
+  background: var(--ui-surface-soft);
   border-radius: var(--dp-radius-panel);
   font-size: 13px;
   color: var(--dp-color-bright);
@@ -81,20 +81,20 @@
   padding: 6px 12px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-pill);
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-meta);
   font: 500 11px var(--dp-typography-mono);
 }
 
 .round-track span.active {
-  background: #181818;
+  background: var(--ui-surface-soft);
   border-color: var(--dp-color-bright);
   color: var(--dp-color-bright);
 }
 
 .round-track span.completed {
-  background: #0d1e15;
-  border-color: #1e3d2f;
+  background: var(--ui-success-bg);
+  border-color: var(--ui-success-border);
   color: var(--dp-color-live);
 }
 
@@ -124,7 +124,7 @@
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   padding: 8px 12px;
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   font: 13px var(--dp-typography-face);
   outline: none;
@@ -143,8 +143,8 @@
 .my-entry {
   margin-top: 18px;
   padding: 14px 18px;
-  background: #0a1610;
-  border: var(--dp-border-hairline) solid #1e3d2f;
+  background: var(--ui-success-bg);
+  border: var(--dp-border-hairline) solid var(--ui-success-border);
   border-radius: var(--dp-radius-panel);
   font-size: 13px;
   color: var(--dp-color-bright);

@@ -23,7 +23,7 @@ from . import practice_ops
 def page(request):
     if can_operate(request.user):
         return redirect('/tournament/')
-    return render(request, 'web/practice.html', {'page':'practice'})
+    return redirect('/play/#practice')
 
 
 @api_view(['GET'])

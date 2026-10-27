@@ -89,15 +89,15 @@
 }
 
 .bot-chip.red {
-  background: #2a1215;
-  color: #ff8b94;
-  border-color: #5c2025;
+  background: var(--ui-p1-bg);
+  color: var(--piece-p1);
+  border-color: var(--piece-p1);
 }
 
 .bot-chip.blue {
-  background: #0f1e33;
-  color: #70b4ff;
-  border-color: #1e3d66;
+  background: var(--ui-p2-bg);
+  color: var(--piece-p2);
+  border-color: var(--piece-p2);
 }
 
 .versus-label {
@@ -121,7 +121,7 @@
 }
 
 .arena-status.is-error {
-  color: #f87171;
+  color: var(--ui-error);
 }
 
 .arena-help {
@@ -135,7 +135,7 @@
 
 .arena-disclaimer {
   padding: 12px;
-  background: #0a0a0a;
+  background: var(--dp-color-ground);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   font-size: 12px;
@@ -158,7 +158,7 @@
 }
 
 .arena-size {
-  background: #050505;
+  background: var(--dp-color-ground);
   color: var(--dp-color-live);
   font: 500 12px var(--dp-typography-mono);
   padding: 6px 10px;
@@ -174,6 +174,7 @@
 .arena-board {
   display: grid;
   grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
   gap: 1px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   background: var(--dp-color-hairline);
@@ -189,18 +190,18 @@
   text-align: center;
   font: 400 18px/1.5 var(--dp-typography-mono);
   color: var(--dp-color-meta);
-  background: #0a0a0a;
+  background: var(--dp-color-ground);
 }
 
 .arena-board.is-empty > span {
-  background: #141414;
+  background: var(--ui-surface-soft);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   padding: 24px;
 }
 
 .arena-cell {
-  background: #0e0e0e;
+  background: var(--dp-color-panel);
   display: grid;
   place-items: center;
   min-width: 0;
@@ -210,15 +211,15 @@
 }
 
 .arena-cell:nth-child(even) {
-  background: #090909;
+  background: var(--ui-surface-soft);
 }
 
 .arena-cell.last {
-  background: #1c1c1c;
+  background: var(--ui-surface-hover);
 }
 
 .arena-cell.goal-p1 {
-  box-shadow: inset 0 0 0 1.5px #f87171;
+  box-shadow: inset 0 0 0 1.5px var(--ui-error);
 }
 
 .arena-cell.goal-p2 {
@@ -226,7 +227,7 @@
 }
 
 .arena-cell.blocked {
-  background: repeating-linear-gradient(45deg, #181818, #181818 4px, #080808 4px, #080808 8px);
+  background: repeating-linear-gradient(45deg, var(--ui-surface-soft), var(--ui-surface-soft) 4px, var(--dp-color-ground) 4px, var(--dp-color-ground) 8px);
 }
 
 .arena-piece {
@@ -240,15 +241,15 @@
 }
 
 .arena-piece.p1 {
-  background: #2e1014;
-  color: #ff8b94;
-  border-color: #5c2025;
+  background: var(--ui-p1-bg);
+  color: var(--piece-p1);
+  border-color: var(--piece-p1);
 }
 
 .arena-piece.p2 {
-  background: #0d1e38;
-  color: #70b4ff;
-  border-color: #1e3d66;
+  background: var(--ui-p2-bg);
+  color: var(--piece-p2);
+  border-color: var(--piece-p2);
 }
 
 .arena-result:empty {
@@ -260,7 +261,7 @@
   padding: 14px 18px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
-  background: #141414;
+  background: var(--ui-surface-soft);
   font-weight: 500;
   font-size: 13px;
   color: var(--dp-color-bright);
@@ -296,7 +297,7 @@
 .speed-control select {
   font: 12px var(--dp-typography-mono);
   min-height: 36px;
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
@@ -320,7 +321,7 @@
 .replay-progress {
   font: 12px var(--dp-typography-mono);
   padding: 8px 12px;
-  background: #050505;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
@@ -335,7 +336,7 @@
 
 .replay-log summary {
   padding: 12px 16px;
-  background: #090909;
+  background: var(--ui-surface-soft);
   font-size: 13px;
   font-weight: 500;
   color: var(--dp-color-bright);
@@ -347,7 +348,7 @@
   max-height: 220px;
   overflow: auto;
   font: 12px/1.65 var(--dp-typography-mono);
-  background: #050505;
+  background: var(--dp-color-ground);
 }
 
 .replay-log p {
@@ -358,12 +359,12 @@
 
 .replay-event {
   padding: 8px 16px;
-  border-bottom: var(--dp-border-hairline) solid #161616;
+  border-bottom: var(--dp-border-hairline) solid var(--ui-surface-soft);
   color: var(--dp-color-read);
 }
 
 .replay-event:nth-child(even) {
-  background: #090909;
+  background: var(--ui-surface-soft);
 }
 
 @media (max-width: 780px) {

@@ -13,7 +13,8 @@
         body.append(node('p',season.participants+' / '+season.capacity+' tài khoản đại diện'));
         if(entry){
           body.append(node('h3',entry.display_name),node('p',entry.status==='disqualified'?'Mục dự thi đã bị loại.':entry.status==='locked'?'Bản dự thi đã khóa.':'Bạn đã đăng ký thành công.'));
-          const link=node('a','Xem bài dự thi');link.href='/tournament/';link.className='retro-button primary';body.append(link);
+          if(entry.position?.group)body.append(node('p',`Bạn ở bảng ${entry.position.group} · Hạng tạm thời ${entry.position.rank} · ${entry.position.points} điểm`));
+          const link=node('a','Xem bảng đấu của tôi');link.href='/tournament/?season='+season.id;link.className='retro-button primary';body.append(link);
           if(entry.status==='registered'){const upload=node('a','Nộp bot Python');upload.href='/ai/?entry='+entry.id;upload.className='retro-button';body.append(upload);}
         }else if(season.registration_open){
           body.append(node('p','Đang nhận đăng ký'+(season.registration_deadline?' đến '+new Date(season.registration_deadline).toLocaleString('vi-VN'):'')+'.'));

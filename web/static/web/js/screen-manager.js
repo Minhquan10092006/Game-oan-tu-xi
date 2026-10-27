@@ -38,7 +38,9 @@ function showScreen(name) {
 
 window.addEventListener('DOMContentLoaded', () => {
   const hash = location.hash.replace('#', '');
-  if (['solo', 'multi'].includes(hash)) {
+  if (hash === 'practice') {
+    showScreen('practice');
+  } else if (['solo', 'multi'].includes(hash)) {
     showScreen(hash);
   } else {
     showScreen('menu');

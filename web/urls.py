@@ -3,7 +3,7 @@ from . import views
 from . import practice_views
 from . import api_views
 from .operations_views import dashboard, usage_guide
-from .competition_views import retired_feature
+from .competition_views import retired_feature, season_draw
 
 urlpatterns = [
     path('practice/', practice_views.page, name='practice'),
@@ -15,6 +15,7 @@ urlpatterns = [
     path('ai/offline/', views.submission_offline_shell, name='submission-offline'),
     path('guide/', usage_guide, name='usage-guide'),
     path('tournament/', dashboard, name='tournament-operations'),
+    path('api/competition/seasons/<int:season_id>/draw/', season_draw),
     path('', views.index, name='index'),
     path('play/', views.play, name='play'),
     path('login/', views.account, name='login'),

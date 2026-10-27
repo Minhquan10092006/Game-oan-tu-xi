@@ -53,12 +53,11 @@ body.retro-tournament {
 }
 
 .retro-tournament .tab-nav a[aria-current=page] {
-  background: #141414;
+  background: var(--ui-surface-soft);
   color: var(--dp-color-bright);
 }
 
 .retro-tournament .tab-nav a[href="/#tham-gia"],
-.retro-tournament .tab-nav a[href="/play/"],
 .retro-tournament .motion-toggle,
 .retro-tournament .account-links > a[href="/play/"] {
   display: none;
@@ -72,7 +71,7 @@ body.retro-tournament {
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   box-shadow: none;
   border-radius: var(--dp-radius-pill);
-  background: #141414;
+  background: var(--ui-surface-soft);
   color: var(--dp-color-bright);
   text-decoration: none;
   font-weight: 500;
@@ -83,7 +82,7 @@ body.retro-tournament {
 }
 
 .retro-tournament .retro-button:hover {
-  background: #202020;
+  background: var(--ui-surface-hover);
   border-color: var(--dp-color-bright);
   color: var(--dp-color-bright);
 }
@@ -177,7 +176,7 @@ body.retro-tournament {
 .retro-tournament textarea {
   font: inherit;
   color: var(--dp-color-bright);
-  background: #080808;
+  background: var(--dp-color-ground);
   padding: 10px 14px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
@@ -213,7 +212,7 @@ body.retro-tournament {
 
 #ops-message {
   padding: 14px 18px;
-  background: #141414;
+  background: var(--ui-surface-soft);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   color: var(--dp-color-bright);
@@ -288,13 +287,13 @@ body.retro-tournament {
 }
 
 .ops-tabs button:hover {
-  background: #141414;
+  background: var(--ui-surface-soft);
   color: var(--dp-color-bright);
 }
 
 .ops-tabs button[aria-current=page] {
   color: var(--dp-color-bright);
-  background: #181818;
+  background: var(--ui-surface-soft);
 }
 
 .ops-panel {
@@ -357,7 +356,7 @@ body.retro-tournament {
 
 .ops-phases li {
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
-  background: #080808;
+  background: var(--dp-color-ground);
   padding: 6px 12px;
   border-radius: var(--dp-radius-pill);
   font-size: 12px;
@@ -490,7 +489,7 @@ body.retro-tournament {
   display: block;
   overflow-wrap: anywhere;
   font: 12px/1.6 var(--dp-typography-mono);
-  background: #050505;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   padding: 12px;
   border-radius: var(--dp-radius-panel);
@@ -513,15 +512,15 @@ body.retro-tournament {
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   padding: 16px;
-  background: #080808;
+  background: var(--dp-color-ground);
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 13px;
 }
 
 .ops-worker.online {
-  border-color: #1e3d2f;
-  background: #0b1a13;
+  border-color: var(--ui-success-border);
+  background: var(--ui-success-bg);
 }
 
 .ops-worker strong {
@@ -569,7 +568,7 @@ body.retro-tournament {
 }
 
 #ops-content th {
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-meta);
   font-weight: 500;
 }
@@ -662,22 +661,22 @@ body.retro-tournament {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  background: #0e0e0e;
+  background: var(--dp-color-panel);
   font-weight: 600;
 }
 
 .ops-cell.p1 {
-  color: #ff8b94;
-  background: #2a1215;
+  color: var(--piece-p1);
+  background: var(--ui-p1-bg);
 }
 
 .ops-cell.p2 {
-  color: #70b4ff;
-  background: #0f1e33;
+  color: var(--piece-p2);
+  background: var(--ui-p2-bg);
 }
 
 .ops-cell.blocked {
-  background: #222222;
+  background: var(--dp-color-hairline);
 }
 
 #ops-replay-timeline {

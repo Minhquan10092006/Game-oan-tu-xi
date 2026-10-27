@@ -4,7 +4,7 @@
 {% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-submit.css' %}">{% endblock %}
 {% block content %}
 <p><a class="retro-button" href="/tournament/">Chọn bản chính thức · kiểm tra Python · xem tiến độ chấm →</a></p>
-<p><a class="retro-button" href="/practice/">Luyện tập: chọn bot đã nộp và đối thủ →</a></p>
+<p><a class="retro-button" href="/play/#practice">Đấu trường: chọn bot đã nộp và đối thủ →</a></p>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <section id="offline-submissions" class="bot-protocol" data-user-id="{{ user.pk|default:'' }}" data-username="{{ user.username|default:'' }}" aria-label="Lưu bài trên máy">
   <h2>Lưu bài và nộp khi có mạng</h2>
@@ -105,9 +105,9 @@ function showError(msg) {
 function showToast(msg, isError = false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.style.background   = isError ? '#3a1a1a' : '#1a3a1a';
-  el.style.borderColor  = isError ? '#f44336' : '#4caf50';
-  el.style.color        = isError ? '#f44336' : '#4caf50';
+  el.style.background   = isError ? 'var(--ui-error-bg)' : 'var(--ui-success-bg)';
+  el.style.borderColor  = isError ? 'var(--ui-error-border)' : 'var(--ui-success-border)';
+  el.style.color        = isError ? 'var(--ui-error)' : 'var(--ui-success)';
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3500);
 }
@@ -157,7 +157,7 @@ async function loadHistory() {
           <div class="sub-body">
             <div class="sub-name" title="${escHtml(s.ai_name)}">
               ${escHtml(s.ai_name)}
-              <span style="color:#555;font-size:0.75rem"> v${s.version}</span>
+              <span style="color:var(--dp-color-meta);font-size:0.75rem"> v${s.version}</span>
             </div>
             <div class="sub-meta">Biên nhận #${s.id} · 📅 ${date}</div>
             <details style="font-size:.75rem;overflow-wrap:anywhere"><summary>Mã kiểm tra SHA-256</summary>${escHtml(s.source_sha256 || '')}</details>

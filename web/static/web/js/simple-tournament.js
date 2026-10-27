@@ -27,19 +27,11 @@
     }
     $('validation-progress').value=v.percent; $('fixture-progress').value=f.percent;
     $('ops-workers').textContent=(data.workers || []).map(w => `Máy ${w.slot}: ${w.online ? (w.job ? 'đang chấm' : 'sẵn sàng') : 'chưa kết nối'}`).join(' · ');
-    const fixtures=await api(`seasons/${id}/fixtures/`);
-    const holder=$('fixtures'); holder.replaceChildren();
-    if (!fixtures.total) holder.textContent='Lịch đấu sẽ xuất hiện khi ban tổ chức chạy giải.';
-    else {
-      holder.append(`${fixtures.total} trận đã được tạo. Kết quả cập nhật tự động khi trận hoàn tất.`);
-      const list=document.createElement('ul');
-      fixtures.fixtures.forEach(f => { const item=document.createElement('li'); item.append(`${f.entry1__display_name || 'Chờ xác định'} — ${f.entry2__display_name || 'Chờ xác định'}: ${f.result} `); if(f.can_view_replay){const button=document.createElement('button'); button.type='button'; button.className='retro-button'; button.textContent='Xem diễn biến trận'; button.onclick=()=>showReplay(f.judging_job__id, f); item.append(button);} list.append(item); });
-      holder.append(list);
-    }
     const link=$('submit-link'); if(link) { link.hidden=!data.submissions_open; link.href='/ai/'; }
+    document.dispatchEvent(new CustomEvent('tournament:loaded',{detail:{id}}));
     message('');
   }
-  const pieceIcons={rock:'●',paper:'■',scissors:'▲'};
+  const pieceIcons={rock:'Búa',paper:'Bao',scissors:'Kéo'};
   function stopReplay(){if(replayTimer){clearInterval(replayTimer);replayTimer=null;}const play=$('replay-play');if(play)play.textContent='▶ Phát';}
   function drawReplay(){
     const snapshot=replayFrames[replayIndex]; if(!snapshot)return;
@@ -49,7 +41,9 @@
     for(let row=1;row<=boardData.rows;row++)for(let col=1;col<=boardData.cols;col++){
       const cell=document.createElement('div'),key=`${row},${col}`,piece=pieces.get(key);cell.className='replay-cell';
       if((boardData.blocked_cells||[]).some(pos=>pos[0]===row&&pos[1]===col))cell.classList.add('blocked');
-      if(piece){cell.classList.add(piece.owner.toLowerCase());cell.textContent=pieceIcons[piece.type]||'?';cell.title=`${piece.owner} · ${piece.type}`;}
+      if(piece){cell.classList.add(piece.owner.toLowerCase());window.ReplayPieces.paint(cell,piece);}
+      const move=replayEvents[replayIndex];
+      if(move?.type==='move' && move.to[0]===row && move.to[1]===col)cell.classList.add('last');
       board.append(cell);
     }
     const event=replayEvents[replayIndex];
@@ -73,6 +67,7 @@
       $('replay-logs').textContent=logs||'Không có log bot.';goReplay(0);$('match-replay').showModal();
     }catch(error){message(error.message);}
   }
+  document.addEventListener('tournament:replay',event=>showReplay(event.detail.jobId,event.detail.fixture));
   $('season').onchange=async e=>{id=e.target.value; $('season-content').hidden=true; try{await load();}catch(err){message(err.message);}};
   const form=$('create-season'); if(form) form.onsubmit=async e=>{e.preventDefault();try{const data=Object.fromEntries(new FormData(form)); const created=await api('seasons/create/',data); const option=new Option(created.name,created.id,true,true);$('season').add(option);id=String(created.id);await load();message('Đã mở giải. Sinh viên có thể xem đề và nộp bài ngay.');}catch(err){message(err.message);}};
   const operate=async action=>{try{const result=await api(`seasons/${id}/operate/`,{action});await load();message(result.message || (action==='start_tournament'?'Đã gửi giải sang hàng đợi sandbox.':'Đã cập nhật giải.'));}catch(err){message(err.message);}};
@@ -83,6 +78,6 @@
   if($('replay-slider')) $('replay-slider').oninput=()=>goReplay(Number($('replay-slider').value));
   if($('replay-play')) $('replay-play').onclick=()=>{if(replayTimer){stopReplay();return;}if(replayIndex>=replayFrames.length-1)goReplay(0);$('replay-play').textContent='⏸ Tạm dừng';replayTimer=setInterval(()=>{if(replayIndex>=replayFrames.length-1){stopReplay();return;}replayIndex++;drawReplay();},700);};
   if($('match-replay')) $('match-replay').addEventListener('close',stopReplay);
-  if($('season').options.length>1){$('season').selectedIndex=1;$('season').dispatchEvent(new Event('change'));}
+  if($('season').options.length>1){const requested=new URLSearchParams(location.search).get('season') || $('season').dataset.preferredSeason;if(requested && [...$('season').options].some(option=>option.value===requested))$('season').value=requested;else $('season').selectedIndex=1;$('season').dispatchEvent(new Event('change'));}
   setInterval(()=>{if(id&&!document.hidden)load().catch(err=>message(err.message));},10000);
 })();

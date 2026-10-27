@@ -1,5 +1,5 @@
 /* Cache only the anonymous editor shell and public assets, never accounts/API. */
-const CACHE = 'ott-submission-shell-v4';
+const CACHE = 'ott-submission-shell-v13';
 const SHELL = '/ai/offline/';
 const ASSETS = [SHELL, '/static/web/css/retro.css', '/static/web/css/retro-submit.css',
   '/static/web/js/retro.js', '/static/web/js/submission-offline.js'];

@@ -3,7 +3,7 @@
 {% block title %}Đấu trường · Oẳn Tù Tì 2.0{% endblock %}
 {% block body_class %}retro-play{% endblock %}
 {% block legacy_styles %}<link rel="stylesheet" href="{% static 'web/css/style.css' %}"><link rel="stylesheet" href="{% static 'web/css/multiplayer.css' %}">{% endblock %}
-{% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-play.css' %}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'web/css/retro-play.css' %}"><link rel="stylesheet" href="{% static 'web/css/tournament-operations.css' %}"><link rel="stylesheet" href="{% static 'web/css/practice.css' %}"><script src="{% static 'web/js/practice.js' %}" defer></script>{% endblock %}
 {% block content %}
 <section id="screen-menu" class="screen active">
   <div class="retro-window launcher-window">
@@ -11,7 +11,8 @@
     <div class="window-body">
       <div class="section-heading"><div><div class="eyebrow">{% if is_guest %}PHIÊN TRẢI NGHIỆM / KHÁCH{% else %}PLAYER / {{ user.username }}{% endif %}</div><h1>CHỌN NƯỚC ĐI TIẾP THEO.</h1><p>Chơi một ván, xem bot thi đấu hoặc bắt tay viết chiến thuật.</p></div><a href="/logout/" class="retro-button">Đăng xuất</a></div>
       <div class="launcher-grid">
-        <article class="retro-window launcher-card"><div class="window-title">01 · hai_nguoi.exe</div><div class="window-body"><span class="launcher-icon" aria-hidden="true">P1<br>↔ P2</span><h2>Chơi cùng máy</h2><p>Hai người luân phiên điều khiển quân cờ. Làm quen luật chơi bằng một ván đấu.</p><button class="retro-button full-width" onclick="showScreen('solo')">Chơi hai người →</button></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">LUYỆN TẬP BOT</div><div class="window-body"><span class="launcher-icon" aria-hidden="true">AI<br>VS</span><h2>Luyện tập</h2><p>Chọn bot đã nộp, tìm đối thủ và xem lại trận đấu của bạn.</p><button type="button" class="retro-button primary full-width" onclick="showScreen('practice')">Vào luyện tập →</button></div></article>
+        <article class="retro-window launcher-card"><div class="window-title">01 · hai_nguoi.exe</div><div class="window-body"><span class="launcher-icon" aria-hidden="true">P1<br>↔ P2</span><h2>1v1</h2><p>Hai người luân phiên điều khiển quân cờ. Làm quen luật chơi bằng một ván đấu.</p><button class="retro-button full-width" onclick="showScreen('solo')">Vào chế độ 1v1 →</button></div></article>
         <article class="retro-window launcher-card"><div class="window-title">02 · phong_dau.exe</div><div class="window-body"><span class="launcher-icon blue" aria-hidden="true">NET<br>↗ ↙</span><h2>Phòng trực tuyến</h2><p>Vào phòng cùng bạn bè hoặc theo dõi bốn bàn đấu đang diễn ra.</p><button class="retro-button full-width" onclick="showScreen('multi')">Mở phòng đấu →</button></div></article>
         <article class="retro-window launcher-card"><div class="window-title">03 · bot_arena.exe</div><div class="window-body"><span class="launcher-icon red" aria-hidden="true">&lt;/&gt;<br>VS</span><h2>Hai bot mẫu</h2><p>Để thuật toán lên tiếng. Xem trận mẫu và phát lại từng nước đi đã xác nhận.</p><a class="retro-button primary full-width" href="/battlecode/">Xem bot thi đấu →</a></div></article>
         <article class="retro-window launcher-card"><div class="window-title">04 · your_bot.py</div><div class="window-body"><span class="launcher-icon blue" aria-hidden="true">PY<br>↑</span><h2>Nộp chương trình</h2><p>{% if is_guest %}Tạo tài khoản chính thức để gửi và quản lý các phiên bản bot của bạn.{% else %}Gửi file Python, nhận mã biên nhận và theo dõi trạng thái duyệt bài.{% endif %}</p>{% if is_guest %}<a class="retro-button full-width" href="/register/?next=/ai/">Đăng ký để nộp bot →</a>{% else %}<a class="retro-button full-width" href="/ai/">Nộp bot Python →</a>{% endif %}</div></article>
@@ -22,6 +23,12 @@
       {% if is_admin %}<div class="admin-shortcuts"><strong>QUẢN TRỊ:</strong> <a href="/season-admin/">Quản lý mùa giải</a><a href="/admin/code-review/">Duyệt bài nộp</a></div>{% endif %}
     </div>
   </div>
+</section>
+<section id="screen-practice" class="screen" aria-label="Luyện tập bot">
+  <button type="button" class="retro-button" onclick="showScreen('menu')">← Các chế độ chơi</button>
+  <section id="practice" class="arena-practice" aria-label="Luyện tập với bot đã nộp">
+  {% if not is_guest %}{% include 'web/retro/practice_panel.html' %}{% else %}<div class="retro-window"><div class="window-body"><h1>Đấu trường bot Python</h1><p>Đăng ký tài khoản để dùng bot đã nộp đấu với bot mẫu. Bạn vẫn có thể thử các chế độ chơi khác.</p><a class="retro-button primary" href="/register/?next=/play/">Đăng ký để luyện tập</a></div></div>{% endif %}
+  </section>
 </section>
 {% include 'web/retro/game_screens.html' %}
 <script src="{% static 'web/js/game.js' %}"></script>

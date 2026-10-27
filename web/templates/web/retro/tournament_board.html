@@ -1,0 +1,14 @@
+<section class="retro-window tournament-board" aria-labelledby="draw-heading">
+  <div class="window-title">BẢNG ĐẤU & NHÁNH GIẢI</div>
+  <div class="window-body">
+    <h2 id="draw-heading">Hành trình đến chung kết</h2>
+    <p id="draw-status" role="status">Chọn một mùa giải để xem bảng điểm và nhánh đấu.</p>
+    <div id="user-draw" data-operator="{{ operator|yesno:'true,false' }}"></div>
+    <details class="draw-demo">
+      <summary>Tham khảo sơ đồ giải 48 đội</summary>
+      <p><strong>Minh họa, không phải kết quả mùa giải.</strong> 12 bảng × 4 đội → 32 đội → 16 đội → tứ kết → bán kết → chung kết. Việc lấy 8 đội hạng ba chỉ áp dụng trong minh họa này.</p>
+      <button type="button" class="retro-button" id="preview-world-cup-toggle" aria-expanded="false" aria-controls="tournament-preview">Xem demo World Cup · 48 đội</button>
+      <div id="tournament-preview" hidden></div>
+    </details>
+  </div>
+</section>

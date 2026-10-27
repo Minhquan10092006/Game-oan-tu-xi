@@ -2,7 +2,7 @@
 .retro-play {
   --bg-primary: var(--dp-color-ground);
   --bg-secondary: var(--dp-color-panel);
-  --bg-tertiary: #111;
+  --bg-tertiary: var(--ui-surface-soft);
   --bg-card: var(--dp-color-panel);
   --text-primary: var(--dp-color-bright);
   --text-secondary: var(--dp-color-read);
@@ -10,8 +10,8 @@
   --accent-gold: var(--dp-color-live);
   --accent-purple: var(--dp-color-live);
   --border-subtle: var(--dp-color-hairline);
-  --cell-light: #151515;
-  --cell-dark: #111;
+  --cell-light: var(--board-a);
+  --cell-dark: var(--ui-surface-soft);
   --radius-sm: var(--dp-radius-panel);
   --radius-md: var(--dp-radius-panel);
   --radius-lg: var(--dp-radius-panel);
@@ -181,8 +181,8 @@
   border-radius: var(--dp-radius-panel);
 }
 .retro-play .cell { box-shadow: none; }
-.retro-play .cell.light { background: #151515 !important; }
-.retro-play .cell.dark { background: #111 !important; }
+.retro-play .cell.light { background: var(--board-a) !important; }
+.retro-play .cell.dark { background: var(--ui-surface-soft) !important; }
 
 .retro-play #multi-controls {
   background: var(--dp-color-panel);
@@ -237,7 +237,7 @@
   align-items: center;
 }
 .elo-change-card {
-  background: #141414;
+  background: var(--ui-surface-soft);
   border: 1px solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   padding: 16px;
@@ -254,11 +254,11 @@
 }
 .elo-change-card.positive {
   border-color: rgba(16, 185, 129, 0.4);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, #141414 100%);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--ui-surface-soft) 100%);
 }
 .elo-change-card.negative {
   border-color: rgba(239, 68, 68, 0.4);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #141414 100%);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--ui-surface-soft) 100%);
 }
 .elo-card-header {
   display: flex;
@@ -287,7 +287,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-.elo-delta-val.positive { color: #10b981; }
+.elo-delta-val.positive { color: var(--ui-success); }
 .elo-delta-val.negative { color: #ef4444; }
 .elo-delta-val.neutral { color: var(--dp-color-read); }
 .elo-new-score {

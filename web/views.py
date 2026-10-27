@@ -17,7 +17,7 @@ from django.http import JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 from .models import (
     UserProfile, Season, MatchHistory, TournamentFixture, TournamentGroup,
-    TournamentRound,
+    TournamentRound, PracticeMatch,
 )
 from .tournament import DrawError, draw_season, group_standings, record_fixture_result
 
@@ -29,7 +29,7 @@ def submission_offline_shell(request):
     from django.http import HttpResponse
     from django.template.loader import render_to_string
     response = HttpResponse(render_to_string('web/ai_judge.html', {
-        'user': AnonymousUser(), 'offline_mode': True, 'page': 'play',
+        'user': AnonymousUser(), 'offline_mode': True, 'page': 'submission',
     }))
     response['Cache-Control'] = 'no-cache'
     return response
@@ -79,11 +79,12 @@ def index(request):
 
 
 @login_required(login_url='/login/')
+@ensure_csrf_cookie
 def play(request):
     if _is_admin(request.user):
         return redirect('/tournament/')
     return render(request, 'web/play.html', {
-        'authed': True, 'user': request.user, 'page': 'play',
+        'authed': True, 'user': request.user, 'page': 'arena',
         'is_guest': request.session.get('is_guest', False), 'is_admin': _is_admin(request.user),
         'active_season': Season.objects.filter(is_active=True).first(),
     })
@@ -184,8 +185,10 @@ def battlecode_demo(request):
 
 @login_required(login_url='/login/')
 def match_history(request):
-    matches = MatchHistory.objects.all() if _is_admin(request.user) else MatchHistory.objects.filter(player=request.user)
-    matches = matches.order_by('-played_at')
+    records = PracticeMatch.objects.filter(state='completed')
+    if not _is_admin(request.user):
+        records = records.filter(user=request.user)
+    matches = [_practice_history_record(record) for record in records.order_by('-finished_at', '-pk')]
     return render(request, 'web/history.html', {
         'user': request.user, 'matches': matches, 'page': 'play',
         'is_guest': request.session.get('is_guest', False),
@@ -195,13 +198,34 @@ def match_history(request):
 
 @login_required(login_url='/login/')
 def match_detail(request, match_id):
-    matches = MatchHistory.objects.all() if _is_admin(request.user) else MatchHistory.objects.filter(player=request.user)
-    match = get_object_or_404(matches, match_id=match_id)
+    from django.http import Http404
+    if not match_id.startswith('practice-') or not match_id[9:].isdigit():
+        raise Http404
+    records = PracticeMatch.objects.filter(state='completed')
+    if not _is_admin(request.user):
+        records = records.filter(user=request.user)
+    record = get_object_or_404(records, pk=int(match_id[9:]))
+    match = _practice_history_record(record)
+    replay = dict(record.result)
+    replay.pop('bot_runs', None)
     return render(request, 'web/match_detail.html', {
         'user': request.user, 'match': match,
-        'replay_json': json.dumps(match.get_replay()) if match.get_replay() else 'null',
+        'replay_json': json.dumps(replay),
         'is_admin': _is_admin(request.user),
     })
+
+
+def _practice_history_record(record):
+    result = record.result
+    winner = result.get('winner')
+    p1, p2 = (record.own_label, record.opponent_label) if record.player_side == 'P1' else (record.opponent_label, record.own_label)
+    return {
+        'match_id': f'practice-{record.pk}', 'played_at': record.finished_at or record.created_at,
+        'board_preset': result.get('board_preset', 'classic_9x9'), 'season': None,
+        'player1_filename': p1, 'player2_filename': p2, 'total_plies': result.get('ply', 0),
+        'result': 'draw' if result.get('result') == 'draw' else {'P1': 'p1_win', 'P2': 'p2_win'}.get(winner, 'error'),
+        'reason_message': result.get('reason', {}).get('message', ''),
+    }
 
 
 # ── mùa giải (admin) ─────────────────────────────────────────────────
@@ -373,11 +397,11 @@ def ai_submit(request):
     if not entries:
         active = Season.objects.filter(is_active=True).order_by('-created_at').first()
         return render(request, 'web/submission_closed.html', {
-            'page': 'play', 'user': request.user, 'season': active,
+            'page': 'submission', 'user': request.user, 'season': active,
             'is_guest': request.session.get('is_guest', False), 'is_admin': _is_admin(request.user),
         })
     return render(request, 'web/ai_judge.html', {
-        'user': request.user, 'page': 'play',
+        'user': request.user, 'page': 'submission',
         'my_subs': my_subs,
         'submission_entries': entries, 'selected_submission_entry': selected_entry,
         'is_guest': request.session.get('is_guest', False),
@@ -392,7 +416,7 @@ def competition_hub(request):
     if _is_admin(request.user):
         return redirect('/tournament/')
     return render(request, 'web/competition.html', {
-        'user': request.user, 'page': 'play',
+        'user': request.user, 'page': 'registration',
         'is_guest': request.session.get('is_guest', False),
         'is_admin': _is_admin(request.user),
     })

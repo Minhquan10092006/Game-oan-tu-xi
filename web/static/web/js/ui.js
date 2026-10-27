@@ -161,7 +161,7 @@ function renderBoard() {
       if (piece) {
         const pieceEl = document.createElement('span');
         pieceEl.className = `piece p${piece.player}`;
-        pieceEl.textContent = piece.emoji;
+        window.ReplayPieces.paint(pieceEl, {type:piece.type, owner:`P${piece.player}`});
         pieceEl.dataset.tooltip = `${piece.player === 1 ? 'P1' : 'P2'} ${pieceNameVi(piece.type)}`;
         cell.appendChild(pieceEl);
       }

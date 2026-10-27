@@ -6,6 +6,7 @@
       <span class="brand-copy"><strong>Oẳn Tù Tì <span>2.0</span></strong><small>{% if is_management_user %}Ban tổ chức{% else %}Đấu trường thuật toán{% endif %}</small></span>
     </a>
     <div class="account-links">
+      <button class="retro-button theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Chuyển giao diện sáng tối">Sáng / Tối</button>
       {% if user.is_authenticated %}
       <span class="username">{{ user.username }}</span>
       <span class="user-elo-badge" id="header-user-elo" title="Điểm ELO xếp hạng của bạn">★ {{ user.profile.elo|default:1200 }} ELO</span>
@@ -25,12 +26,12 @@
     <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>Trang chủ</a>
     <a href="/ranking/" {% if page == 'ranking' %}aria-current="page"{% endif %}>Xếp hạng</a>
     <a href="/competition/" {% if page == 'registration' %}aria-current="page"{% endif %}>Đăng ký giải</a>
-    <a href="/ai/">Nộp bot</a>
-    <a href="/practice/" {% if page == 'practice' %}aria-current="page"{% endif %}>Luyện tập</a>
+    <a href="/ai/" {% if page == 'submission' %}aria-current="page"{% endif %}>Nộp bot</a>
+    <a href="/play/" {% if page == 'arena' %}aria-current="page"{% endif %}>Đấu trường</a>
     <a href="/tournament/" {% if page == 'competition' %}aria-current="page"{% endif %}>Giải của bạn</a>
     <a href="/#luat-choi">Luật chơi</a>
     <a href="{% url 'usage-guide' %}" {% if page == 'guide' %}aria-current="page"{% endif %}>Hướng dẫn</a>
-    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Tĩnh</button>
     {% endif %}
+    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">Tĩnh</button>
   </nav>
 </header>

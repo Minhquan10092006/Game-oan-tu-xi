@@ -49,7 +49,7 @@
 }
 
 .info-banner {
-  background: #141414;
+  background: var(--ui-surface-soft);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   padding: 14px 16px;
@@ -75,7 +75,7 @@
 .submit-main textarea,
 .submit-main select {
   width: 100%;
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
@@ -98,7 +98,7 @@
 
 .upload-zone {
   border: 1px dashed var(--dp-color-hairline-2);
-  background: #080808;
+  background: var(--dp-color-ground);
   border-radius: var(--dp-radius-panel);
   padding: 28px 20px;
   text-align: center;
@@ -111,7 +111,7 @@
 .upload-zone:hover,
 .upload-zone.drag-over,
 .upload-zone.has-file {
-  background: #121212;
+  background: var(--ui-surface-soft);
   border-color: var(--dp-color-live);
   color: var(--dp-color-bright);
 }
@@ -140,9 +140,9 @@
 
 .form-error {
   display: none;
-  color: #f87171;
-  background: #1c0e0e;
-  border: 1px solid #4a1d1d;
+  color: var(--ui-error);
+  background: var(--ui-error-bg);
+  border: 1px solid var(--ui-error-border);
   border-radius: var(--dp-radius-panel);
   padding: 12px;
   font-size: 13px;
@@ -162,7 +162,7 @@
 
 .protocol-help code {
   font: 12px var(--dp-typography-mono);
-  background: #181818;
+  background: var(--ui-surface-soft);
   color: var(--dp-color-bright);
   padding: 2px 6px;
   border-radius: 4px;
@@ -171,7 +171,7 @@
 .empty-msg {
   padding: 20px;
   text-align: center;
-  background: #080808;
+  background: var(--dp-color-ground);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   color: var(--dp-color-meta);
@@ -188,7 +188,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  background: #080808;
+  background: var(--dp-color-ground);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   font-size: 12px;
@@ -293,12 +293,12 @@
 .bot-protocol pre {
   max-width: 100%;
   overflow-x: auto;
-  background: #050505;
+  background: var(--dp-color-ground);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   padding: 14px;
   font: 12px/1.65 var(--dp-typography-mono);
-  color: #e5e5e5;
+  color: var(--dp-color-bright);
   white-space: pre;
 }
 

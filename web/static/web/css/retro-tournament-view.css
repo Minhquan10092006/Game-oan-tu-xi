@@ -86,7 +86,7 @@
 }
 
 .standings-table th {
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-meta);
   font: 500 10px/1.4 var(--dp-typography-mono);
 }
@@ -106,7 +106,7 @@
 .group-fixtures {
   margin-top: 14px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
-  background: #080808;
+  background: var(--dp-color-ground);
   border-radius: var(--dp-radius-panel);
 }
 
@@ -183,7 +183,7 @@
   padding: 12px;
   overflow-x: auto;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
-  background: #080808;
+  background: var(--dp-color-ground);
   border-radius: var(--dp-radius-panel);
 }
 
@@ -268,11 +268,11 @@
   padding: 0 6px;
   border-right: 1px dashed var(--dp-color-hairline-2);
   border-left: 1px dashed var(--dp-color-hairline-2);
-  background: #0c1410;
+  background: var(--ui-surface-soft);
 }
 
 .bracket-final .bracket-match {
-  border-color: #1e3d2f;
+  border-color: var(--ui-success-border);
   box-shadow: none;
   text-align: center;
 }
@@ -285,7 +285,7 @@
 .third-place h5 {
   margin: 0 0 10px;
   padding: 8px 12px;
-  background: #141414;
+  background: var(--ui-surface-soft);
   color: var(--dp-color-bright);
   font: 500 11px/1.4 var(--dp-typography-mono);
   border-radius: var(--dp-radius-panel);
@@ -363,7 +363,7 @@
 .contact-email-wrap {
   padding: 12px;
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
-  background: #080808;
+  background: var(--dp-color-ground);
   border-radius: var(--dp-radius-panel);
 }
 

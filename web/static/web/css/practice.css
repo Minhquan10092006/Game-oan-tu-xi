@@ -21,7 +21,7 @@
   min-width: 0;
   font: inherit;
   padding: 10px 14px;
-  background: #080808;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
@@ -67,7 +67,7 @@
 
 #practice-message {
   padding: 14px 18px;
-  background: #141414;
+  background: var(--ui-surface-soft);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   color: var(--dp-color-bright);

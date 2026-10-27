@@ -23,7 +23,7 @@
     return items;
   }
 
-  function renderGroups(groups, bestThirdPlaces, thirdPlaceStats) {
+  function renderGroups(groups, bestThirdPlaces, thirdPlaceStats, groupStats) {
     const section = node('section', 'group-stage');
     section.append(node('h4', '', 'Vòng bảng · 12 bảng × 4 đội · 144 trận'));
     const grid = node('div', 'group-grid');
@@ -43,10 +43,7 @@
         const row = document.createElement('tr');
         const qualifies = rank < 2 || (rank === 2 && bestThirdPlaces.has(index));
         if (qualifies) row.className = 'qualifier-row';
-        const stats = rank === 2 ? thirdPlaceStats[index] : [
-          [3, 2, 1, 0, 7], [3, 1, 2, 0, 5], null,
-          [3, 0, 0, 3, 0],
-        ][rank];
+        const stats = groupStats[index][rank];
         [rank + 1, entry, ...stats].forEach(value => row.append(node('td', '', String(value))));
         rows.append(row);
       });
@@ -65,9 +62,9 @@
     const bracket = node('div', 'bracket-scroll bracket-compact');
     const qualified = [];
     groups.forEach((entries, group) => {
-      qualified.push(`Bảng ${String.fromCharCode(65 + group)} · #1`);
-      qualified.push(`Bảng ${String.fromCharCode(65 + group)} · #2`);
-      if (bestThirdPlaces.has(group)) qualified.push(`Bảng ${String.fromCharCode(65 + group)} · #3`);
+      qualified.push(`${entries[0]} · ${String.fromCharCode(65 + group)}1`);
+      qualified.push(`${entries[1]} · ${String.fromCharCode(65 + group)}2`);
+      if (bestThirdPlaces.has(group)) qualified.push(`${entries[2]} · ${String.fromCharCode(65 + group)}3`);
     });
     shuffle(qualified);
 
@@ -92,7 +89,7 @@
           round.append(match);
         }
         rounds.push(round);
-        winners = Array.from({length: winners.length / 2}, (_, index) => `Thắng ${label} ${index + 1}`);
+        winners = Array.from({length: winners.length / 2}, (_, index) => `Thắng ${label} ${sideName} ${index + 1}`);
       });
       rounds.forEach(round => half.append(round));
       half.setAttribute('aria-label', `${sideName} nhánh loại trực tiếp`);
@@ -205,13 +202,20 @@
   function showPreview() {
     const entries = shuffle(Array.from({length: 48}, (_, index) => `Đội ${String(index + 1).padStart(2, '0')}`));
     const groups = Array.from({length: 12}, (_, index) => entries.slice(index * 4, index * 4 + 4));
-    const outcomes = [];
-    for (let wins = 0; wins <= 3; wins += 1) {
-      for (let draws = 0; draws <= 3 - wins; draws += 1) {
-        outcomes.push([3, wins, draws, 3 - wins - draws, wins * 3 + draws]);
+    // Simulate the same two-leg group schedule: each team plays six games.
+    const groupStats = groups.map((entries,groupIndex) => {
+      const rows=entries.map(name=>({name,stats:[0,0,0,0,0]}));
+      for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)for(let leg=0;leg<2;leg++){
+        const outcome=shuffle([0,1,2])[0],first=rows[a].stats,second=rows[b].stats;
+        first[0]++;second[0]++;
+        if(outcome===0){first[2]++;second[2]++;first[4]++;second[4]++;}
+        else{const win=outcome===1?first:second,lose=outcome===1?second:first;win[1]++;win[4]+=3;lose[3]++;}
       }
-    }
-    const thirdPlaceStats = Array.from({length: 12}, () => shuffle(outcomes.slice())[0]);
+      rows.sort((a,b)=>b.stats[4]-a.stats[4]||b.stats[1]-a.stats[1]||a.name.localeCompare(b.name));
+      groups[groupIndex]=rows.map(row=>row.name);
+      return rows.map(row=>row.stats);
+    });
+    const thirdPlaceStats = groupStats.map(rows=>rows[2]);
     const bestThirdPlaces = new Set(
       shuffle(Array.from({length: 12}, (_, index) => index))
         .sort((first, second) => thirdPlaceStats[second][4] - thirdPlaceStats[first][4])
@@ -226,7 +230,7 @@
     );
     panel.append(
       heading,
-      renderGroups(groups, bestThirdPlaces, thirdPlaceStats),
+      renderGroups(groups, bestThirdPlaces, thirdPlaceStats, groupStats),
       renderBracket(groups, bestThirdPlaces),
     );
     panel.hidden = false;
@@ -235,14 +239,6 @@
   }
 
   toggle.addEventListener('click', () => {
-    if (panel.hidden) showPreview();
-    else {
-      panel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.textContent = 'Xem demo World Cup · 48 đội';
-      connectorResizeObserver?.disconnect();
-      connectorResizeObserver = null;
-      redrawConnectors = () => {};
-    }
+    showPreview();
   });
 })();

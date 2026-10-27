@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
+  if(!$('practice-form'))return;
   const labels = {queued:'Chờ máy chấm',running:'Đang thi đấu',completed:'Hoàn thành',failed:'Chưa chấm được',cancelled:'Đã hủy'};
   const outcomes = {win:'Bạn thắng',loss:'Bạn thua',draw:'Hòa'};
   let choices, creating=false, active=false, pendingKey=null, pendingPayload='', timer, refreshing=false;
@@ -69,9 +70,10 @@
     const board=snapshot.board;if(!board || board.rows>20 || board.cols>20)return;
     $('ops-replay-board').style.gridTemplateColumns=`repeat(${board.cols},1fr)`;$('ops-replay-board').replaceChildren();
     for(let r=1;r<=board.rows;r++)for(let c=1;c<=board.cols;c++){
-      const piece=(snapshot.pieces || []).find(p=>p.at[0]===r && p.at[1]===c);const cell=el('div',piece?({rock:'B',paper:'Ba',scissors:'K'}[piece.type] || '?'):'');
+      const piece=(snapshot.pieces || []).find(p=>p.at[0]===r && p.at[1]===c);const cell=el('div');
+      if(piece)window.ReplayPieces.paint(cell,piece);
       cell.className='ops-cell'+(piece?(piece.owner==='P1'?' p1':' p2'):'');
-      if((board.blocked_cells || []).some(p=>p[0]===r && p[1]===c))cell.classList.add('blocked');cell.title=`${r},${c}`;$('ops-replay-board').append(cell);
+      if((board.blocked_cells || []).some(p=>p[0]===r && p[1]===c))cell.classList.add('blocked');cell.title=`${r},${c}${piece?' · '+cell.title:''}`;$('ops-replay-board').append(cell);
     }
     $('ops-replay-info').textContent=`Bước ${index}/${frames.length-1} · lượt ${snapshot.current_player}`;
   }

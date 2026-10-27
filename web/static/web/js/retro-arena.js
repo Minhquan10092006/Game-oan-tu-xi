@@ -23,6 +23,7 @@
     const fragment = document.createDocumentFragment();
     $('board').classList.remove('is-empty');
     $('board').style.gridTemplateColumns = `repeat(${board.cols}, minmax(0,1fr))`;
+    $('board').style.gridTemplateRows = `repeat(${board.rows}, minmax(0,1fr))`;
     for (let row = 1; row <= board.rows; row++) {
       for (let col = 1; col <= board.cols; col++) {
         const cell = document.createElement('div'), piece = cells.get(`${row},${col}`);
@@ -34,11 +35,8 @@
         const event = match.events[frame];
         if (event.type === 'move' && event.to[0] === row && event.to[1] === col) cell.classList.add('last');
         if (piece) {
-          const token = document.createElement('span');
-          token.className = `arena-piece ${piece.owner === 'P1' ? 'p1' : 'p2'}`;
-          token.textContent = labels[piece.type] || '?';
+          window.ReplayPieces.paint(cell,piece);
           cell.title = `${piece.owner}: ${piece.type} — hàng ${row}, cột ${col}`;
-          cell.append(token);
         }
         fragment.append(cell);
       }
@@ -76,10 +74,10 @@
     message('Hai bot đang thi đấu. Đang chuẩn bị bản phát lại…');
     try {
       const data = await readResponse(await fetch(event.target.action, {method:'POST', body:new FormData(event.target)}));
-      const replay = await readResponse(await fetch(`/api/matches/demo/${encodeURIComponent(data.match_id)}/`));
+      const replay = data.replay;
       if (!Array.isArray(replay.events) || !replay.events.length) throw Error('Trận chưa có diễn biến để phát lại.');
       match = replay; frame = 0; $('timeline').max = match.events.length - 1;
-      draw(); message('Trận đã được lưu. Nhấn Phát hoặc kéo thanh tiến trình để xem.');
+      draw(); message('Nhấn Phát hoặc kéo thanh tiến trình để xem. Trận mẫu không lưu vào lịch sử.');
     } catch (error) { message(error.message, true); }
     finally { $('start').disabled = false; controls(Boolean(match)); }
   });

@@ -25,6 +25,25 @@ class PracticeTests(TestCase):
     def create(self,**changes):
         return self.client.post('/api/practice/matches/',{**self.payload,**changes},content_type='application/json')
 
+    def test_history_only_lists_completed_practice_and_protects_replay(self):
+        self.create()
+        match = PracticeMatch.objects.get()
+        match.state = 'completed'
+        match.result = MatchManager(SampleBotRunner).run('aggressive', 'defensive', max_plies=3)
+        match.result['bot_runs'] = [{'stderr': 'private-opponent-debug'}]
+        match.finished_at = timezone.now()
+        match.save()
+        self.client.post('/api/matches/sample/')
+        response = self.client.get('/history/')
+        self.assertEqual(len(response.context['matches']), 1)
+        self.assertContains(response, f'/history/practice-{match.pk}/')
+        detail = self.client.get(f'/history/practice-{match.pk}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertNotContains(detail, 'private-opponent-debug')
+        self.client.force_login(self.other)
+        self.assertEqual(len(self.client.get('/history/').context['matches']), 0)
+        self.assertEqual(self.client.get(f'/history/practice-{match.pk}/').status_code, 404)
+
     def finish(self,match,job):
         result=MatchManager(SampleBotRunner).run('aggressive','defensive',max_plies=3,match_id=f'job-practice-{match.pk}')
         return practice_ops.update(self.worker,job['id'],job['lease_token'],result)
@@ -112,8 +131,10 @@ class PracticeTests(TestCase):
         self.assertEqual(invalid.status_code,409)
 
     def test_student_menu_and_admin_redirect(self):
-        self.assertContains(self.client.get('/practice/'),'practice-own')
-        self.assertContains(self.client.get('/'),'href="/practice/"')
+        self.assertRedirects(self.client.get('/practice/'),'/play/#practice',fetch_redirect_response=False)
+        self.assertContains(self.client.get('/play/'),'practice-own')
+        self.assertContains(self.client.get('/'),'href="/play/"')
+        self.assertNotContains(self.client.get('/'),'href="/practice/"')
         self.user.is_staff=True;self.user.save()
         self.assertRedirects(self.client.get('/practice/'),'/tournament/',fetch_redirect_response=False)
         self.assertEqual(self.create().status_code,403)

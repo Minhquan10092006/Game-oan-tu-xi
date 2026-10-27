@@ -4,6 +4,24 @@ from django.test import Client, TestCase
 
 
 class PublicFrontendTests(TestCase):
+    def test_student_sees_real_draw_and_separate_48_team_preview(self):
+        user=User.objects.create_user(username='draw-viewer')
+        self.client.force_login(user)
+        response=self.client.get('/tournament/')
+        self.assertContains(response,'id="user-draw"')
+        self.assertContains(response,'preview-world-cup-toggle')
+        self.assertContains(response,'Minh họa, không phải kết quả mùa giải.')
+        user.is_staff=True;user.save()
+        self.assertContains(self.client.get('/tournament/'),'id="user-draw"')
+
+    def test_guest_arena_explains_practice_requires_account(self):
+        user=User.objects.create_user(username='guest-arena-viewer')
+        self.client.force_login(user)
+        session=self.client.session;session['is_guest']=True;session.save()
+        response=self.client.get('/play/')
+        self.assertContains(response,'Đăng ký để luyện tập')
+        self.assertNotContains(response,'id="practice-form"')
+
     def test_home_logout_button_ends_session_and_preserves_account(self):
         user = User.objects.create_user(username='logout_player', password='testing')
         client = Client(enforce_csrf_checks=True)
@@ -20,7 +38,7 @@ class PublicFrontendTests(TestCase):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         for text in (
-            'NƯỚC ĐI NHỎ.', 'Ý TƯỞNG', 'id="luat-choi"', 'id="tham-gia"',
+            'Nước đi nhỏ.', 'Ý tưởng lớn.', 'id="luat-choi"', 'id="tham-gia"',
             'href="/register/"', 'data-motion-toggle', 'tối đa 4 mục/bảng',
             'href="/rules/download/"', 'href="/competition/"',
         ):

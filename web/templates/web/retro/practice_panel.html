@@ -1,0 +1,21 @@
+<header class="ops-heading"><div><p class="eyebrow">LUYỆN TẬP RIÊNG</p><h1>Cho bot của bạn đấu thử</h1><p>Chọn một phiên bản đã nộp và đối thủ. Kết quả không tính vào mùa giải; điểm luyện tập theo quy định hiện hành.</p></div><a class="retro-button" href="/ai/">Nộp bot mới</a></header>
+<p id="practice-message" role="status" aria-live="polite">Đang tải bot của bạn…</p>
+<section class="retro-window"><div class="window-title">Tạo trận luyện tập</div><div class="window-body">
+<form id="practice-form" class="practice-form">
+  <label>Bot của bạn <select id="practice-own" required><option value="">Đang tải…</option></select></label>
+  <p id="practice-empty" hidden>Bạn chưa có bot khả dụng. <a href="/ai/">Nộp một file Python</a> rồi quay lại đây. Bài chưa được duyệt vẫn có thể luyện tập; bài bị từ chối không được sử dụng.</p>
+  <label>Chọn đối thủ <select id="practice-opponent" required></select></label>
+  <div class="practice-search"><label>Tìm bot đã được duyệt <input id="practice-search" maxlength="80" placeholder="Tên bot hoặc tài khoản"></label><button type="button" class="retro-button" id="practice-find">Tìm đối thủ</button></div>
+  <p id="practice-description"></p>
+  <label>Bên của bạn <select id="practice-side"><option value="P1">P1 — đi trước</option><option value="P2">P2 — đi sau</option></select></label>
+  <p id="practice-quota"></p>
+  <p id="practice-workers"></p>
+  <button class="retro-button primary" id="practice-start" type="submit" disabled>Bắt đầu luyện tập</button>
+</form>
+<p>Mỗi tài khoản có một trận đang chờ hoặc đang chạy. Máy chấm ưu tiên trận chính thức; luyện tập có thể cần chờ. Mỗi trận dùng bản sao cố định của hai bot tại lúc tạo.</p>
+</div></section>
+<section class="retro-window practice-history"><div class="window-title">Trận luyện tập của bạn</div><div class="window-body">
+<button class="retro-button" id="practice-refresh" type="button">Làm mới</button><p>Hiển thị 30 trận gần nhất. Khi có kết quả, bấm Xem replay để xem từng nước.</p>
+<div class="ops-scroll"><table><thead><tr><th>Trận</th><th>Bot của bạn</th><th>Đối thủ</th><th>Trạng thái / kết quả</th><th>Thao tác</th></tr></thead><tbody id="practice-history"></tbody></table></div>
+</div></section>
+<dialog id="ops-replay" aria-labelledby="ops-replay-title"><h2 id="ops-replay-title">Replay luyện tập</h2><p id="ops-replay-info"></p><div id="ops-replay-board" role="img" aria-label="Bàn cờ replay"></div><label for="ops-replay-timeline">Nước đi</label><input id="ops-replay-timeline" type="range" min="0" value="0"><div class="ops-actions"><button class="retro-button" id="ops-replay-play" type="button">Phát / dừng</button><button class="retro-button" id="ops-replay-close" type="button">Đóng</button></div></dialog>

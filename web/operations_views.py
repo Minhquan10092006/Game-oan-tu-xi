@@ -33,8 +33,10 @@ def usage_guide(request):
 @login_required(login_url='/login/')
 @ensure_csrf_cookie
 def dashboard(request):
+    preferred = CompetitionEntry.objects.filter(user=request.user).exclude(status='withdrawn').order_by('-season__created_at').values_list('season_id', flat=True).first()
     return render(request, 'web/tournament_operations.html', {'page': 'competition',
         'operator': ops.can_operate(request.user),
+        'preferred_season_id': preferred,
         'seasons': Season.objects.all().only('id', 'name')})
 
 

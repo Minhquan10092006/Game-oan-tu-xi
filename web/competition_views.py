@@ -26,6 +26,27 @@ def _entry_payload(entry):
     return {'id': entry.pk, 'season_id': entry.season_id, 'display_name': entry.display_name, 'status': entry.status}
 
 
+def _entry_position(entry):
+    """Resolve the signed-in representative by ID, including large tournaments."""
+    from django.db.models import Q
+    group = entry.groups.filter(tournament_round__season_id=entry.season_id).prefetch_related('entries', 'fixtures').first()
+    rows = group_standings(group) if group else []
+    mine = next((row for row in rows if row['entry'].pk == entry.pk), None)
+    fixtures = TournamentFixture.objects.filter(
+        Q(entry1_id=entry.pk) | Q(entry2_id=entry.pk), tournament_round__season_id=entry.season_id,
+    ).select_related('entry1', 'entry2', 'winner', 'group', 'tournament_round').order_by('tournament_round__order', 'match_number')
+    return {
+        'group': group.code if group else None,
+        'rank': mine['rank'] if mine else None,
+        'points': mine['points'] if mine else 0,
+        'played': mine['played'] if mine else 0,
+        'standings': [{'entry_id': row['entry'].pk, 'name': row['entry'].display_name,
+                       **{key: row[key] for key in ('rank', 'played', 'wins', 'draws', 'losses', 'points')}} for row in rows],
+        'fixtures': [{**_fixture_payload(f), 'round': f.tournament_round.name,
+                      'group': f.group.code if f.group_id else None} for f in fixtures],
+    }
+
+
 def _fixture_slot_name(fixture: TournamentFixture, slot: str) -> str:
     entry = getattr(fixture, f'{slot}_id')
     if entry:
@@ -34,17 +55,25 @@ def _fixture_slot_name(fixture: TournamentFixture, slot: str) -> str:
     rank = getattr(fixture, f'source_rank{slot[-1]}')
     if group and rank:
         return f'{group.code} · Hạng {rank}'
-    previous = fixture.incoming_winners.order_by('match_number').first()
+    previous = fixture.incoming_winners.filter(winner_to_slot=slot).select_related('tournament_round').order_by('match_number').first()
     if previous:
-        return f'Thắng trận {previous.match_number}'
+        return f'Thắng {previous.tournament_round.name} · trận {previous.match_number}'
     return 'Chờ kết quả'
 
 
 def _fixture_payload(fixture: TournamentFixture) -> dict:
+    job = getattr(fixture, 'judging_job', None)
     return {
         'id': fixture.pk,
         'match_number': fixture.match_number,
         'leg': fixture.leg,
+        'entry1_id': fixture.entry1_id,
+        'entry2_id': fixture.entry2_id,
+        'winner_id': fixture.winner_id,
+        'winner_to_id': fixture.winner_to_id,
+        'winner_to_slot': fixture.winner_to_slot,
+        'job_id': job.pk if job else None,
+        'job_state': job.state if job else None,
         'entry1': _fixture_slot_name(fixture, 'entry1'),
         'entry2': _fixture_slot_name(fixture, 'entry2'),
         'result': fixture.result,
@@ -68,6 +97,7 @@ def _season_tournament_payload(season: Season) -> dict:
                 groups.append({
                     'code': group.code,
                     'standings': [{
+                        'entry_id': row['entry'].pk,
                         'rank': row['rank'],
                         'name': row['entry'].display_name,
                         'played': row['played'],
@@ -80,7 +110,7 @@ def _season_tournament_payload(season: Season) -> dict:
                         _fixture_payload(fixture)
                         for fixture in group.fixtures.select_related(
                             'entry1', 'entry2', 'winner',
-                            'winner_to', 'winner_to__tournament_round',
+                            'winner_to', 'winner_to__tournament_round', 'judging_job',
                         ).order_by('match_number')
                     ],
                 })
@@ -88,7 +118,7 @@ def _season_tournament_payload(season: Season) -> dict:
             third_place = [
                 _fixture_payload(fixture)
                 for fixture in tournament_round.fixtures.select_related(
-                    'entry1', 'entry2', 'winner',
+                    'entry1', 'entry2', 'winner', 'judging_job',
                 ).prefetch_related('incoming_winners').order_by('match_number')
             ]
         else:
@@ -98,7 +128,7 @@ def _season_tournament_payload(season: Season) -> dict:
                 'fixtures': [
                     _fixture_payload(fixture)
                     for fixture in tournament_round.fixtures.select_related(
-                        'entry1', 'entry2', 'winner',
+                        'entry1', 'entry2', 'winner', 'judging_job',
                         'source_group1', 'source_group2',
                     ).prefetch_related('incoming_winners').order_by('match_number')
                 ],
@@ -116,10 +146,19 @@ def _season_tournament_payload(season: Season) -> dict:
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
+def season_draw(request, season_id):
+    season = get_object_or_404(Season, pk=season_id)
+    entry = CompetitionEntry.objects.filter(season=season,user=request.user).exclude(status='withdrawn').first()
+    return Response({'season': {'id':season.pk,'name':season.name,'phase':season.phase,**_season_tournament_payload(season)},
+                     'entry': {**_entry_payload(entry),'position':_entry_position(entry)} if entry else None})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def my_competition_state(request):
     seasons = Season.objects.filter(is_active=True).prefetch_related('rounds')
     entries = CompetitionEntry.objects.filter(season__in=seasons, user=request.user).exclude(status='withdrawn')
-    return Response({'entries': [_entry_payload(e) for e in entries], 'seasons': [
+    return Response({'entries': [{**_entry_payload(e), 'position': _entry_position(e)} for e in entries], 'seasons': [
         {'id': s.pk, 'name': s.name, 'phase': s.phase, 'registration_open': _registration_open(s),
          'registration_deadline': s.registration_deadline, 'submission_deadline': s.submission_deadline,
          'participants': participant_count(s), 'capacity': min(s.max_participants, 4000),

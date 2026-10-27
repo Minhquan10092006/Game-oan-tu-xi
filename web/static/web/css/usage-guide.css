@@ -27,7 +27,7 @@
 
 .guide-roles a[aria-current=page] {
   color: var(--dp-color-bright);
-  background: #141414;
+  background: var(--ui-surface-soft);
   border-color: var(--dp-color-hairline-2);
 }
 
@@ -107,7 +107,7 @@
 
 .guide-tip {
   padding: 14px 18px;
-  background: #121212;
+  background: var(--ui-surface-soft);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline-2);
   border-radius: var(--dp-radius-panel);
   font-size: 13px;
@@ -142,7 +142,7 @@
 
 .guide-body code {
   overflow-wrap: anywhere;
-  background: #050505;
+  background: var(--dp-color-ground);
   color: var(--dp-color-bright);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   padding: 2px 6px;

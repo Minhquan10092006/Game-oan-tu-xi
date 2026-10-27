@@ -4,20 +4,20 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Replay — Oẳn Tù Tì 2.0</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="{% static 'web/js/theme.js' %}"></script>
+  <script src="{% static 'web/js/replay-pieces.js' %}"></script>
+  <script src="{% static 'web/js/retro.js' %}" defer></script>
   <style>
     :root {
-      --bg: #050505;
-      --panel: #0e0e0e;
-      --line: #222222;
+      --bg: var(--dp-color-ground);
+      --panel: var(--dp-color-panel);
+      --line: var(--dp-color-hairline);
       --line-2: #303030;
       --text: #f2f2f2;
       --muted: #8a8d91;
-      --read: #a6a9ad;
-      --p1: #ff8b94;
-      --p2: #70b4ff;
+      --read: var(--dp-color-read);
+      --p1: var(--piece-p1);
+      --p2: var(--piece-p2);
       --accent: #3fd6c6;
     }
     * { box-sizing: border-box; }
@@ -60,7 +60,7 @@
       transition: all 0.12s ease-out;
     }
     .nav-links a:hover, .nav-links a.active {
-      background: #141414;
+      background: var(--ui-surface-soft);
       color: var(--text);
     }
     .nav-links a.back-home {
@@ -83,7 +83,7 @@
       border-radius: 999px;
       border: 1px solid var(--line-2);
       background: transparent;
-      color: #f87171;
+      color: var(--ui-error);
       font: 0.78rem inherit;
       cursor: pointer;
       text-decoration: none;
@@ -129,10 +129,10 @@
       font-weight: 500;
       font-family: "Geist Mono", monospace;
     }
-    .b-p1 { background: #2a1215; color: var(--p1); border: 1px solid #5c2025; }
-    .b-p2 { background: #0f1e33; color: var(--p2); border: 1px solid #1e3d66; }
-    .b-draw { background: #141414; color: var(--muted); border: 1px solid var(--line); }
-    .b-error { background: #240d0e; color: #f87171; border: 1px solid #4a1d1d; }
+    .b-p1 { background: var(--ui-p1-bg); color: var(--p1); border: 1px solid var(--piece-p1); }
+    .b-p2 { background: var(--ui-p2-bg); color: var(--p2); border: 1px solid var(--piece-p2); }
+    .b-draw { background: var(--ui-surface-soft); color: var(--muted); border: 1px solid var(--line); }
+    .b-error { background: #240d0e; color: var(--ui-error); border: 1px solid var(--ui-error-border); }
     .layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
     .panel {
       background: var(--panel);
@@ -165,18 +165,18 @@
     .cell {
       min-width: 34px;
       min-height: 34px;
-      background: #0e0e0e;
+      background: var(--dp-color-panel);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .cell:nth-child(even) { background: #090909; }
+    .cell:nth-child(even) { background: var(--ui-surface-soft); }
     .cell.blocked {
-      background: repeating-linear-gradient(45deg, #181818, #181818 4px, #080808 4px, #080808 8px);
+      background: repeating-linear-gradient(45deg, var(--ui-surface-soft), var(--ui-surface-soft) 4px, var(--dp-color-ground) 4px, var(--dp-color-ground) 8px);
     }
     .cell.goal-p1 { box-shadow: inset 0 0 0 1.5px var(--p1); }
     .cell.goal-p2 { box-shadow: inset 0 0 0 1.5px var(--p2); }
-    .cell.last { background: #1c1c1c !important; }
+    .cell.last { background: var(--ui-surface-hover) !important; }
     .piece {
       border-radius: 6px;
       width: 76%;
@@ -187,21 +187,21 @@
       font-weight: 600;
       border: 1px solid transparent;
     }
-    .piece.p1 { color: var(--p1); background: #2e1014; border-color: #5c2025; }
-    .piece.p2 { color: var(--p2); background: #0d1e38; border-color: #1e3d66; }
+    .piece.p1 { color: var(--p1); background: var(--ui-p1-bg); border-color: var(--piece-p1); }
+    .piece.p2 { color: var(--p2); background: var(--ui-p2-bg); border-color: var(--piece-p2); }
     .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 10px; }
     .ctrl {
       padding: 8px 16px;
       border-radius: 999px;
       border: 1px solid var(--line-2);
-      background: #141414;
+      background: var(--ui-surface-soft);
       color: var(--text);
       cursor: pointer;
       font: 0.84rem inherit;
       transition: all 0.12s ease-out;
     }
-    .ctrl:hover { background: #202020; border-color: var(--text); }
-    .ctrl.primary { background: var(--text); color: #0a0a0a; border-color: var(--text); font-weight: 500; }
+    .ctrl:hover { background: var(--ui-surface-hover); border-color: var(--text); }
+    .ctrl.primary { background: var(--text); color: var(--dp-color-ground); border-color: var(--text); font-weight: 500; }
     .ctrl.primary:hover { background: #e0e0e0; }
     .prog {
       color: var(--muted);
@@ -225,9 +225,9 @@
       transition: background 0.1s;
       color: var(--read);
     }
-    .mv:hover { background: #141414; color: var(--text); }
+    .mv:hover { background: var(--ui-surface-soft); color: var(--text); }
     .mv.active {
-      background: #181818;
+      background: var(--ui-surface-soft);
       color: var(--text);
       border-left: 2px solid var(--accent);
     }
@@ -237,8 +237,9 @@
       .board { min-width: 300px; }
     }
   </style>
+  <link rel="stylesheet" href="{% static 'web/css/ui-refresh.css' %}">
 </head>
-<body>
+<body class="replay-page">
 <nav>
   <a class="nav-logo" href="/">OTT 2.0 / REPLAY</a>
   <div class="nav-links">
@@ -248,6 +249,7 @@
     {% if is_admin %}<a href="/season-admin/">Mùa giải</a>{% endif %}
   </div>
   <div class="nav-right">
+    <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false">Sáng / Tối</button>
     <span>{{ user.username }}</span>
     <a href="/logout/" class="btn-out">Thoát</a>
   </div>
@@ -285,7 +287,7 @@
         <button id="restart" class="ctrl">↺ Đầu</button>
         <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)">
           Tốc độ
-          <select id="speed" style="background:#080808;border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:5px 10px;font:inherit;outline:none">
+          <select id="speed" style="background:var(--dp-color-ground);border:1px solid var(--line-2);color:var(--text);border-radius:6px;padding:5px 10px;font:inherit;outline:none">
             <option value="2000">0.5×</option><option value="1000" selected>1×</option>
             <option value="500">2×</option><option value="250">4×</option>
           </select>
@@ -319,7 +321,7 @@ function draw(){
     if(b.goals.P1[0]===r&&b.goals.P1[1]===c)el.classList.add('goal-p1');
     if(b.goals.P2[0]===r&&b.goals.P2[1]===c)el.classList.add('goal-p2');
     const cur=R.events[frame];if(cur?.type==='move'&&cur.to[0]===r&&cur.to[1]===c)el.classList.add('last');
-    if(p)el.innerHTML=`<span class="piece ${p.owner.toLowerCase()}" title="${p.owner}: ${p.type}">${LABELS[p.type]}</span>`;
+    if(p)window.ReplayPieces.paint(el,p);
     document.getElementById('board').append(el);
   }
   const done=s.status==='finished';

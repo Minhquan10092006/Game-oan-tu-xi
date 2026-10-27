@@ -223,7 +223,7 @@ body.retro-site {
 .user-elo-badge.pulse {
   background: rgba(16, 185, 129, 0.2);
   border-color: rgba(16, 185, 129, 0.6);
-  color: #10b981;
+  color: var(--ui-success);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
   transform: scale(1.05);
 }
@@ -509,7 +509,7 @@ body.retro-site {
 
 /* --- Board Preview Card ----------------------------------- */
 .board-preview-card {
-  background: #080808;
+  background: var(--dp-color-ground);
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   border-radius: var(--dp-radius-panel);
   padding: 24px;
@@ -533,7 +533,8 @@ body.retro-site {
 
 .pixel-board {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
   border: var(--dp-border-hairline) solid var(--dp-color-hairline);
   aspect-ratio: 1;
   background: var(--dp-color-hairline);
@@ -544,14 +545,17 @@ body.retro-site {
 
 .pixel-cell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
-  background: #0c0c0c;
+  background: var(--dp-color-ground);
   font: 500 11px/1 var(--dp-typography-mono);
   min-width: 0;
+  min-height: 0;
   position: relative;
   color: var(--dp-color-meta);
 }
-.pixel-cell:nth-child(even) { background: #070707; }
+.pixel-cell:nth-child(even) { background: var(--ui-surface-soft); }
 .pixel-cell.goal { outline: 1px solid var(--dp-color-hairline-2); outline-offset: -2px; }
 .pixel-cell span {
   width: 75%;
@@ -561,14 +565,14 @@ body.retro-site {
   border-radius: 3px;
 }
 .pixel-cell.P1 span {
-  background: #2e1014;
-  color: #ff8b94;
-  border: 1px solid #5c2025;
+  background: var(--ui-p1-bg);
+  color: var(--piece-p1);
+  border: 1px solid var(--piece-p1);
 }
 .pixel-cell.P2 span {
-  background: #0d1e38;
-  color: #70b4ff;
-  border: 1px solid #1e3d66;
+  background: var(--ui-p2-bg);
+  color: var(--piece-p2);
+  border: 1px solid var(--piece-p2);
 }
 
 .board-legend {
@@ -579,8 +583,8 @@ body.retro-site {
   color: var(--dp-color-meta);
   margin-top: 14px;
 }
-.red-ink { color: #ff8b94; }
-.blue-ink { color: #70b4ff; }
+.red-ink { color: var(--piece-p1); }
+.blue-ink { color: var(--piece-p2); }
 
 /* --- Counter Strip ---------------------------------------- */
 .counter-strip {
@@ -698,7 +702,7 @@ body.retro-site {
   color: var(--dp-color-bright);
   font-size: 15px;
 }
-.rule-cycle li:nth-child(2) { background: #0a0a0a; }
+.rule-cycle li:nth-child(2) { background: var(--dp-color-ground); }
 .rule-cycle li:last-child { border-bottom: 0; }
 .rule-letter {
   display: grid;
@@ -711,9 +715,9 @@ body.retro-site {
   color: var(--dp-color-bright);
   border-radius: var(--dp-radius-panel);
 }
-.rule-cycle li:nth-child(1) .rule-letter { background: #2e1014; color: #ff8b94; border: 1px solid #5c2025; }
-.rule-cycle li:nth-child(2) .rule-letter { background: #0d1e38; color: #70b4ff; border: 1px solid #1e3d66; }
-.rule-cycle li:nth-child(3) .rule-letter { background: #161616; color: #a6a9ad; border: 1px solid #282828; }
+.rule-cycle li:nth-child(1) .rule-letter { background: var(--ui-p1-bg); color: var(--piece-p1); border: 1px solid var(--piece-p1); }
+.rule-cycle li:nth-child(2) .rule-letter { background: var(--ui-p2-bg); color: var(--piece-p2); border: 1px solid var(--piece-p2); }
+.rule-cycle li:nth-child(3) .rule-letter { background: var(--ui-surface-soft); color: var(--dp-color-read); border: 1px solid var(--dp-color-hairline-2); }
 .rule-cycle .rule-arrow {
   margin-left: auto;
   font: 18px var(--dp-typography-mono);
@@ -1043,7 +1047,7 @@ body.retro-site {
   color: var(--dp-color-meta);
 }
 .form-error {
-  color: #f47067;
+  color: var(--ui-error);
   font-size: 13px;
   margin: 6px 0 0;
 }
@@ -1051,7 +1055,7 @@ body.retro-site {
   background: rgba(244, 112, 103, 0.08);
   border: var(--dp-border-hairline) solid rgba(244, 112, 103, 0.2);
   padding: 14px;
-  color: #f47067;
+  color: var(--ui-error);
   font-size: 13px;
   margin-bottom: 20px;
   border-radius: var(--dp-radius-panel);
@@ -1081,7 +1085,7 @@ body.retro-site {
 }
 .contact-email-form .ops-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
 .contact-email-form [data-email-status] { font-size: 13px; color: var(--dp-color-live); overflow-wrap: anywhere; }
-.contact-email-form [data-email-status][data-error=true] { color: #f47067; }
+.contact-email-form [data-email-status][data-error=true] { color: var(--ui-error); }
 .team-contact-box { margin-top: 22px; padding-top: 18px; border-top: var(--dp-border-hairline) solid var(--dp-color-hairline); }
 
 /* --- Motion / Reduced Motion ------------------------------ */

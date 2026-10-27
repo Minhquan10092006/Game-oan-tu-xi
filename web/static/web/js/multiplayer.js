@@ -595,7 +595,7 @@ function renderMiniBoard(slot, s) {
       if (p) {
         const pe = document.createElement('span');
         pe.className = `piece p${p.player}`;
-        pe.textContent = PIECE_EMOJI[p.type];
+        window.ReplayPieces.paint(pe, {type:p.type, owner:`P${p.player}`});
         cell.appendChild(pe);
       }
       board.appendChild(cell);
