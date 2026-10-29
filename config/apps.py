@@ -12,8 +12,10 @@ class ConfigConfig(AppConfig):
     name = 'config'
 
     def ready(self):
-        # Chỉ bật WAL mode khi KHÔNG phải DEBUG (production)
+        # Chỉ bật WAL mode khi KHÔNG phải DEBUG (production) và KHÔNG phải môi trường serverless Vercel
         if os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes'):
+            return
+        if os.environ.get('VERCEL'):
             return
 
         from django.db import connection

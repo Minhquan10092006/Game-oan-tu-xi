@@ -157,10 +157,11 @@ if DATABASE_URL:
     )
 elif os.environ.get('VERCEL'):
     # Trên Vercel Serverless, filesystem chính là read-only.
-    # Nếu chưa gắn PostgreSQL qua DATABASE_URL, fallback tạm sang /tmp/ để tránh crash write.
+    # Nếu chưa gắn PostgreSQL qua DATABASE_URL, fallback tạm sang thư mục temp để tránh crash write.
+    import tempfile
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path('/tmp/db.sqlite3'),
+        'NAME': Path(tempfile.gettempdir()) / 'db.sqlite3',
     }
 
 # ===========================================================
