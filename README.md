@@ -1,4 +1,4 @@
-Link: https://13.211.201.112
+
 # Oẳn Tù Tì 2.0 — Demo và công cụ giải K71
 
 Sinh viên viết Python điều khiển quân trên bàn 9 × 9. Thắng khi đến đích hoặc bắt hết **một loại quân** của đối phương. Engine cũng xử lý hết nước đi, hòa lặp trạng thái và giới hạn 300 nước.
