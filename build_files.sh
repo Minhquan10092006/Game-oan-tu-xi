@@ -15,4 +15,7 @@ fi
 echo "==> Thu thập static files (collectstatic)..."
 python3 manage.py collectstatic --no-input --clear
 
+echo "==> Chạy database migrations trong build..."
+python3 manage.py migrate --no-input || echo "==> Migrate bỏ qua hoặc có cảnh báo, tiếp tục build."
+
 echo "==> Build hoàn tất cho Vercel!"

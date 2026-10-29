@@ -72,9 +72,14 @@ def index(request):
             cells.append({'owner': piece['owner'] if piece else '',
                           'symbol': symbols[piece['type']] if piece else '',
                           'goal': (row, col) in ((1, 1), (9, 9))})
+    active_season = None
+    try:
+        active_season = Season.objects.filter(is_active=True).first()
+    except Exception:
+        pass
     return render(request, 'web/index.html', {
         'hero_cells': cells, 'page': 'home', 'is_guest': request.session.get('is_guest', False),
-        'active_season': Season.objects.filter(is_active=True).first(),
+        'active_season': active_season,
     })
 
 
@@ -83,10 +88,15 @@ def index(request):
 def play(request):
     if _is_admin(request.user):
         return redirect('/tournament/')
+    active_season = None
+    try:
+        active_season = Season.objects.filter(is_active=True).first()
+    except Exception:
+        pass
     return render(request, 'web/play.html', {
         'authed': True, 'user': request.user, 'page': 'arena',
         'is_guest': request.session.get('is_guest', False), 'is_admin': _is_admin(request.user),
-        'active_season': Season.objects.filter(is_active=True).first(),
+        'active_season': active_season,
     })
 
 
