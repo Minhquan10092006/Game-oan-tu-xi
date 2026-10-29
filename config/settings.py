@@ -31,6 +31,29 @@ if not DEBUG and not os.environ.get('DJANGO_SECRET_KEY'):
 ALLOWED_HOSTS_ENV = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
 ALLOWED_HOSTS = ['*'] if DEBUG else [h.strip() for h in ALLOWED_HOSTS_ENV.split(',') if h.strip()]
 
+# CSRF Trusted Origins (cần thiết cho Django khi submit POST qua HTTPS)
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
+]
+
+# Tự động cấu hình Vercel
+VERCEL_URL = os.environ.get('VERCEL_URL')
+IS_VERCEL = bool(os.environ.get('VERCEL') or VERCEL_URL)
+if IS_VERCEL:
+    for domain in ['.vercel.app', 'now.sh', 'localhost', '127.0.0.1']:
+        if domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(domain)
+    if VERCEL_URL and VERCEL_URL not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(VERCEL_URL)
+
+    for origin in ['https://*.vercel.app', 'https://*.now.sh']:
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+    if VERCEL_URL:
+        origin_v = f'https://{VERCEL_URL}'
+        if origin_v not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin_v)
+
 # ===========================================================
 # APPLICATION DEFINITION
 # ===========================================================
@@ -129,6 +152,13 @@ if DATABASE_URL:
         conn_max_age=600,
         conn_health_checks=True,
     )
+elif os.environ.get('VERCEL'):
+    # Trên Vercel Serverless, filesystem chính là read-only.
+    # Nếu chưa gắn PostgreSQL qua DATABASE_URL, fallback tạm sang /tmp/ để tránh crash write.
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': Path('/tmp/db.sqlite3'),
+    }
 
 # ===========================================================
 # AUTHENTICATION
@@ -154,11 +184,11 @@ USE_TZ = True
 # STATIC FILES
 # ===========================================================
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # thư mục collectstatic output
 
-# Whitenoise: nén và cache static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Whitenoise: nén và cache static files an toàn (không crash khi thiếu manifest)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -197,9 +227,13 @@ CORS_ALLOWED_ORIGINS = [
 # Render URL từ env (linh hoạt khi đổi service name)
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME] + ALLOWED_HOSTS
-    CORS_ALLOWED_ORIGINS += [f'https://{RENDER_EXTERNAL_HOSTNAME}']
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
+    if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    render_origin = f'https://{RENDER_EXTERNAL_HOSTNAME}'
+    if render_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(render_origin)
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
 
 CORS_ALLOW_CREDENTIALS = True
 

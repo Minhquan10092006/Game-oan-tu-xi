@@ -290,7 +290,11 @@ function initMultiMode() {
   });
 
   socket.on('reconnect_failed', () => {
-    setMultiStatus('❌ Không thể kết nối lại. Hãy đảm bảo lệnh "python manage.py runserver" đang chạy.');
+    if (window.location.hostname.includes('vercel.app')) {
+      setMultiStatus('⚠️ Vercel (Serverless) không hỗ trợ WebSocket thời gian thực. Hãy chơi Solo/AI hoặc deploy qua Render/VPS để chơi 2 người!');
+    } else {
+      setMultiStatus('❌ Không thể kết nối lại. Hãy đảm bảo lệnh "python manage.py runserver" đang chạy.');
+    }
   });
 
   socket.on('spectate_snapshot', (rooms) => {
