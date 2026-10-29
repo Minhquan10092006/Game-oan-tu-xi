@@ -147,7 +147,12 @@ DATABASES = {
     }
 }
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = (
+    os.environ.get('DATABASE_URL')
+    or os.environ.get('POSTGRES_URL')
+    or os.environ.get('DATABASE_URL_UNPOOLED')
+    or os.environ.get('POSTGRES_URL_NON_POOLING')
+)
 if DATABASE_URL:
     import dj_database_url
     DATABASES['default'] = dj_database_url.config(
