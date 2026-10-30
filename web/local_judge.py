@@ -27,7 +27,9 @@ def run_once():
     job = practice_ops.claim(worker.pk, engine_hash())
     if not job:
         return False
-    practice = str(job['id']).startswith('practice-')
+    job_id = job.get('id', 'unknown')
+    print(f"⚡ Đang nhận ván chấm: {job_id}...")
+    practice = str(job_id).startswith('practice-')
     stop = threading.Event()
     lost = threading.Event()
 
@@ -60,6 +62,7 @@ def run_once():
                 practice_ops.update(worker, job['id'], job['lease_token'], result)
             else:
                 ops.finish_job(worker, job['id'], job['lease_token'], result)
+        print(f"✅ Đã hoàn tất chấm ván: {job_id}!")
     finally:
         stop.set()
         heartbeat.join(timeout=5)
@@ -67,9 +70,12 @@ def run_once():
 
 
 def run_until_empty(wait=False):
-    while True:
-        if run_once():
-            continue
-        if not wait:
-            return
-        time.sleep(2)
+    try:
+        while True:
+            if run_once():
+                continue
+            if not wait:
+                return
+            time.sleep(2)
+    except KeyboardInterrupt:
+        print("\n🛑 Đã dừng máy chấm an toàn.")
