@@ -15,7 +15,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 application = get_wsgi_application()
 app = application
 
-# Tự động chạy migrations trên Vercel khi database chưa có bảng
+# Tự động khởi tạo database, migrations và tài khoản admin trên Vercel
 if os.environ.get('VERCEL'):
     try:
         from django.db import connection
@@ -25,7 +25,9 @@ if os.environ.get('VERCEL'):
             print("Vercel: Running auto-migrations...")
             call_command('migrate', interactive=False)
             print("Vercel: Migrations completed.")
+            tables = connection.introspection.table_names()
 
+        if 'web_season' in tables:
             try:
                 from web.models import Season
                 from django.utils import timezone
@@ -38,5 +40,18 @@ if os.environ.get('VERCEL'):
                     )
             except Exception as e_season:
                 print("Default season notice:", e_season)
+
+        if 'auth_user' in tables:
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                admin_user = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+                admin_pass = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123456')
+                admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@ott.local')
+                if not User.objects.filter(username=admin_user).exists():
+                    User.objects.create_superuser(admin_user, admin_email, admin_pass)
+                    print(f"Default superuser '{admin_user}' created on Vercel.")
+            except Exception as e_user:
+                print("Default superuser notice:", e_user)
     except Exception as e:
-        print("Vercel auto-migration notice:", e)
+        print("Vercel setup notice:", e)
